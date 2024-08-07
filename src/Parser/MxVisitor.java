@@ -139,12 +139,12 @@ public interface MxVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitBlockStmt(MxParser.BlockStmtContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code vardefStmt}
+	 * Visit a parse tree produced by the {@code varDefStmt}
 	 * labeled alternative in {@link MxParser#statement}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitVardefStmt(MxParser.VardefStmtContext ctx);
+	T visitVarDefStmt(MxParser.VarDefStmtContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code ifStmt}
 	 * labeled alternative in {@link MxParser#statement}.
@@ -274,11 +274,11 @@ public interface MxVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitFormatString(MxParser.FormatStringContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link MxParser#const}.
+	 * Visit a parse tree produced by {@link MxParser#literal}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitConst(MxParser.ConstContext ctx);
+	T visitLiteral(MxParser.LiteralContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link MxParser#arrayConst}.
 	 * @param ctx the parse tree

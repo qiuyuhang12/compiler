@@ -3,7 +3,7 @@ package AST.expr.atom;
 import AST.*;
 import Util.*;
 
-public class identifierNode extends atomExprNode {
+public class identifierNode extends atomExprNode{
     public String name;
     public identifierNode(position pos) {
         super(pos);
@@ -13,7 +13,7 @@ public class identifierNode extends atomExprNode {
         name = _name;
     }
     @Override
-    public void accept(ASTVisitor visitor) {
+public void accept(ASTVisitor visitor) {
         visitor.visit(this);
     }
 }

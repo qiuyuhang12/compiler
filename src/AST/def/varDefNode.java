@@ -5,7 +5,7 @@ import AST.expr.*;
 import AST.stmt.*;
 import Util.position;
 
-public class varDefNode extends StmtNode {
+public class varDefNode extends ASTNode {
     public String name = null, typeName = null;
     public ExprNode init = null;
 

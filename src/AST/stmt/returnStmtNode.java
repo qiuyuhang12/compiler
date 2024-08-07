@@ -12,6 +12,9 @@ public class returnStmtNode extends StmtNode {
         super(pos);
         this.value = value;
     }
+    public returnStmtNode(position pos) {
+        super(pos);
+    }
 
     @Override
     public void accept(ASTVisitor visitor) {

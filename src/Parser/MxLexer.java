@@ -23,7 +23,7 @@ public class MxLexer extends Lexer {
 		While=24, Break=25, Continue=26, Return=27, Plus=28, Minus=29, Mul=30, 
 		Div=31, Mod=32, Greater=33, Less=34, GreaterEqual=35, LessEqual=36, UnEqual=37, 
 		Equal=38, LogicAnd=39, LogicOr=40, LogicNot=41, RightShift=42, LeftShift=43, 
-		And=44, Or=45, Xor=46, Not=47, Assign=48, Increment=49, Decrement=50, 
+		And=44, Or=45, Xor=46, BitNot=47, Assign=48, Increment=49, Decrement=50, 
 		Dot=51, Identifier=52, Question=53, Colon=54, Semi=55, Comma=56, IntegerConst=57, 
 		Escape=58, StringConst=59, WhiteSpace=60, LineComment=61, ParaComment=62;
 	public static String[] channelNames = {
@@ -42,7 +42,7 @@ public class MxLexer extends Lexer {
 			"While", "Break", "Continue", "Return", "Plus", "Minus", "Mul", "Div", 
 			"Mod", "Greater", "Less", "GreaterEqual", "LessEqual", "UnEqual", "Equal", 
 			"LogicAnd", "LogicOr", "LogicNot", "RightShift", "LeftShift", "And", 
-			"Or", "Xor", "Not", "Assign", "Increment", "Decrement", "Dot", "Identifier", 
+			"Or", "Xor", "BitNot", "Assign", "Increment", "Decrement", "Dot", "Identifier", 
 			"Question", "Colon", "Semi", "Comma", "Printable", "IntegerConst", "Escape", 
 			"StringConst", "WhiteSpace", "LineComment", "ParaComment"
 		};
@@ -69,7 +69,7 @@ public class MxLexer extends Lexer {
 			"Continue", "Return", "Plus", "Minus", "Mul", "Div", "Mod", "Greater", 
 			"Less", "GreaterEqual", "LessEqual", "UnEqual", "Equal", "LogicAnd", 
 			"LogicOr", "LogicNot", "RightShift", "LeftShift", "And", "Or", "Xor", 
-			"Not", "Assign", "Increment", "Decrement", "Dot", "Identifier", "Question", 
+			"BitNot", "Assign", "Increment", "Decrement", "Dot", "Identifier", "Question", 
 			"Colon", "Semi", "Comma", "IntegerConst", "Escape", "StringConst", "WhiteSpace", 
 			"LineComment", "ParaComment"
 		};

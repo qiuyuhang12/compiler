@@ -3,7 +3,7 @@ package Util;
 import java.util.HashMap;
 
 public class Type {
-    enum TypeEnum {
+    public enum TypeEnum {
         VOID,
         BOOL,
         INT,
@@ -11,6 +11,7 @@ public class Type {
         ARRAY,
         CLASS
     }
+    public boolean isfString=false;
     public TypeEnum type = null;
 //    public boolean
 //            isVoid = false,

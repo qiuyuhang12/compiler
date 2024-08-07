@@ -111,7 +111,7 @@ LeftShift
 And
 Or
 Xor
-Not
+BitNot
 Assign
 Increment
 Decrement
@@ -176,7 +176,7 @@ LeftShift
 And
 Or
 Xor
-Not
+BitNot
 Assign
 Increment
 Decrement

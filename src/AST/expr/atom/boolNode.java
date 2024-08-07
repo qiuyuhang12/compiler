@@ -3,7 +3,7 @@ package AST.expr.atom;
 import AST.*;
 import Util.*;
 
-public class boolNode extends atomExprNode {
+public class boolNode extends atomExprNode{
     public boolean value;
     public boolNode(position pos) {
         super(pos);
@@ -14,7 +14,7 @@ public class boolNode extends atomExprNode {
     }
 
     @Override
-    public void accept(ASTVisitor visitor) {
+public void accept(ASTVisitor visitor) {
         visitor.visit(this);
     }
 }

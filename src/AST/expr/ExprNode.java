@@ -6,7 +6,7 @@ import AST.stmt.*;
 import Util.Type;
 import Util.position;
 
-public abstract class ExprNode extends ASTNode {
+public abstract class ExprNode extends ASTNode{
     public Type type;
 //    public entity val;
 

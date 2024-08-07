@@ -11,13 +11,13 @@ funDef: (type|Void) Identifier '(' (funParaList)? ')' '{' (statement)* '}';
 funParaList: type Identifier (Comma type Identifier)*;
 
 expression
-    : New type ('[' expression? ']')+                                           #newArrayExpr
+    : New type ('[' expression? ']')+ arrayConst?                               #newArrayExpr
     | New type ('(' ')')?                                                       #newVarExpr
     | expression '(' (expression (Comma expression)*)? ')'                      #funExpr
     | expression '[' expression ']'                                             #arrayExpr
     | expression op=Dot Identifier                                              #memberExpr
     | expression op=(Increment | Decrement)                                     #unaryExpr
-    | <assoc=right> op=(Not | LogicNot | Minus) expression                      #unaryExpr//去掉了+
+    | <assoc=right> op=(BitNot | LogicNot | Minus| Plus) expression             #unaryExpr
     | <assoc=right> op=(Increment | Decrement) expression                       #preSelfExpr
     | expression op=(Mul | Div | Mod) expression                                #binaryExpr
     | expression op=(Plus | Minus) expression                                   #binaryExpr
@@ -32,13 +32,13 @@ expression
     | <assoc=right> expression '?' expression ':' expression                    #conditionalExpr
     | <assoc=right> expression op=Assign expression                             #assignExpr
     | '(' expression ')'                                                        #parenExpr
-    | (const|Identifier|This)                                                   #atomExpr
+    | (literal|Identifier|This)                                                 #atomExpr
     | formatString                                                              #formatStringExpr
     ;
 
 statement
     : block                                             #blockStmt
-    | varDef ';'                                        #vardefStmt
+    | varDef                                            #varDefStmt
     | if                                                #ifStmt
     | while                                             #whileStmt
     | for                                               #forStmt
@@ -115,7 +115,7 @@ LeftShift: '<<';
 And: '&';
 Or: '|';
 Xor: '^';
-Not: '~';
+BitNot: '~';
 
 Assign: '=';
 
@@ -136,11 +136,11 @@ Comma : ',';
 
 
 fragment Printable: [\u0020-\u007E];
-const: True|False|IntegerConst|StringConst|Null|arrayConst;
+literal: True|False|IntegerConst|StringConst|Null|arrayConst;
 IntegerConst: '0' | [1-9][0-9]*;
 Escape: '\\\\' | '\\n' | '\\"';
 StringConst: '"' (Escape | Printable| ' ')*? '"';
-arrayConst: '{' (const (Comma const)*)? '}';
+arrayConst: '{' (literal (Comma literal)*)? '}';
 
 
 WhiteSpace: [\t\r\n ]+ -> skip;

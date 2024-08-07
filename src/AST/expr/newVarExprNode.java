@@ -1,12 +1,17 @@
 package AST.expr;
 
-import AST.*;
-import AST.def.*;
-import AST.stmt.*;
-import Util.Type;
+import AST.ASTVisitor;
 import Util.position;
 
-public class newVarExprNode {
+import java.util.ArrayList;
+
+public class newVarExprNode extends ExprNode {
+    public String name;
+    public ExprNode init;
+    public newVarExprNode(position pos) {
+        super(pos);
+    }
+    @Override
     public void accept(ASTVisitor visitor) {
         visitor.visit(this);
     }

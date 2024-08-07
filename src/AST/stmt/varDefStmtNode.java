@@ -1,19 +1,22 @@
 package AST.stmt;
+
 import AST.*;
 import AST.def.*;
 import AST.expr.*;
 
+import Util.Type;
 import Util.position;
 
-public class varDefStmtNode extends StmtNode {
-    public String name, typeName;
-    public ExprNode init;
+import java.util.ArrayList;
 
-    public varDefStmtNode(String typeName, String name, ExprNode init, position pos) {
+public class varDefStmtNode extends StmtNode {
+    public Type type;
+    public ArrayList<String> name;
+
+    public ArrayList<ExprNode> init;
+
+    public varDefStmtNode(position pos) {
         super(pos);
-        this.name = name;
-        this.typeName = typeName;
-        this.init = init;
     }
 
     @Override

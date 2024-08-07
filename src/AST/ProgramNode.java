@@ -8,12 +8,12 @@ import AST.def.*;
 import java.util.ArrayList;
 
 public class ProgramNode extends ASTNode {
-    public funDefNode fn;
-    public ArrayList<classDefNode> strDefs = new ArrayList<>();
+    public ArrayList<classDefNode> claDefs = new ArrayList<>();
+    public ArrayList<varDefNode> varDefs = new ArrayList<>();
+    public ArrayList<funDefNode> funDefs = new ArrayList<>();
 
-    public ProgramNode(position pos, funDefNode fn) {
+    public ProgramNode(position pos) {
         super(pos);
-        this.fn = fn;
     }
 
     @Override

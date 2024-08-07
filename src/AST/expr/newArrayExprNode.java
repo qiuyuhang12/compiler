@@ -1,11 +1,20 @@
 package AST.expr;
+
 import AST.*;
-import AST.def.*;
-import AST.stmt.*;
-import Util.Type;
 import Util.position;
-public class newArrayExprNode {
-public void accept(ASTVisitor visitor) {
-visitor.visit(this);
-}
+import AST.expr.atom.arrayNode;
+import java.util.ArrayList;
+
+public class newArrayExprNode extends ExprNode {
+    public String name;
+    public int dim=0;
+    public ArrayList<ExprNode> sizeInit = new ArrayList<>();
+    public arrayNode init;
+    public newArrayExprNode(position pos) {
+        super(pos);
+    }
+    @Override
+    public void accept(ASTVisitor visitor) {
+        visitor.visit(this);
+    }
 }
