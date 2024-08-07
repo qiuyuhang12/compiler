@@ -1,12 +1,12 @@
-package AST;
-
+package AST.expr;
+import AST.*;
 import Util.Type;
 import Util.position;
 
-public class constExprNode extends ExprNode {
+public class zzzconstExprNode extends ExprNode {
     public int value;
 
-    public constExprNode(int value, Type intType, position pos) {
+    public zzzconstExprNode(int value, Type intType, position pos) {
         super(pos);
         this.value = value;
         type = intType;

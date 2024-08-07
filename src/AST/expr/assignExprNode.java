@@ -1,14 +1,15 @@
-package AST;
+package AST.expr;
 
+import AST.*;
+import AST.def.*;
+import AST.stmt.*;
 import Util.position;
 
-public class assignExprNode extends ExprNode{
+public class assignExprNode extends ExprNode {
     public ExprNode lhs, rhs;
 
-    public assignExprNode(ExprNode lhs, ExprNode rhs, position pos) {
+    public assignExprNode(position pos) {
         super(pos);
-        this.lhs = lhs;
-        this.rhs = rhs;
     }
 
     @Override

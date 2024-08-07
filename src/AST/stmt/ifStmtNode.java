@@ -1,5 +1,8 @@
-package AST;
+package AST.stmt;
 
+import AST.*;
+import AST.def.*;
+import AST.expr.*;
 import Util.position;
 
 public class ifStmtNode extends StmtNode {

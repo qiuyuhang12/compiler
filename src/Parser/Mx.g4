@@ -11,8 +11,8 @@ funDef: (type|Void) Identifier '(' (funParaList)? ')' '{' (statement)* '}';
 funParaList: type Identifier (Comma type Identifier)*;
 
 expression
-    : New type ('[' expression? ']')+                                       #newArrayExpr
-    | New type ('(' ')')?                                                   #newVarExpr
+    : New type ('[' expression? ']')+                                           #newArrayExpr
+    | New type ('(' ')')?                                                       #newVarExpr
     | expression '(' (expression (Comma expression)*)? ')'                      #funExpr
     | expression '[' expression ']'                                             #arrayExpr
     | expression op=Dot Identifier                                              #memberExpr
@@ -32,21 +32,21 @@ expression
     | <assoc=right> expression '?' expression ':' expression                    #conditionalExpr
     | <assoc=right> expression op=Assign expression                             #assignExpr
     | '(' expression ')'                                                        #parenExpr
-    | (const|Identifier|This)                                                            #atomExpr
+    | (const|Identifier|This)                                                   #atomExpr
     | formatString                                                              #formatStringExpr
     ;
 
 statement
-    : block
-    | varDef
-    | if
-    | while
-    | for
-    | return
-    | break
-    | continue
-    | expression ';'
-    | ';'
+    : block                                             #blockStmt
+    | varDef ';'                                        #vardefStmt
+    | if                                                #ifStmt
+    | while                                             #whileStmt
+    | for                                               #forStmt
+    | return                                            #returnStmt
+    | break                                             #breakStmt
+    | continue                                          #continueStmt
+    | expression ';'                                    #exprStmt
+    | ';'                                               #emptyStmt
     ;
 block: '{' statement* '}';
 if: If '(' expression ')' thenStmt=statement (Else elseStmt=statement)?;

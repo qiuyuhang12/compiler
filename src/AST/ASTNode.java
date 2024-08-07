@@ -1,5 +1,8 @@
 package AST;
 
+import AST.stmt.*;
+import AST.expr.*;
+import AST.def.*;
 import Util.position;
 
 abstract public class ASTNode {

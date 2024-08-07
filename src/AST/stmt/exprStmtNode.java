@@ -1,5 +1,6 @@
-package AST;
-
+package AST.stmt;
+import AST.*;
+import AST.expr.ExprNode;
 import Util.position;
 
 public class exprStmtNode extends StmtNode{

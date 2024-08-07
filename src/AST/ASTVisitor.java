@@ -1,5 +1,7 @@
 package AST;
-
+import AST.stmt.*;
+import AST.expr.*;
+import AST.def.*;
 public interface ASTVisitor {
     void visit(ProgramNode it);
     void visit(classDefNode it);
@@ -13,7 +15,7 @@ public interface ASTVisitor {
 
     void visit(assignExprNode it);
     void visit(binaryExprNode it);
-    void visit(constExprNode it);
-    void visit(cmpExprNode it);
-    void visit(varExprNode it);
+    void visit(zzzconstExprNode it);
+    void visit(zzzvarExprNode it);
+    void visit(varDefNode it);
 }

@@ -1,12 +1,16 @@
-package AST;
-
+package AST.expr;
+import AST.*;
+import AST.def.*;
+import AST.stmt.*;
 import Util.Type;
 import Util.position;
 
 public class binaryExprNode extends ExprNode {
     public ExprNode lhs, rhs;
     public enum binaryOpType {
-        add, sub
+        add, sub, mul, div, mod,
+        shl, shr, and, or, xor, lt,
+        gt, le, ge, eq, ne, andl, orl
     }
     public binaryOpType opCode;
 

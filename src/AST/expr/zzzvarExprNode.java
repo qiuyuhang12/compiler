@@ -1,11 +1,11 @@
-package AST;
-
+package AST.expr;
+import AST.*;
 import Util.position;
 
-public class varExprNode extends ExprNode {
+public class zzzvarExprNode extends ExprNode {
     public String name;
 
-    public varExprNode(String name, position pos) {
+    public zzzvarExprNode(String name, position pos) {
         super(pos);
         this.name = name;
         type = null;

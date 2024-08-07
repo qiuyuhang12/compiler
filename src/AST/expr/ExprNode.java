@@ -1,5 +1,7 @@
-package AST;
-
+package AST.expr;
+import AST.*;
+import AST.def.*;
+import AST.stmt.*;
 //import MIR.entity;
 import Util.Type;
 import Util.position;

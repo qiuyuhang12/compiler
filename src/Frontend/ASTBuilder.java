@@ -1,8 +1,8 @@
 package Frontend;
 
 import AST.*;
-import AST.binaryExprNode.binaryOpType;
-import AST.cmpExprNode.cmpOpType;
+//import AST.binaryExprNode.binaryOpType;
+//import AST.cmpExprNode.cmpOpType;
 import Parser.MxBaseVisitor;
 import Parser.MxParser;
 import Util.Type;
