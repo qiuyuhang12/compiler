@@ -8,8 +8,7 @@ import java.util.ArrayList;
 
 public class classBuildNode extends ASTNode {
     public String name = null;//debug
-    public funParaList paraList;
-    public ArrayList<StmtNode> stmts = new ArrayList<>();
+    public ArrayList<StmtNode> stmts;
 
     public classBuildNode(position pos) {
         super(pos);

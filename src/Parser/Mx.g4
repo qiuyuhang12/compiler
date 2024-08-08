@@ -3,7 +3,7 @@ grammar Mx;
 @header {package Parser;}
 program: (funDef|classDef|varDef)*EOF;
 classDef:Class Identifier '{'  (funDef|classBuild|varDef)* '}' Semi;
-classBuild: Identifier '(' ')' '{' statement '}';
+classBuild: Identifier '(' ')' '{' statement* '}';
 //classVisit: Identifier Member Identifier;
 
 
@@ -12,25 +12,25 @@ funParaList: type Identifier (Comma type Identifier)*;
 
 expression
     : New type ('[' expression? ']')+ arrayConst?                               #newArrayExpr
-    | New type ('(' ')')?                                                       #newVarExpr
-    | expression '(' (expression (Comma expression)*)? ')'                      #funExpr
-    | expression '[' expression ']'                                             #arrayExpr
+    | New type ('(' init=expression? ')')?                                                       #newVarExpr
+    | fun=expression '(' (para+=expression (Comma para+=expression)*)? ')'                      #funExpr
+    | array=expression '[' index=expression ']'                                             #arrayExpr
     | expression op=Dot Identifier                                              #memberExpr
     | expression op=(Increment | Decrement)                                     #unaryExpr
     | <assoc=right> op=(BitNot | LogicNot | Minus| Plus) expression             #unaryExpr
     | <assoc=right> op=(Increment | Decrement) expression                       #preSelfExpr
-    | expression op=(Mul | Div | Mod) expression                                #binaryExpr
-    | expression op=(Plus | Minus) expression                                   #binaryExpr
-    | expression op=(LeftShift | RightShift) expression                         #binaryExpr
-    | expression op= (Greater | GreaterEqual | Less | LessEqual) expression     #binaryExpr
-    | expression op=(Equal | UnEqual) expression                                #binaryExpr
-    | expression op=And expression                                              #binaryExpr
-    | expression op=Xor expression                                              #binaryExpr
-    | expression op=Or expression                                               #binaryExpr
-    | expression op=LogicAnd expression                                         #binaryExpr
-    | expression op=LogicOr expression                                          #binaryExpr
-    | <assoc=right> expression '?' expression ':' expression                    #conditionalExpr
-    | <assoc=right> expression op=Assign expression                             #assignExpr
+    | lhs=expression op=(Mul | Div | Mod) rhs=expression                                #binaryExpr
+    | lhs=expression op=(Plus | Minus) rhs=expression                                   #binaryExpr
+    | lhs=expression op=(LeftShift | RightShift) rhs=expression                         #binaryExpr
+    | lhs=expression op= (Greater | GreaterEqual | Less | LessEqual) rhs=expression     #binaryExpr
+    | lhs=expression op=(Equal | UnEqual) rhs=expression                                #binaryExpr
+    | lhs=expression op=And rhs=expression                                              #binaryExpr
+    | lhs=expression op=Xor rhs=expression                                              #binaryExpr
+    | lhs=expression op=Or rhs=expression                                               #binaryExpr
+    | lhs=expression op=LogicAnd rhs=expression                                         #binaryExpr
+    | lhs=expression op=LogicOr rhs=expression                                          #binaryExpr
+    | <assoc=right> cond=expression '?' trueex=expression ':' falseex=expression                    #conditionalExpr
+    | <assoc=right> lhs=expression op=Assign rhs=expression                             #assignExpr
     | '(' expression ')'                                                        #parenExpr
     | (literal|Identifier|This)                                                 #atomExpr
     | formatString                                                              #formatStringExpr
@@ -51,13 +51,15 @@ statement
 block: '{' statement* '}';
 if: If '(' expression ')' thenStmt=statement (Else elseStmt=statement)?;
 while: While '(' expression ')' statement;
-for: For '(' initStmt=statement?  condExpr=expression? ';' stepExpr=expression? ')' statement;
+for: For '(' init=statement?  cond=expression? ';' step=statement? ')' body=statement;
 return: Return expression? ';';
 break: Break ';';
 continue: Continue ';';
 
 basicType: (Int|Bool|String);
-type: (basicType|Identifier) ('[' ']')*;
+type: (basicType|Identifier) (dim)*;
+dim: '[' ']' ;
+//type: (basicType|Identifier) ('[' ']')*;
 varDef : type varDefUnit (Comma varDefUnit)* Semi;
 varDefUnit : Identifier (Assign expression)?;
 
@@ -133,7 +135,12 @@ Colon: ':';
 Semi : ';';
 Comma : ',';
 
-
+LParen: '(';
+RParen: ')';
+LBracket: '[';
+RBracket: ']';
+LBrace: '{';
+RBrace: '}';
 
 fragment Printable: [\u0020-\u007E];
 literal: True|False|IntegerConst|StringConst|Null|arrayConst;

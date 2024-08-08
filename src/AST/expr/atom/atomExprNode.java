@@ -1,13 +1,15 @@
 package AST.expr.atom;
 
-import AST.*;
 import AST.expr.*;
 import Util.position;
 
-public abstract class atomExprNode extends ExprNode{
-    enum atomType {
+public abstract class atomExprNode extends ExprNode {
+    public enum atomType {
         CONST, THIS, IDENTIFIER
     }
+
+    public atomType atTypeNd;
+
     public atomExprNode(position pos) {
         super(pos);
     }

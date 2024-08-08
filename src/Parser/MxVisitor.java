@@ -256,6 +256,12 @@ public interface MxVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitType(MxParser.TypeContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link MxParser#dim}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitDim(MxParser.DimContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link MxParser#varDef}.
 	 * @param ctx the parse tree
 	 * @return the visitor result

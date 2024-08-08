@@ -1,13 +1,12 @@
 package AST.expr;
 
 import AST.*;
-import AST.def.*;
-import AST.stmt.*;
-import Util.Type;
 import Util.position;
+import AST.expr.atom.identifierNode;
 
 public class memberExprNode extends ExprNode {
-    public ExprNode object, member;
+    public ExprNode object;
+    public identifierNode member;
     public memberExprNode(position pos) {
         super(pos);
     }

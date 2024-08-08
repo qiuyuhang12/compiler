@@ -1,7 +1,5 @@
 package AST.stmt;
 import AST.*;
-import AST.def.*;
-import AST.expr.*;
 
 import Util.position;
 

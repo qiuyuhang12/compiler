@@ -7,8 +7,8 @@ public class unaryExprNode extends ExprNode {
     public enum unaryOpType {
         Inc, Dec, logNot, bitNot, minus, plus
     }
-    public unaryOpType op;
-    public ExprNode expr;
+    public unaryOpType opCode;
+    public ExprNode body;
     public unaryExprNode(position pos) {
         super(pos);
     }

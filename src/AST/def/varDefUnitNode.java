@@ -1,14 +1,14 @@
 package AST.def;
 
 import AST.*;
+import AST.expr.ExprNode;
 import Util.position;
 
-import java.util.ArrayList;
+public class varDefUnitNode extends ASTNode {
+    public String name = null;
+    public ExprNode init = null;
 
-public class funParaList extends ASTNode {
-    public ArrayList<varDefNode> paraList = new ArrayList<>();
-
-    public funParaList(position pos) {
+    public varDefUnitNode(position pos) {
         super(pos);
     }
 

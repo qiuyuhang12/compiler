@@ -1,8 +1,6 @@
 package AST;
 
 import Util.position;
-import AST.stmt.*;
-import AST.expr.*;
 import AST.def.*;
 
 import java.util.ArrayList;

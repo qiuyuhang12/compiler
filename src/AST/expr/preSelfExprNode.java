@@ -7,7 +7,7 @@ public class preSelfExprNode extends ExprNode {
     public enum opType {
         Inc, Dec
     }
-    public ExprNode expr;
+    public ExprNode body;
     public opType op;
     public preSelfExprNode(position pos) {
         super(pos);

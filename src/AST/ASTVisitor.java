@@ -12,6 +12,7 @@ public interface ASTVisitor {
     void visit(funDefNode it);
     void visit(varDefNode it);
     void visit(funParaList it);
+    void visit(varDefUnitNode it);
 
     //expr.atom
     void visit(arrayNode it);
@@ -44,6 +45,9 @@ public interface ASTVisitor {
     void visit(forStmtNode it);
     void visit(ifStmtNode it);
     void visit(returnStmtNode it);
-    void visit(varDefStmtNode it);
     void visit(whileStmtNode it);
+
+    void visit(typeNode it);
+
+    void visit(emptyStmtNode it);
 }

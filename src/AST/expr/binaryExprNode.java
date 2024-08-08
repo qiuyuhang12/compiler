@@ -1,9 +1,6 @@
 package AST.expr;
 
 import AST.*;
-import AST.def.*;
-import AST.stmt.*;
-import Util.Type;
 import Util.position;
 
 public class binaryExprNode extends ExprNode {
@@ -13,7 +10,7 @@ public class binaryExprNode extends ExprNode {
         add, sub, mul, div, mod,
         leftSh, rightSh, and, or, xor, not,
         greater, less, grEq, lessEq, unEq, eq,
-        andLg, orLg, notLg,
+        andLg, orLg,
     }
 
     public binaryOpType opCode;

@@ -1,8 +1,6 @@
 package AST.expr;
 
 import AST.*;
-import AST.def.*;
-import AST.stmt.*;
 import Util.position;
 
 public class assignExprNode extends ExprNode {
