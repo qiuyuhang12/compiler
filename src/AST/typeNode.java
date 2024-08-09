@@ -3,7 +3,7 @@ import Util.Type;
 import Util.position;
 
 public class typeNode extends ASTNode {
-    public Type type;
+    public Type type=new Type();
     public typeNode(position pos) {
         super(pos);
     }

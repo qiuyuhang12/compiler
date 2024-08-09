@@ -51,7 +51,7 @@ statement
 block: '{' statement* '}';
 if: If '(' expression ')' thenStmt=statement (Else elseStmt=statement)?;
 while: While '(' expression ')' statement;
-for: For '(' init=statement?  cond=expression? ';' step=statement? ')' body=statement;
+for: For '(' init=statement?  cond=expression? ';' step=expression? ')' body=statement;
 return: Return expression? ';';
 break: Break ';';
 continue: Continue ';';
@@ -70,7 +70,7 @@ FmtStringM: '$' (FormatStringChar)* '$';
 FmtStringR: '$' (FormatStringChar)* '"';
 formatString
     : FmtStringS
-    | FmtStringL (expression)? (FmtStringM (expression)?)*  FmtStringR;
+    | FmtStringL (expression) (FmtStringM (expression))*  FmtStringR;
 
 
 Void : 'void';

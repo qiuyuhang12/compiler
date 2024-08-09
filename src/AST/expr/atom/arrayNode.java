@@ -8,7 +8,7 @@ import java.util.ArrayList;
 public class arrayNode extends atomExprNode {
 
     public int dim = 0;
-    public ArrayList<atomExprNode> value;
+    public ArrayList<atomExprNode> value=new ArrayList<>();
 
     public arrayNode(position pos) {
         super(pos);

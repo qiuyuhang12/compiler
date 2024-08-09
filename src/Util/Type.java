@@ -15,11 +15,6 @@ public class Type {
     }
     public boolean isfString=false;
     public TypeEnum type = null;
-//    public boolean
-//            isVoid = false,
-//            isBool = false,
-//            isInt = false,
-//            isString = false;
     public boolean isArray = false;
     public boolean isFun = false;
     public int dim=0;

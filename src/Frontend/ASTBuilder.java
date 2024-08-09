@@ -12,6 +12,7 @@ import Util.Type;
 import Util.position;
 import org.antlr.v4.runtime.ParserRuleContext;
 import Util.error.*;
+import org.antlr.v4.runtime.tree.TerminalNode;
 
 public class ASTBuilder extends MxBaseVisitor<ASTNode> {
 
@@ -23,10 +24,9 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
     @Override
     public ASTNode visitProgram(MxParser.ProgramContext ctx) {
         ProgramNode prog = new ProgramNode(new position(ctx));
-        ctx.classDef().forEach(cd -> prog.claDefs.add((classDefNode) visit(cd)));
-        ctx.funDef().forEach(cd -> prog.funDefs.add((funDefNode) visit(cd)));
-        ctx.varDef().forEach(cd -> prog.varDefs.add((varDefNode) visit(cd)));
-
+        ctx.children.forEach(cd -> {
+            if (!(cd instanceof TerminalNode)) prog.Defs.add(visit(cd));
+        });
         return prog;
     }
 
@@ -172,7 +172,7 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
     public ASTNode visitArrayExpr(MxParser.ArrayExprContext ctx) {
         arrayExprNode array = new arrayExprNode(new position(ctx));
         array.array = (ExprNode) visit(ctx.array);
-        array.index = (ExprNode) visit(ctx.index));
+        array.index = (ExprNode) visit(ctx.index);
         return array;
     }
 
@@ -262,9 +262,21 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
     @Override
     public ASTNode visitFormatStringExpr(MxParser.FormatStringExprContext ctx) {
         formatStringExprNode format = new formatStringExprNode(new position(ctx));
-        format.str = ctx.toString();
-        System.err.println("你检查toString的正确性了吗？str：" + format.str);
-//        ctx.expression().forEach(exp -> format.exprs.add((ExprNode) visit(exp)));
+        if (ctx.formatString().FmtStringS() != null) {
+            assert  ctx.formatString().FmtStringL() == null &&
+                    ctx.formatString().FmtStringM() == null &&
+                    ctx.formatString().FmtStringS() == null &&
+                    ctx.formatString().expression().isEmpty();
+            format.strings.add(ctx.formatString().FmtStringS().toString());
+        }else {
+            format.strings.add(ctx.formatString().FmtStringL().toString());
+            ctx.formatString().FmtStringM().forEach(m -> format.strings.add(m.toString()));
+            format.strings.add(ctx.formatString().FmtStringR().toString());
+            ctx.formatString().expression().forEach(exp -> format.exprs.add((ExprNode) visit(exp)));
+        }
+//        format.str = ctx.formatString().toString();
+//        System.out.println(ctx.formatString().FmtStringS().toString());
+//        System.err.println("你检查toString的正确性了吗？str：" + format.str);
         return format;
     }
 
@@ -378,7 +390,7 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
         forStmtNode forStmt = new forStmtNode(new position(ctx));
         if (ctx.for_().init != null) forStmt.init = (StmtNode) visit(ctx.for_().init);
         if (ctx.for_().cond != null) forStmt.cond = (ExprNode) visit(ctx.for_().cond);
-        if (ctx.for_().step != null) forStmt.step = (StmtNode) visit(ctx.for_().step);
+        if (ctx.for_().step != null) forStmt.step = (ExprNode) visit(ctx.for_().step);
         forStmt.body = (StmtNode) visit(ctx.for_().body);
         return forStmt;
     }
@@ -419,5 +431,22 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
         } else {
             return new returnStmtNode(new position(ctx));
         }
+    }
+
+    @Override
+    public ASTNode visitLiteral(MxParser.LiteralContext ctx) {
+        if (ctx.True() != null)
+            return new boolNode(new position(ctx.True()), true);
+        else if (ctx.False() != null)
+            return new boolNode(new position(ctx.False()), false);
+        else if (ctx.Null() != null)
+            return new nullNode(new position(ctx.Null()));
+        else if (ctx.StringConst() != null)
+            return new stringNode(new position(ctx.StringConst()), ctx.StringConst().toString());
+        else if (ctx.IntegerConst() != null)
+            return new intNode(new position(ctx.IntegerConst()), Integer.parseInt(ctx.IntegerConst().toString()));
+        else if (ctx.arrayConst() != null)
+            return visit(ctx.arrayConst());
+        throw new semanticError("literal error", new position(ctx));
     }
 }
