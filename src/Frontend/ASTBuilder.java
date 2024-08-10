@@ -34,17 +34,32 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
     public ASTNode visitType(MxParser.TypeContext ctx) {
         typeNode type = new typeNode(new position(ctx));
         if (ctx.basicType() != null) {
-            if (ctx.basicType().Int() != null) type.type.type = Type.TypeEnum.INT;
-            else if (ctx.basicType().Bool() != null) type.type.type = Type.TypeEnum.BOOL;
-            else if (ctx.basicType().String() != null) type.type.type = Type.TypeEnum.STRING;
-            assert false;
+            if (ctx.basicType().Int() != null) type.type.atomType = Type.TypeEnum.INT;
+            else if (ctx.basicType().Bool() != null) type.type.atomType = Type.TypeEnum.BOOL;
+            else if (ctx.basicType().String() != null) type.type.atomType = Type.TypeEnum.STRING;
+            else assert false;
         } else {
-            type.type.type = Type.TypeEnum.CLASS;
+            type.type.atomType = Type.TypeEnum.CLASS;
             type.type.name = ctx.Identifier().toString();
         }
         if (ctx.dim() != null) {
             type.type.isArray = true;
             type.type.dim = ctx.dim().size();
+        }
+        return type;
+    }
+
+    @Override
+    public ASTNode visitTypeAtom(MxParser.TypeAtomContext ctx) {
+        typeNode type = new typeNode(new position(ctx));
+        if (ctx.basicType() != null) {
+            if (ctx.basicType().Int() != null) type.type.atomType = Type.TypeEnum.INT;
+            else if (ctx.basicType().Bool() != null) type.type.atomType = Type.TypeEnum.BOOL;
+            else if (ctx.basicType().String() != null) type.type.atomType = Type.TypeEnum.STRING;
+            else assert false;
+        } else {
+            type.type.atomType = Type.TypeEnum.CLASS;
+            type.type.name = ctx.Identifier().toString();
         }
         return type;
     }
@@ -82,7 +97,7 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
         if (ctx.type() != null) fun.typeNd = (typeNode) visit(ctx.type());
         else {
             fun.typeNd = new typeNode(new position(ctx));
-            fun.typeNd.type.type = Type.TypeEnum.VOID;
+            fun.typeNd.type.atomType = Type.TypeEnum.VOID;
         }
         if (ctx.statement() != null) {
             for (ParserRuleContext stmt : ctx.statement())
@@ -146,21 +161,55 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
     public ASTNode visitArrayConst(MxParser.ArrayConstContext ctx) {
         arrayNode array = new arrayNode(new position(ctx));
         ctx.literal().forEach(lit -> array.value.add((atomExprNode) visit(lit)));
+        if (array.value.isEmpty()) {
+            assert ctx.children.size() == 2 &&
+                    ctx.children.get(0).getText().equals("{") &&
+                    ctx.children.get(1).getText().equals("}");
+            array.dim = 1;
+            array.typeNd = new typeNode(new position(ctx));
+            array.typeNd.type.dim = 1;
+            array.typeNd.type.atomType = Type.TypeEnum.NULL;
+            array.typeNd.type.isArray = true;
+            return array;
+        }
         if (array.value.getFirst() instanceof arrayNode) {
             array.dim = ((arrayNode) array.value.getFirst()).dim + 1;
+            array.typeNd = new typeNode(new position(ctx));
+//            try {
+                array.typeNd.type = array.value.getFirst().typeNd.type.clone();
+//            }
+//            catch (CloneNotSupportedException e) {
+//                System.err.println("不应该发生，因为我们实现了 Cloneable 2");
+//            }
+            //TODO:这里有问题，传引用了！
+            //传引用了！
+//            assert false;
+            array.typeNd.type.dim = ((arrayNode) array.value.getFirst()).dim + 1;
             for (atomExprNode a : array.value) {
                 if (!(a instanceof arrayNode))
                     throw new semanticError("arrayConst error:Different type 1", new position(ctx));
                 if (((arrayNode) a).dim != array.dim - 1)
                     throw new semanticError("arrayConst error:Dim error 1", new position(ctx));
+                if (!((arrayNode) a).typeNd.type.equals(array.value.getFirst().typeNd.type))
+                    throw new semanticError("arrayConst error:Different type 1", new position(ctx));
             }
         } else {
             array.dim = 1;
+            array.typeNd = new typeNode(new position(ctx));
+//            try {
+                array.typeNd.type = array.value.getFirst().typeNd.type.clone();
+//            } catch (CloneNotSupportedException e) {
+//                System.err.println("不应该发生，因为我们实现了 Cloneable 3");
+//            }
+            array.typeNd.type.dim = 1;
+            array.typeNd.type.isArray = true;
             for (atomExprNode a : array.value) {
                 if (a instanceof arrayNode) throw new semanticError("arrayConst error:Dim error 0", new position(ctx));
                 //比较类型
                 if (!(a.getClass().equals(array.value.getFirst().getClass())))
                     throw new semanticError("arrayConst error:Different type 0", new position(ctx));
+                if (a instanceof identifierNode || a instanceof thisNode)
+                    throw new semanticError("arrayConst error:using Identifier or this as init", new position(ctx));
             }
         }
         return array;
@@ -263,12 +312,12 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
     public ASTNode visitFormatStringExpr(MxParser.FormatStringExprContext ctx) {
         formatStringExprNode format = new formatStringExprNode(new position(ctx));
         if (ctx.formatString().FmtStringS() != null) {
-            assert  ctx.formatString().FmtStringL() == null &&
+            assert ctx.formatString().FmtStringL() == null &&
                     ctx.formatString().FmtStringM() == null &&
                     ctx.formatString().FmtStringS() == null &&
                     ctx.formatString().expression().isEmpty();
             format.strings.add(ctx.formatString().FmtStringS().toString());
-        }else {
+        } else {
             format.strings.add(ctx.formatString().FmtStringL().toString());
             ctx.formatString().FmtStringM().forEach(m -> format.strings.add(m.toString()));
             format.strings.add(ctx.formatString().FmtStringR().toString());
@@ -285,7 +334,7 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
         //todo SCOPE!
 
         newVarExprNode newVar = new newVarExprNode(new position(ctx));
-        newVar.typeNd = (typeNode) visit(ctx.type());
+        newVar.typeNd = (typeNode) visit(ctx.typeAtom());
         if (ctx.init != null) newVar.init = (ExprNode) visit(ctx.init);
         return newVar;
     }
@@ -356,10 +405,14 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
     @Override
     public ASTNode visitNewArrayExpr(MxParser.NewArrayExprContext ctx) {
         newArrayExprNode newArray = new newArrayExprNode(new position(ctx));
-        newArray.typeNd = (typeNode) visit(ctx.type());
+        newArray.typeNd = (typeNode) visit(ctx.typeAtom());
+        newArray.typeNd.type.isArray = true;
         ctx.expression().forEach(exp -> newArray.sizeInit.add((ExprNode) visit(exp)));
         if (ctx.arrayConst() != null) newArray.init = (arrayNode) visit(ctx.arrayConst());
-        newArray.dim = ctx.LBracket().size();
+        newArray.dim = ctx.count.size();
+        newArray.typeNd.type.dim = ctx.count.size();
+        if (ctx.arrayConst() != null && !newArray.typeNd.type.equals(newArray.init.typeNd.type))
+            throw new semanticError("newArrayExpr error:type/dim unmatched", new position(ctx));
         return newArray;
     }
 

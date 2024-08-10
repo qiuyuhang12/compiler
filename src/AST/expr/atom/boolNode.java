@@ -10,14 +10,14 @@ public class boolNode extends atomExprNode {
         super(pos);
         atTypeNd = atomType.CONST;
         this.typeNd = new typeNode(pos);
-        this.typeNd.type.type = Type.TypeEnum.BOOL;
+        this.typeNd.type.atomType = Type.TypeEnum.BOOL;
     }
 
     public boolNode(position pos, boolean value) {
         super(pos);
         this.typeNd = new typeNode(pos);
         atTypeNd = atomType.CONST;
-        this.typeNd.type.type = Type.TypeEnum.BOOL;
+        this.typeNd.type.atomType = Type.TypeEnum.BOOL;
         this.value = value;
     }
 

@@ -1,7 +1,6 @@
 package AST.expr;
 
 import AST.*;
-import AST.expr.atom.atomExprNode;
 import Util.Type;
 import Util.position;
 import java.util.ArrayList;
@@ -14,7 +13,7 @@ public class formatStringExprNode extends ExprNode {
         super(pos);
 //        atTypeNd = atomExprNode.atomType.CONST;
         this.typeNd = new typeNode(pos);
-        this.typeNd.type.type = Type.TypeEnum.STRING;
+        this.typeNd.type.atomType = Type.TypeEnum.STRING;
     }
     @Override
     public void accept(ASTVisitor visitor) {

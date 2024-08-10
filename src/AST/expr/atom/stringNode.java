@@ -8,14 +8,14 @@ public class stringNode extends atomExprNode{
         super(pos);
         atTypeNd = atomType.CONST;
         this.typeNd = new typeNode(pos);
-        this.typeNd.type.type = Type.TypeEnum.STRING;
+        this.typeNd.type.atomType = Type.TypeEnum.STRING;
         value = _value;
     }
     public stringNode(position pos) {
         super(pos);
         atTypeNd = atomType.CONST;
         this.typeNd = new typeNode(pos);
-        this.typeNd.type.type = Type.TypeEnum.STRING;
+        this.typeNd.type.atomType = Type.TypeEnum.STRING;
     }
     public String value;
 

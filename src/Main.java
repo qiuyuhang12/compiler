@@ -6,11 +6,12 @@ import AST.ProgramNode;
 //import MIR.block;
 //import MIR.mainFn;
 import Frontend.ASTBuilder;
+import Frontend.SymbolCollector;
 import Parser.MxLexer;
 import Parser.MxParser;
 //import Util.MxErrorListener;
+import Util.Scope;
 import Util.error.error;
-//import Util.globalScope;
 import Util.error.error;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -29,8 +30,8 @@ public class Main {
         InputStream input = new FileInputStream(name);
 
         try {
-            ProgramNode ASTRoot;
-//            globalScope gScope = new globalScope(null);
+            ProgramNode programNode;
+            Scope gScope = new Scope(null);
 
             MxLexer lexer = new MxLexer(CharStreams.fromStream(input));
 //            lexer.removeErrorListeners();
@@ -41,8 +42,8 @@ public class Main {
             ParseTree parseTreeRoot = parser.program();
 //            ASTBuilder astBuilder = new ASTBuilder(gScope);
             ASTBuilder astBuilder = new ASTBuilder();
-            ASTRoot = (ProgramNode) astBuilder.visit(parseTreeRoot);
-//            new SymbolCollector(gScope).visit(ASTRoot);
+            programNode = (ProgramNode) astBuilder.visit(parseTreeRoot);
+            new SymbolCollector(gScope).visit(programNode);
 //            new SemanticChecker(gScope).visit(ASTRoot);
 
 //            mainFn f = new mainFn();
@@ -55,7 +56,7 @@ public class Main {
 //            new AsmPrinter(asmF, System.out).print();
         } catch (error er) {
             System.err.println(er.toString());
-            throw new RuntimeException();
+//            throw new RuntimeException();
         }
     }
 }

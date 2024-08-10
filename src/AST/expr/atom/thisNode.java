@@ -8,7 +8,7 @@ public class thisNode extends atomExprNode{
         super(pos);
         atTypeNd = atomType.THIS;
         this.typeNd = new typeNode(pos);
-        this.typeNd.type.type = Type.TypeEnum.CLASS;
+        this.typeNd.type.atomType = Type.TypeEnum.CLASS;
         //你有没有确定class的type类型（不能就是个class！）
         assert false;
     }

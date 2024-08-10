@@ -9,13 +9,13 @@ public class intNode extends atomExprNode{
         super(pos);
         atTypeNd = atomType.CONST;
         this.typeNd = new typeNode(pos);
-        this.typeNd.type.type = Type.TypeEnum.INT;
+        this.typeNd.type.atomType = Type.TypeEnum.INT;
     }
     public intNode(position pos, int value) {
         super(pos);
         atTypeNd = atomType.CONST;
         this.typeNd = new typeNode(pos);
-        this.typeNd.type.type = Type.TypeEnum.INT;
+        this.typeNd.type.atomType = Type.TypeEnum.INT;
         this.value = value;
     }
     @Override

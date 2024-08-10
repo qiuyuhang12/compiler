@@ -250,6 +250,12 @@ public interface MxVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitBasicType(MxParser.BasicTypeContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link MxParser#typeAtom}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitTypeAtom(MxParser.TypeAtomContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link MxParser#type}.
 	 * @param ctx the parse tree
 	 * @return the visitor result

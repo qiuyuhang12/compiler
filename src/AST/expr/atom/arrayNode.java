@@ -17,7 +17,7 @@ public class arrayNode extends atomExprNode {
 //        this.typeNd.type.type= Type.TypeEnum.ARRAY;
         this.typeNd.type.isArray= true;
         //你有没有确定array的type类型（不能就是个Array！），还有dim
-        assert false;
+//        assert false;
     }
 
     @Override

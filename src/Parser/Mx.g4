@@ -11,8 +11,8 @@ funDef: (type|Void) Identifier '(' (funParaList)? ')' '{' (statement)* '}';
 funParaList: type Identifier (Comma type Identifier)*;
 
 expression
-    : New type ('[' expression? ']')+ arrayConst?                               #newArrayExpr
-    | New type ('(' init=expression? ')')?                                                       #newVarExpr
+    : New typeAtom (count+='[' expression? ']')+ arrayConst?                               #newArrayExpr
+    | New typeAtom ('(' init=expression? ')')?                                                       #newVarExpr
     | fun=expression '(' (para+=expression (Comma para+=expression)*)? ')'                      #funExpr
     | array=expression '[' index=expression ']'                                             #arrayExpr
     | expression op=Dot Identifier                                              #memberExpr
@@ -57,6 +57,7 @@ break: Break ';';
 continue: Continue ';';
 
 basicType: (Int|Bool|String);
+typeAtom: basicType|Identifier;
 type: (basicType|Identifier) (dim)*;
 dim: '[' ']' ;
 //type: (basicType|Identifier) ('[' ']')*;
