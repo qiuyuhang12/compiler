@@ -6,7 +6,7 @@ import Util.position;
 
 public class whileStmtNode extends StmtNode {
     public StmtNode body;
-    public ExprNode cond;
+    public ExprNode condition;
 
     public whileStmtNode(position pos) {
         super(pos);

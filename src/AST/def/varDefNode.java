@@ -10,7 +10,6 @@ import java.util.ArrayList;
 public class varDefNode extends StmtNode {
     public ArrayList<varDefUnitNode> units = new ArrayList<>();
     public typeNode typeNd = null;
-    public ExprNode init = null;
 
     public varDefNode(position pos) {
         super(pos);

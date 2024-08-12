@@ -10,14 +10,23 @@ public class Type {
         //        ARRAY,
         CLASS
     }
-
+    static public class funInfo{
+        public boolean inGlobal =false;
+        public String funName;
+        public String className;
+        public funInfo(String funName, String className){
+            this.funName = funName;
+            this.className = className;
+        }
+    }
     public boolean isfString = false;
     public TypeEnum atomType = null;
     public boolean isArray = false;
     public boolean isFun = false;
+    public funInfo fun = null;
     public int dim = 0;
     //    public boolean isClass = false;
-    public String name = null;
+    public String name = null;//for class
 
     @Override
     public boolean equals(Object obj) {
@@ -33,8 +42,12 @@ public class Type {
         }
         return false;
     }
-
+    public Type(TypeEnum tn) {
+        this.atomType = tn;
+    }
+    public Type() {}
     public Type clone() /*throws CloneNotSupportedException */{
+        if (this == null) return null;
 //        try {
 //            Type ret = (Type) super.clone();
             Type ret = new Type();

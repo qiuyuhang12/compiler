@@ -70,6 +70,9 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
     public ASTNode visitClassBuild(MxParser.ClassBuildContext ctx) {
         classBuildNode classBuild = new classBuildNode(new position(ctx));
         classBuild.name = ctx.Identifier().toString();
+//        if (ctx.statement() != null){
+//            throw new semanticError("classBuild doesn't accept parameters", new position(ctx));
+//        }
         ctx.statement().forEach(stmt -> classBuild.stmts.add((StmtNode) visit(stmt)));
         return classBuild;
     }
@@ -165,7 +168,7 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
             assert ctx.children.size() == 2 &&
                     ctx.children.get(0).getText().equals("{") &&
                     ctx.children.get(1).getText().equals("}");
-            array.dim = 1;
+//            array.dim = 1;
             array.typeNd = new typeNode(new position(ctx));
             array.typeNd.type.dim = 1;
             array.typeNd.type.atomType = Type.TypeEnum.NULL;
@@ -173,7 +176,7 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
             return array;
         }
         if (array.value.getFirst() instanceof arrayNode) {
-            array.dim = ((arrayNode) array.value.getFirst()).dim + 1;
+//            array.dim = ((arrayNode) array.value.getFirst()).dim + 1;
             array.typeNd = new typeNode(new position(ctx));
 //            try {
                 array.typeNd.type = array.value.getFirst().typeNd.type.clone();
@@ -184,17 +187,17 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
             //TODO:这里有问题，传引用了！
             //传引用了！
 //            assert false;
-            array.typeNd.type.dim = ((arrayNode) array.value.getFirst()).dim + 1;
+            array.typeNd.type.dim = ((arrayNode) array.value.getFirst()).typeNd.type.dim + 1;
             for (atomExprNode a : array.value) {
                 if (!(a instanceof arrayNode))
                     throw new semanticError("arrayConst error:Different type 1", new position(ctx));
-                if (((arrayNode) a).dim != array.dim - 1)
+                if (((arrayNode) a).typeNd.type.dim != array.typeNd.type.dim - 1)
                     throw new semanticError("arrayConst error:Dim error 1", new position(ctx));
                 if (!((arrayNode) a).typeNd.type.equals(array.value.getFirst().typeNd.type))
                     throw new semanticError("arrayConst error:Different type 1", new position(ctx));
             }
         } else {
-            array.dim = 1;
+//            array.dim = 1;
             array.typeNd = new typeNode(new position(ctx));
 //            try {
                 array.typeNd.type = array.value.getFirst().typeNd.type.clone();
@@ -433,7 +436,7 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
     @Override
     public ASTNode visitWhileStmt(MxParser.WhileStmtContext ctx) {
         whileStmtNode whileStmt = new whileStmtNode(new position(ctx));
-        whileStmt.cond = (ExprNode) visit(ctx.while_().expression());
+        whileStmt.condition = (ExprNode) visit(ctx.while_().expression());
         whileStmt.body = (StmtNode) visit(ctx.while_().statement());
         return whileStmt;
     }

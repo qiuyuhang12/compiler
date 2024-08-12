@@ -7,7 +7,7 @@ import Util.position;
 import java.util.ArrayList;
 
 public class classBuildNode extends ASTNode {
-    public String name = null;//debug
+    public String name = null;
     public ArrayList<StmtNode> stmts=new ArrayList<>();
 
     public classBuildNode(position pos) {

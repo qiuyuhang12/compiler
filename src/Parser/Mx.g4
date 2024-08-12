@@ -11,7 +11,8 @@ funDef: (type|Void) Identifier '(' (funParaList)? ')' '{' (statement)* '}';
 funParaList: type Identifier (Comma type Identifier)*;
 
 expression
-    : New typeAtom (count+='[' expression? ']')+ arrayConst?                               #newArrayExpr
+//    : New typeAtom (count+='[' expression? ']')+ arrayConst?                               #newArrayExpr
+    : New typeAtom (((count+='[' expression ']')* (count+='[' ']')+)|((count+='[' expression ']')+ (count+='[' ']')*))  arrayConst?                               #newArrayExpr
     | New typeAtom ('(' init=expression? ')')?                                                       #newVarExpr
     | fun=expression '(' (para+=expression (Comma para+=expression)*)? ')'                      #funExpr
     | array=expression '[' index=expression ']'                                             #arrayExpr

@@ -5,6 +5,7 @@ import Util.position;
 
 public abstract class ExprNode extends ASTNode{
     public typeNode typeNd;
+    public boolean isLeftValue = false;
 //    public Type type;
 //    public entity val;
 

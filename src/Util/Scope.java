@@ -7,19 +7,35 @@ import Util.error.semanticError;
 import java.util.HashMap;
 
 public class Scope {
-    private Scope parentScope;
+    static public enum scopeType {
+        GLOBAL,CLASS, FUNCTION, FOR,IF,WHILE
+    }
+    public String name;
+    private Scope.scopeType type;
+    private Scope parent;
     private HashMap<String, Class_> Classes = new HashMap<>();//only in global scope
     private HashMap<String, Function> Funs = new HashMap<>();//only in global scope
     private HashMap<String, Type> Vars = new HashMap<>();//int aaa;-> Type String;
+    public Type funcReturnType;
 
-    public Scope parentScope() {
-        return parentScope;
+    public Scope parent() {
+        return parent;
     }
 
-    public Scope(Scope parentScope) {
-        this.parentScope = parentScope;
+    public Scope.scopeType getType() {
+        return type;
     }
 
+    public Scope(Scope parent) {
+        this.parent = parent;
+        this.type = Scope.scopeType.GLOBAL;
+    }
+
+    public Scope(Scope parent, Scope.scopeType scopeType, String name) {
+        this.parent = parent;
+        this.type = scopeType;
+        this.name = name;
+    }
     public void addVar(String name, Type t, position pos) {
         if (Vars.containsKey(name)) throw new semanticError("Var multiple definition of " + name, pos);
         Vars.put(name, t);
@@ -27,14 +43,14 @@ public class Scope {
 
     public boolean containsVar(String name, boolean lookUpon) {
         if (Vars.containsKey(name)) return true;
-        else if (parentScope != null && lookUpon) return parentScope.containsVar(name, true);
+        else if (parent != null && lookUpon) return parent.containsVar(name, true);
         else return false;
     }
 
     public Type getVarType(String name, boolean lookUpon) {
         System.err.println("\nWARNING: \tgetVarType 可能返回NULL并且不THROW.\n\t\t\t程序所在路径: src/Util/Scope.java");
         if (Vars.containsKey(name)) return Vars.get(name);
-        else if (parentScope != null && lookUpon) return parentScope.getVarType(name, true);
+        else if (parent != null && lookUpon) return parent.getVarType(name, true);
         return null;
     }
 
@@ -50,11 +66,26 @@ public class Scope {
         throw new semanticError("no such class: " + name, pos);
     }
 
+    public Type getThisClass() {
+        if (type == Scope.scopeType.CLASS) {
+            Type tmp=new Type(Type.TypeEnum.CLASS);
+            tmp.name = name;
+            return tmp;
+        }
+        else if (parent != null) return parent.getThisClass();
+        else return null;
+    }
 
 
     public void addFun(String name, Function f, position pos) {
         if (Funs.containsKey(name)) throw new semanticError("Function multiple definition of " + name, pos);
         Funs.put(name, f);
+    }
+
+    public boolean containsFun(String name, boolean lookUpon) {
+        if (Funs.containsKey(name)) return true;
+        else if (parent != null && lookUpon) return parent.containsFun(name, true);
+        else return false;
     }
 
     public Function getFunFromName(String name, position pos) {

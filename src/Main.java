@@ -6,12 +6,12 @@ import AST.ProgramNode;
 //import MIR.block;
 //import MIR.mainFn;
 import Frontend.ASTBuilder;
+import Frontend.SemanticChecker;
 import Frontend.SymbolCollector;
 import Parser.MxLexer;
 import Parser.MxParser;
 //import Util.MxErrorListener;
 import Util.Scope;
-import Util.error.error;
 import Util.error.error;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -44,7 +44,7 @@ public class Main {
             ASTBuilder astBuilder = new ASTBuilder();
             programNode = (ProgramNode) astBuilder.visit(parseTreeRoot);
             new SymbolCollector(gScope).visit(programNode);
-//            new SemanticChecker(gScope).visit(ASTRoot);
+            new SemanticChecker(gScope).visit(programNode);
 
 //            mainFn f = new mainFn();
 //            new IRBuilder(f, gScope).visit(ASTRoot);
