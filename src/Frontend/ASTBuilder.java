@@ -83,7 +83,7 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
         classDef.name = ctx.Identifier().toString();
         ctx.varDef().forEach(vd -> classDef.varDefs.add((varDefNode) visit(vd)));
         ctx.funDef().forEach(fd -> classDef.funDefs.add((funDefNode) visit(fd)));
-        if (ctx.classBuild().size() > 1) throw new semanticError("classBuild size > 1", new position(ctx));
+        if (ctx.classBuild().size() > 1) throw new semanticError("classBuild size > 1", new position(ctx), semanticError.errorType.Multiple_Definition);
         ctx.classBuild().forEach(cb -> classDef.build.add((classBuildNode) visit(cb)));
         return classDef;
     }
@@ -157,7 +157,7 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
             return new identifierNode(new position(ctx.Identifier()), ctx.Identifier().toString());
         } else if (ctx.This() != null)
             return new thisNode(new position(ctx.This()));
-        throw new semanticError("atomExpr error", new position(ctx));
+        throw new semanticError("atomExpr error", new position(ctx), semanticError.errorType.Invalid_Identifier);
     }
 
     @Override
@@ -190,11 +190,11 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
             array.typeNd.type.dim = ((arrayNode) array.value.getFirst()).typeNd.type.dim + 1;
             for (atomExprNode a : array.value) {
                 if (!(a instanceof arrayNode))
-                    throw new semanticError("arrayConst error:Different type 1", new position(ctx));
+                    throw new semanticError("arrayConst error:Different type 1", new position(ctx), semanticError.errorType.Type_Mismatch);
                 if (((arrayNode) a).typeNd.type.dim != array.typeNd.type.dim - 1)
-                    throw new semanticError("arrayConst error:Dim error 1", new position(ctx));
+                    throw new semanticError("arrayConst error:Dim error 1", new position(ctx), semanticError.errorType.Type_Mismatch);
                 if (!((arrayNode) a).typeNd.type.equals(array.value.getFirst().typeNd.type))
-                    throw new semanticError("arrayConst error:Different type 1", new position(ctx));
+                    throw new semanticError("arrayConst error:Different type 1", new position(ctx), semanticError.errorType.Type_Mismatch);
             }
         } else {
 //            array.dim = 1;
@@ -207,12 +207,12 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
             array.typeNd.type.dim = 1;
             array.typeNd.type.isArray = true;
             for (atomExprNode a : array.value) {
-                if (a instanceof arrayNode) throw new semanticError("arrayConst error:Dim error 0", new position(ctx));
+                if (a instanceof arrayNode) throw new semanticError("arrayConst error:Dim error 0", new position(ctx), semanticError.errorType.Type_Mismatch);
                 //比较类型
                 if (!(a.getClass().equals(array.value.getFirst().getClass())))
-                    throw new semanticError("arrayConst error:Different type 0", new position(ctx));
+                    throw new semanticError("arrayConst error:Different type 0", new position(ctx), semanticError.errorType.Type_Mismatch);
                 if (a instanceof identifierNode || a instanceof thisNode)
-                    throw new semanticError("arrayConst error:using Identifier or this as init", new position(ctx));
+                    throw new semanticError("arrayConst error:using Identifier or this as init", new position(ctx), semanticError.errorType.Invalid_Identifier);
             }
         }
         return array;
@@ -224,7 +224,7 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
     public ASTNode visitArrayExpr(MxParser.ArrayExprContext ctx) {
         arrayExprNode array = new arrayExprNode(new position(ctx));
         if (ctx.array instanceof MxParser.NewArrayExprContext){
-            throw new semanticError("ArrayExpr: NewArrayExpr", new position(ctx));
+            throw new semanticError("ArrayExpr: NewArrayExpr", new position(ctx), semanticError.errorType.Invalid_Identifier);
         }
         array.array = (ExprNode) visit(ctx.array);
         array.index = (ExprNode) visit(ctx.index);
@@ -298,7 +298,7 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
                 binary.opCode = binaryExprNode.binaryOpType.orLg;
                 break;
             default:
-                throw new semanticError("binaryExpr error", new position(ctx));
+                throw new semanticError("binaryExpr error", new position(ctx), semanticError.errorType.Invalid_Identifier);
         }
         binary.lhs = (ExprNode) visit(ctx.lhs);
         binary.rhs = (ExprNode) visit(ctx.rhs);
@@ -402,7 +402,7 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
                 unary.opCode = unaryExprNode.unaryOpType.bitNot;
                 break;
             default:
-                throw new semanticError("unaryExpr error", new position(ctx));
+                throw new semanticError("unaryExpr error", new position(ctx), semanticError.errorType.Invalid_Identifier);
         }
         unary.body = (ExprNode) visit(ctx.expression());
         return unary;
@@ -418,7 +418,7 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
         newArray.dim = ctx.count.size();
         newArray.typeNd.type.dim = ctx.count.size();
         if (ctx.arrayConst() != null && !newArray.typeNd.type.equals(newArray.init.typeNd.type))
-            throw new semanticError("newArrayExpr error:type/dim unmatched", new position(ctx));
+            throw new semanticError("newArrayExpr error:type/dim unmatched", new position(ctx), semanticError.errorType.Type_Mismatch);
         return newArray;
     }
 

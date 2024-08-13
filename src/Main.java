@@ -48,9 +48,9 @@ public class Main {
             programNode = (ProgramNode) astBuilder.visit(parseTreeRoot);
             new SymbolCollector(gScope).visit(programNode);
             //没有main函数
-           if (gScope.getFunFromName("main", programNode.pos).returnType.atomType != Util.Type.TypeEnum.INT){
+            if (gScope.getFunFromName("main", programNode.pos).returnType.atomType != Util.Type.TypeEnum.INT) {
                 throw new semanticError("main not int", programNode.pos);
-           }
+            }
             new SemanticChecker(gScope).visit(programNode);
 
 //            mainFn f = new mainFn();
@@ -62,7 +62,14 @@ public class Main {
 //            new RegAlloc(asmF).work();
 //            new AsmPrinter(asmF, System.out).print();
         } catch (error er) {
-            System.err.println(er.toString());
+            if (er instanceof semanticError) {
+                if (((semanticError) er).type != null) {
+                    ((semanticError) er).printType();
+                }
+            } else if (er instanceof Util.error.syntaxError) {
+                System.err.println("Invalid Identifier");
+            }
+//            System.err.println(er.toString());
             System.exit(1);
 //            throw new RuntimeException();
         }

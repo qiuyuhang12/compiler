@@ -105,7 +105,7 @@ public class SemanticChecker implements ASTVisitor {
         }
         //不能重名
         if (gScope.containsFun(it.name)) {
-            throw new semanticError("classDefNode name conflict", it.pos);
+            throw new semanticError("classDefNode name conflict", it.pos, semanticError.errorType.Multiple_Definition);
         }
 //        if (currentScope.containsVar(it.name, false)) {
 //            throw new semanticError("classDefNode name conflict", it.pos);
@@ -213,7 +213,7 @@ public class SemanticChecker implements ASTVisitor {
                 if (currentScope.parent().getType() == Scope.scopeType.GLOBAL && it.name.equals("main")) {
                     return;
                 }
-                throw new semanticError("none void funDefNode without return", it.pos);
+                throw new semanticError("none void funDefNode without return", it.pos, semanticError.errorType.Missing_Return_Statement);
             }
         }
 //        if (!(it.typeNd.type.atomType == Type.TypeEnum.VOID && currentScope.funcReturnType == null) &&
@@ -335,7 +335,7 @@ public class SemanticChecker implements ASTVisitor {
         it.typeNd.type = new Type();
         Class_ cla = nowClass();
         Function fun;
-        System.err.println("WARNING:局部变量只找1层，当心{{a}}");
+//        System.err.println("WARNING:局部变量只找1层，当心{{a}}");
         if (currentScope.containsVar(it.name, false)) {//单scope变量
             it.isLeftValue = true;
             it.typeNd.type = currentScope.getVarType(it.name, true).clone();
@@ -419,11 +419,11 @@ public class SemanticChecker implements ASTVisitor {
     public void visit(assignExprNode it) {
         visit(it.lhs);
         if (!it.lhs.isLeftValue) {
-            throw new semanticError("assignExprNode lhs not left value", it.pos);
+            throw new semanticError("assignExprNode lhs not left value", it.pos, semanticError.errorType.Invalid_Type);
         }
         visit(it.rhs);
         if (!(it.rhs instanceof nullNode) && !it.rhs.typeNd.type.equals(it.lhs.typeNd.type)) {
-            throw new semanticError("assignExprNode type not match", it.pos);
+            throw new semanticError("assignExprNode type not match", it.pos, semanticError.errorType.Type_Mismatch);
         }
         if (it.rhs instanceof nullNode) {
             if (it.lhs.typeNd.type.atomType == Type.TypeEnum.INT ||
@@ -503,7 +503,7 @@ public class SemanticChecker implements ASTVisitor {
                 throw new semanticError("binaryExprNode type not match: bool invalid", it.pos);
             }
         } else {
-            throw new semanticError("binaryExprNode type not match: type invalid", it.pos);
+            throw new semanticError("binaryExprNode type not match: type invalid", it.pos, semanticError.errorType.Invalid_Type);
         }
         currentType = it.typeNd.type;
     }
@@ -551,7 +551,7 @@ public class SemanticChecker implements ASTVisitor {
             if (!currentType.equals(new Type(Type.TypeEnum.INT)) &&
                     !currentType.equals(new Type(Type.TypeEnum.STRING)) &&
                     !currentType.equals(new Type(Type.TypeEnum.BOOL))) {
-                throw new semanticError("formatStringExprNode type not match", it.pos);
+                throw new semanticError("formatStringExprNode type not match", it.pos, semanticError.errorType.Type_Mismatch);
             }
         }
         it.isLeftValue = false;
@@ -793,13 +793,12 @@ public class SemanticChecker implements ASTVisitor {
         }
     }
 
-
     private void brcocheck(position pos) {
         Scope ret = currentScope;
         Scope.scopeType tmp = currentScope.getType();
         while (tmp != Scope.scopeType.FOR && tmp != Scope.scopeType.WHILE) {
             if (tmp == Scope.scopeType.GLOBAL || tmp == Scope.scopeType.CLASS || tmp == Scope.scopeType.FUNCTION) {
-                throw new semanticError("break/continue not in loop", pos);
+                throw new semanticError("break/continue not in loop", pos, semanticError.errorType.Invalid_Control_Flow);
             }
             currentScope = currentScope.parent();
             tmp = currentScope.getType();
@@ -846,7 +845,7 @@ public class SemanticChecker implements ASTVisitor {
         if (it.cond != null) {
             visit(it.cond);
             if (!currentType.equals(new Type(Type.TypeEnum.BOOL))) {
-                throw new semanticError("forStmtNode cond type not bool", it.pos);
+                throw new semanticError("forStmtNode cond type not bool", it.pos, semanticError.errorType.Invalid_Type);
             }
         }
         if (it.step != null) {
@@ -859,7 +858,7 @@ public class SemanticChecker implements ASTVisitor {
     public void visit(ifStmtNode it) {
         visit(it.condition);
         if (!currentType.equals(new Type(Type.TypeEnum.BOOL))) {
-            throw new semanticError("ifStmtNode cond type not bool", it.pos);
+            throw new semanticError("ifStmtNode cond type not bool", it.pos, semanticError.errorType.Invalid_Type);
         }
         currentScope = new Scope(currentScope, Scope.scopeType.IF, "if");
         visit(it.thenStmt);
@@ -905,7 +904,7 @@ public class SemanticChecker implements ASTVisitor {
                         return;
                     }
                 }
-                throw new semanticError("returnStmtNode type not match", it.pos);
+                throw new semanticError("returnStmtNode type not match", it.pos, semanticError.errorType.Type_Mismatch);
             }
         } else {
 //            currentScope.funcReturnType=null;

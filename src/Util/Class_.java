@@ -10,7 +10,7 @@ public class Class_ {
     private HashMap<String, Function> funs = new HashMap<>();
 
     public void addVar(String name, Type t, position pos) {
-        if (vars.containsKey(name)) throw new semanticError("Var multiple definition of " + name, pos);
+        if (vars.containsKey(name)) throw new semanticError("Var multiple definition of " + name, pos, semanticError.errorType.Multiple_Definition);
         vars.put(name, t);
     }
 

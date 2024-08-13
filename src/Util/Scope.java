@@ -95,7 +95,7 @@ public class Scope {
 
     public Function getFunFromName(String name, position pos) {
         if (Funs.containsKey(name)) return Funs.get(name);
-        throw new semanticError("no such function: " + name, pos);
+        throw new semanticError("no such function: " + name, pos, semanticError.errorType.Undefined_Identifier);
     }
 
     public void addBuiltInFunction(String name, Function f) {
