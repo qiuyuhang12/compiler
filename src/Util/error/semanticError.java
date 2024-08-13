@@ -16,28 +16,28 @@ public class semanticError extends error {
     public void printType(){
         switch(type){
             case Invalid_Identifier:
-                System.err.println("Invalid Identifier");
+                System.out.println("Invalid Identifier");
                 break;
             case Multiple_Definition:
-                System.err.println("Multiple Definition");
+                System.out.println("Multiple Definition");
                 break;
             case Undefined_Identifier:
-                System.err.println("Undefined Identifier");
+                System.out.println("Undefined Identifier");
                 break;
             case Type_Mismatch:
-                System.err.println("Type Mismatch");
+                System.out.println("Type Mismatch");
                 break;
             case Invalid_Control_Flow:
-                System.err.println("Invalid Control Flow");
+                System.out.println("Invalid Control Flow");
                 break;
             case Invalid_Type:
-                System.err.println("Invalid Type");
+                System.out.println("Invalid Type");
                 break;
             case Missing_Return_Statement:
-                System.err.println("Missing Return Statement");
+                System.out.println("Missing Return Statement");
                 break;
             case Dimension_Out_Of_Bound:
-                System.err.println("Dimension Out Of Bound");
+                System.out.println("Dimension Out Of Bound");
                 break;
         }
     }
