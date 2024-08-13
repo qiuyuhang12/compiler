@@ -4,7 +4,7 @@ import Util.position;
 public class semanticError extends error {
     public enum errorType{
         Invalid_Identifier,
-        Multiple_Definition,
+        Multiple_Definitions,
         Undefined_Identifier,
         Type_Mismatch,
         Invalid_Control_Flow,
@@ -18,8 +18,8 @@ public class semanticError extends error {
             case Invalid_Identifier:
                 System.out.println("Invalid Identifier");
                 break;
-            case Multiple_Definition:
-                System.out.println("Multiple Definition");
+            case Multiple_Definitions:
+                System.out.println("Multiple Definitions");
                 break;
             case Undefined_Identifier:
                 System.out.println("Undefined Identifier");

@@ -67,7 +67,7 @@ public class Main {
                     ((semanticError) er).printType();
                 }
             } else if (er instanceof Util.error.syntaxError) {
-                System.err.println("Invalid Identifier");
+                System.out.println("Invalid Identifier");
             }
 //            System.err.println(er.toString());
             System.exit(1);
