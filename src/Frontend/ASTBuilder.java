@@ -83,7 +83,7 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
         classDef.name = ctx.Identifier().toString();
         ctx.varDef().forEach(vd -> classDef.varDefs.add((varDefNode) visit(vd)));
         ctx.funDef().forEach(fd -> classDef.funDefs.add((funDefNode) visit(fd)));
-        if (ctx.classBuild().size() > 1) throw new semanticError("classBuild size > 1", new position(ctx), semanticError.errorType.Multiple_Definition);
+        if (ctx.classBuild().size() > 1) throw new semanticError("classBuild size > 1", new position(ctx), semanticError.errorType.Multiple_Definitions);
         ctx.classBuild().forEach(cb -> classDef.build.add((classBuildNode) visit(cb)));
         return classDef;
     }

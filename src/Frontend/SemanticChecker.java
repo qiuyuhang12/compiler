@@ -105,7 +105,7 @@ public class SemanticChecker implements ASTVisitor {
         }
         //不能重名
         if (gScope.containsFun(it.name)) {
-            throw new semanticError("classDefNode name conflict", it.pos, semanticError.errorType.Multiple_Definition);
+            throw new semanticError("classDefNode name conflict", it.pos, semanticError.errorType.Multiple_Definitions);
         }
 //        if (currentScope.containsVar(it.name, false)) {
 //            throw new semanticError("classDefNode name conflict", it.pos);
