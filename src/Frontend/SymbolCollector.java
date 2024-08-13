@@ -38,6 +38,14 @@ public class SymbolCollector implements ASTVisitor {
             assert node instanceof classDefNode || node instanceof varDefNode || node instanceof funDefNode;
             if (node instanceof funDefNode fdn) {
                 currentFunction = new Function();
+                if (fdn.name.equals("main")) {
+                    if (fdn.typeNd.type.atomType != Util.Type.TypeEnum.INT) {
+                        throw new semanticError("main not int", fdn.pos);
+                    }
+                    if (fdn.paraList != null) {
+                        throw new semanticError("main has para", fdn.pos);
+                    }
+                }
                 visit(fdn);
                 gScope.addFun(fdn.name, currentFunction, fdn.pos);
             }

@@ -12,18 +12,24 @@ public class Type {
     }
     static public class funInfo{
         public boolean inGlobal =false;
+        public boolean isInBuildMethod = false;//全局内建函数不在此列
         public String funName;
         public String className;
         public funInfo(String funName, String className){
             this.funName = funName;
             this.className = className;
         }
+        public funInfo(){}
+        public funInfo(String funName){
+            this.funName = funName;
+            this.inGlobal = true;
+        }
     }
     public boolean isfString = false;
     public TypeEnum atomType = null;
     public boolean isArray = false;
     public boolean isFun = false;
-    public funInfo fun = null;
+    public funInfo fun = new funInfo(null, null);
     public int dim = 0;
     //    public boolean isClass = false;
     public String name = null;//for class
@@ -63,6 +69,13 @@ public class Type {
 //        }
 //        assert false;
 //        return null;
+    }
+    //a construction for inbuildmethod
+    public Type(TypeEnum tn, String name) {
+        this.atomType = tn;
+        this.isFun = true;
+        this.fun.funName = name;
+        this.fun.isInBuildMethod = true;
     }
 //    public HashMap<String, Type> members = null;
 }

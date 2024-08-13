@@ -10,7 +10,7 @@ public class thisNode extends atomExprNode{
         this.typeNd = new typeNode(pos);
         this.typeNd.type.atomType = Type.TypeEnum.CLASS;
         //你有没有确定class的type类型（不能就是个class！）
-        assert false;
+//        assert false;
     }
     @Override
 public void accept(ASTVisitor visitor) {

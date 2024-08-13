@@ -10,7 +10,7 @@ public class nullNode extends atomExprNode{
         this.typeNd = new typeNode(pos);
         this.typeNd.type.atomType = Type.TypeEnum.NULL;
         //为什么会出现？？？
-        assert false;
+//        assert false;
     }
     @Override
 public void accept(ASTVisitor visitor) {

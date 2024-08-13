@@ -8,7 +8,7 @@ import java.util.HashMap;
 
 public class Scope {
     static public enum scopeType {
-        GLOBAL,CLASS, FUNCTION, FOR,IF,WHILE
+        GLOBAL,CLASS, FUNCTION, FOR,IF,WHILE,BLOCK
     }
     public String name;
     private Scope.scopeType type;
@@ -17,7 +17,8 @@ public class Scope {
     private HashMap<String, Function> Funs = new HashMap<>();//only in global scope
     private HashMap<String, Type> Vars = new HashMap<>();//int aaa;-> Type String;
     public Type funcReturnType;
-
+    public Type correctFuncReturnType;//int f(); 那么correctFuncReturnType 是 int
+    public boolean existReturnForFun = false;
     public Scope parent() {
         return parent;
     }
@@ -48,7 +49,7 @@ public class Scope {
     }
 
     public Type getVarType(String name, boolean lookUpon) {
-        System.err.println("\nWARNING: \tgetVarType 可能返回NULL并且不THROW.\n\t\t\t程序所在路径: src/Util/Scope.java");
+//        System.err.println("\nWARNING: \tgetVarType 可能返回NULL并且不THROW.\n\t\t\t程序所在路径: src/Util/Scope.java");
         if (Vars.containsKey(name)) return Vars.get(name);
         else if (parent != null && lookUpon) return parent.getVarType(name, true);
         return null;
@@ -64,6 +65,11 @@ public class Scope {
     public Class_ getClassFromName(String name, position pos) {
         if (Classes.containsKey(name)) return Classes.get(name);
         throw new semanticError("no such class: " + name, pos);
+    }
+
+    public boolean containsClass(String name) {
+        if (Classes.containsKey(name)) return true;
+        else return false;
     }
 
     public Type getThisClass() {
@@ -82,9 +88,8 @@ public class Scope {
         Funs.put(name, f);
     }
 
-    public boolean containsFun(String name, boolean lookUpon) {
+    public boolean containsFun(String name) {
         if (Funs.containsKey(name)) return true;
-        else if (parent != null && lookUpon) return parent.containsFun(name, true);
         else return false;
     }
 
@@ -93,7 +98,20 @@ public class Scope {
         throw new semanticError("no such function: " + name, pos);
     }
 
+    public void addBuiltInFunction(String name, Function f) {
+        Funs.put(name, f);
+    }
 
-
+    public void addBuiltInFunction() {
+        Type int_ = new Type(Type.TypeEnum.INT);
+        Type string_ = new Type(Type.TypeEnum.STRING);
+        addBuiltInFunction("print", new Function("print", new Type(Type.TypeEnum.VOID), string_));
+        addBuiltInFunction("println", new Function("println", new Type(Type.TypeEnum.VOID), string_));
+        addBuiltInFunction("printInt", new Function("printInt", new Type(Type.TypeEnum.VOID), int_));
+        addBuiltInFunction("printlnInt", new Function("printlnInt", new Type(Type.TypeEnum.VOID), int_));
+        addBuiltInFunction("getString", new Function("getString", string_));
+        addBuiltInFunction("getInt", new Function("getInt", int_));
+        addBuiltInFunction("toString", new Function("toString", string_, int_));
+    }
 
 }

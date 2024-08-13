@@ -42,7 +42,7 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
             type.type.atomType = Type.TypeEnum.CLASS;
             type.type.name = ctx.Identifier().toString();
         }
-        if (ctx.dim() != null) {
+        if (ctx.dim() != null && !ctx.dim().isEmpty()) {
             type.type.isArray = true;
             type.type.dim = ctx.dim().size();
         }
@@ -179,7 +179,7 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
 //            array.dim = ((arrayNode) array.value.getFirst()).dim + 1;
             array.typeNd = new typeNode(new position(ctx));
 //            try {
-                array.typeNd.type = array.value.getFirst().typeNd.type.clone();
+            array.typeNd.type = array.value.getFirst().typeNd.type.clone();
 //            }
 //            catch (CloneNotSupportedException e) {
 //                System.err.println("不应该发生，因为我们实现了 Cloneable 2");
@@ -200,7 +200,7 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
 //            array.dim = 1;
             array.typeNd = new typeNode(new position(ctx));
 //            try {
-                array.typeNd.type = array.value.getFirst().typeNd.type.clone();
+            array.typeNd.type = array.value.getFirst().typeNd.type.clone();
 //            } catch (CloneNotSupportedException e) {
 //                System.err.println("不应该发生，因为我们实现了 Cloneable 3");
 //            }
@@ -223,6 +223,9 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
     @Override
     public ASTNode visitArrayExpr(MxParser.ArrayExprContext ctx) {
         arrayExprNode array = new arrayExprNode(new position(ctx));
+        if (ctx.array instanceof MxParser.NewArrayExprContext){
+            throw new semanticError("ArrayExpr: NewArrayExpr", new position(ctx));
+        }
         array.array = (ExprNode) visit(ctx.array);
         array.index = (ExprNode) visit(ctx.index);
         return array;
@@ -345,7 +348,7 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
     @Override
     public ASTNode visitFunExpr(MxParser.FunExprContext ctx) {
         //你有办法确定返回值吗？
-        assert false;
+//        assert false;
         funExprNode fun = new funExprNode(new position(ctx));
         fun.fun = (ExprNode) visit(ctx.fun);
         if (ctx.para != null) {
