@@ -83,7 +83,8 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
         classDef.name = ctx.Identifier().toString();
         ctx.varDef().forEach(vd -> classDef.varDefs.add((varDefNode) visit(vd)));
         ctx.funDef().forEach(fd -> classDef.funDefs.add((funDefNode) visit(fd)));
-        if (ctx.classBuild().size() > 1) throw new semanticError("classBuild size > 1", new position(ctx), semanticError.errorType.Multiple_Definitions);
+        if (ctx.classBuild().size() > 1)
+            throw new semanticError("classBuild size > 1", new position(ctx), semanticError.errorType.Multiple_Definitions);
         ctx.classBuild().forEach(cb -> classDef.build.add((classBuildNode) visit(cb)));
         return classDef;
     }
@@ -168,48 +169,47 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
             assert ctx.children.size() == 2 &&
                     ctx.children.get(0).getText().equals("{") &&
                     ctx.children.get(1).getText().equals("}");
-//            array.dim = 1;
             array.typeNd = new typeNode(new position(ctx));
             array.typeNd.type.dim = 1;
             array.typeNd.type.atomType = Type.TypeEnum.NULL;
             array.typeNd.type.isArray = true;
             return array;
         }
-        if (array.value.getFirst() instanceof arrayNode) {
-//            array.dim = ((arrayNode) array.value.getFirst()).dim + 1;
+        ExprNode first = array.value.getFirst();
+//        ExprNode first;
+        for (atomExprNode a : array.value) {
+            if (!a.typeNd.type.atomType.equals(Type.TypeEnum.NULL)) {
+                first = a;
+                break;
+            }
+        }
+        if (first instanceof arrayNode) {
             array.typeNd = new typeNode(new position(ctx));
-//            try {
-            array.typeNd.type = array.value.getFirst().typeNd.type.clone();
-//            }
-//            catch (CloneNotSupportedException e) {
-//                System.err.println("不应该发生，因为我们实现了 Cloneable 2");
-//            }
-            //TODO:这里有问题，传引用了！
-            //传引用了！
-//            assert false;
-            array.typeNd.type.dim = ((arrayNode) array.value.getFirst()).typeNd.type.dim + 1;
+            array.typeNd.type = first.typeNd.type.clone();
+            array.typeNd.type.dim = ((arrayNode) first).typeNd.type.dim + 1;
             for (atomExprNode a : array.value) {
                 if (!(a instanceof arrayNode))
                     throw new semanticError("arrayConst error:Different type 1", new position(ctx), semanticError.errorType.Type_Mismatch);
                 if (((arrayNode) a).typeNd.type.dim != array.typeNd.type.dim - 1)
                     throw new semanticError("arrayConst error:Dim error 1", new position(ctx), semanticError.errorType.Type_Mismatch);
-                if (!((arrayNode) a).typeNd.type.equals(array.value.getFirst().typeNd.type))
+                if (!((arrayNode) a).typeNd.type.equals(first.typeNd.type) && !((arrayNode) a).typeNd.type.atomType.equals(Type.TypeEnum.NULL))
                     throw new semanticError("arrayConst error:Different type 1", new position(ctx), semanticError.errorType.Type_Mismatch);
             }
         } else {
 //            array.dim = 1;
             array.typeNd = new typeNode(new position(ctx));
 //            try {
-            array.typeNd.type = array.value.getFirst().typeNd.type.clone();
+            array.typeNd.type = first.typeNd.type.clone();
 //            } catch (CloneNotSupportedException e) {
 //                System.err.println("不应该发生，因为我们实现了 Cloneable 3");
 //            }
             array.typeNd.type.dim = 1;
             array.typeNd.type.isArray = true;
             for (atomExprNode a : array.value) {
-                if (a instanceof arrayNode) throw new semanticError("arrayConst error:Dim error 0", new position(ctx), semanticError.errorType.Type_Mismatch);
+                if (a instanceof arrayNode)
+                    throw new semanticError("arrayConst error:Dim error 0", new position(ctx), semanticError.errorType.Type_Mismatch);
                 //比较类型
-                if (!(a.getClass().equals(array.value.getFirst().getClass())))
+                if (!(a.getClass().equals(first.getClass())))
                     throw new semanticError("arrayConst error:Different type 0", new position(ctx), semanticError.errorType.Type_Mismatch);
                 if (a instanceof identifierNode || a instanceof thisNode)
                     throw new semanticError("arrayConst error:using Identifier or this as init", new position(ctx), semanticError.errorType.Invalid_Identifier);
@@ -223,7 +223,7 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
     @Override
     public ASTNode visitArrayExpr(MxParser.ArrayExprContext ctx) {
         arrayExprNode array = new arrayExprNode(new position(ctx));
-        if (ctx.array instanceof MxParser.NewArrayExprContext){
+        if (ctx.array instanceof MxParser.NewArrayExprContext) {
             throw new semanticError("ArrayExpr: NewArrayExpr", new position(ctx), semanticError.errorType.Invalid_Identifier);
         }
         array.array = (ExprNode) visit(ctx.array);

@@ -288,7 +288,7 @@ public class SemanticChecker implements ASTVisitor {
         for (var node : it.value) {
             visit(node);
             if (!currentType.equals(tmp)) {
-                throw new semanticError("arrayNode type not match", it.pos);
+                throw new semanticError("arrayNode type not match", it.pos, semanticError.errorType.Dimension_Out_Of_Bound);
             }
         }
         it.isLeftValue = false;
