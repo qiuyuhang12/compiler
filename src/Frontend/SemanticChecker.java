@@ -140,11 +140,11 @@ public class SemanticChecker implements ASTVisitor {
     public void visit(funDefNode it) {
         assert currentScope.funcReturnType != null;
         //不能重名
-        if (currentScope==gScope&&gScope.containsClass(it.name)) {
+        if (currentScope == gScope && gScope.containsClass(it.name)) {
             throw new semanticError("funDefNode name conflict0", it.pos);
         }
         //不能重名
-        if (currentScope==gScope&&gScope.containsVar(it.name, false)) {
+        if (currentScope == gScope && gScope.containsVar(it.name, false)) {
             throw new semanticError("funDefNode name conflict1", it.pos);
         }
 //        assert false;
@@ -331,28 +331,29 @@ public class SemanticChecker implements ASTVisitor {
 
     @Override
     public void visit(identifierNode it) {
-        if (currentScope.containsVar(it.name, true)) {
+        it.typeNd = new typeNode(it.pos);
+        it.typeNd.type = new Type();
+        Class_ cla = nowClass();
+        Function fun;
+        System.err.println("WARNING:局部变量只找1层，当心{{a}}");
+        if (currentScope.containsVar(it.name, false)) {//单scope变量
             it.isLeftValue = true;
             it.typeNd.type = currentScope.getVarType(it.name, true).clone();
-        } else {
-//            assert it.typeNd.type == null;
-            it.typeNd = new typeNode(it.pos);
-            it.typeNd.type = new Type();
+        } else if (cla != null && cla.containsFun(it.name)) {//类内函数
+            fun = cla.getFunFromName(it.name, it.pos);
+            it.typeNd.type = fun.returnType.clone();
             it.typeNd.type.isFun = true;
-//            System.err.println("WARNING:假设 identifier 是 global function");
-            Class_ cla = nowClass();
-            Function fun;
-            if (cla != null && cla.containsFun(it.name)) {
-                fun = cla.getFunFromName(it.name, it.pos);
-                it.typeNd.type = fun.returnType.clone();
-                it.typeNd.type.fun = new Type.funInfo(fun.name, cla.name);
-            } else {
-                fun = gScope.getFunFromName(it.name, it.pos);
-                it.typeNd.type = fun.returnType.clone();
-                it.typeNd.type.fun = new Type.funInfo(fun.name);
-            }
             it.isLeftValue = false;
+            it.typeNd.type.fun = new Type.funInfo(fun.name, cla.name);
+        } else if (currentScope.containsVar(it.name, true)) {//变量
+            it.isLeftValue = true;
+            it.typeNd.type = currentScope.getVarType(it.name, true).clone();
+        } else {//全局函数
+            fun = gScope.getFunFromName(it.name, it.pos);
+            it.typeNd.type = fun.returnType.clone();
             it.typeNd.type.isFun = true;
+            it.isLeftValue = false;
+            it.typeNd.type.fun = new Type.funInfo(fun.name);
         }
         currentType = it.typeNd.type;
     }
@@ -518,8 +519,27 @@ public class SemanticChecker implements ASTVisitor {
         visit(it.falseExpr);
         assert currentType.equals(it.falseExpr.typeNd.type);
         if (!it.falseExpr.typeNd.type.equals(it.trueExpr.typeNd.type)) {
+            if (it.falseExpr.typeNd.type.equals(new Type(Type.TypeEnum.NULL))) {
+                if (canBeNull(it.trueExpr.typeNd.type)) {
+                    it.typeNd = new typeNode(it.pos);
+                    it.typeNd.type = it.trueExpr.typeNd.type.clone();
+                    it.isLeftValue = false;
+                    currentType = it.trueExpr.typeNd.type;
+                    return;
+                }
+            } else if (it.trueExpr.typeNd.type.equals(new Type(Type.TypeEnum.NULL))) {
+                if (canBeNull(it.falseExpr.typeNd.type)) {
+                    it.typeNd = new typeNode(it.pos);
+                    it.typeNd.type = it.falseExpr.typeNd.type.clone();
+                    it.isLeftValue = false;
+                    currentType = it.falseExpr.typeNd.type;
+                    return;
+                }
+            }
             throw new semanticError("conditionalExprNode TF type not match", it.pos);
         }
+        it.typeNd = new typeNode(it.pos);
+        it.typeNd.type = it.trueExpr.typeNd.type.clone();
         it.isLeftValue = false;
         currentType = it.trueExpr.typeNd.type;
     }
