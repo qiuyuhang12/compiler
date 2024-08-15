@@ -257,7 +257,8 @@ public class SemanticChecker implements ASTVisitor {
                 }
                 //在visit更新currentType
                 visit(unit.init);
-                if (!currentType.equals(it.typeNd.type) && !currentType.equals(new Type(Type.TypeEnum.NULL))) {
+//                if (!currentType.equals(it.typeNd.type) && !currentType.equals(new Type(Type.TypeEnum.NULL))) {
+                if (!currentType.equals(it.typeNd.type) && !currentType.atomType.equals(Type.TypeEnum.NULL)) {
                     throw new semanticError("varDefNode init type not match", it.pos);
                 }
             }

@@ -28,9 +28,9 @@ public class Main {
 
     public static void main(String[] args) throws Exception {
 
-//        String name = "test.mx";
-//        InputStream input = new FileInputStream(name);
-        InputStream input = System.in;
+        String name = "test.mx";
+        InputStream input = new FileInputStream(name);
+//        InputStream input = System.in;
         try {
             ProgramNode programNode;
             Scope gScope = new Scope(null);
@@ -69,7 +69,7 @@ public class Main {
             } else if (er instanceof Util.error.syntaxError) {
                 System.out.println("Invalid Identifier");
             }
-//            System.err.println(er.toString());
+            System.err.println(er.toString());
             System.exit(1);
 //            throw new RuntimeException();
         }
