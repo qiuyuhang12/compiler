@@ -4,7 +4,7 @@ public class IRBoolLiteral extends IRLiteral {
     public boolean value;
     public IRBoolLiteral(boolean value) {
         this.value = value;
-        typeInfo.type = IRType.irTypeEnum.i1;
+        typeInfo.type = IRType.IRTypeEnum.i1;
     }
 
     @Override

@@ -296,8 +296,8 @@ public class SemanticChecker implements ASTVisitor {
         currentType = it.typeNd.type;
     }
 
-    @Override
-    public void visit(atomExprNode it) {
+//    @Override
+    private void visit(atomExprNode it) {
         switch (it) {
             case boolNode bn -> visit(bn);
             case identifierNode in -> visit(in);

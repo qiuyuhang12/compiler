@@ -3,7 +3,7 @@ package AST.expr;
 import AST.*;
 import Util.position;
 
-public class preSelfExprNode extends ExprNode {
+public class preSelfExprNode extends ExprNode {//++a,自增，不添加新的变量
     public enum opType {
         Inc, Dec
     }

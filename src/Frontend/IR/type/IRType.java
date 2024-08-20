@@ -1,20 +1,25 @@
 package Frontend.IR.type;
 
-public class IRType {
-    public irTypeEnum type;
-    public irTypeEnum ptrType;
+import Frontend.IR.node.IRNode;
+
+public class IRType extends IRNode {
+    public IRTypeEnum type;
+    public IRTypeEnum ptrType;
     public IRStruct structInfo;
-    public enum irTypeEnum{
+    public enum IRTypeEnum {
         i1,
         i32,
         ptr,
         void_,
         struct
     }
-    public IRType(irTypeEnum type){
+    public IRType(IRTypeEnum type){
         this.type = type;
     }
-    public IRType(){}
+    public IRType(){
+        this.type = IRTypeEnum.void_;
+    }
+    @Override
     public String toString(){
         return switch (type) {
             case i1 -> "i1";
@@ -23,8 +28,13 @@ public class IRType {
             case void_ -> "void";
             case struct -> {
                 //TODO:Class\Struct Info
+//                assert false;
+//                yield "struct";
+                yield structInfo.toString();
+            }
+            default -> {
                 assert false;
-                yield "struct";
+                yield null;
             }
         };
     }

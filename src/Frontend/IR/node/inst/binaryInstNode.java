@@ -1,10 +1,11 @@
 package Frontend.IR.node.inst;
 
+import AST.ASTNode;
 import AST.expr.ExprNode;
 import AST.expr.binaryExprNode;
 import Frontend.IR.entity.IREntity;
 import Frontend.IR.entity.IRVar;
-import Util.Type;
+import Frontend.IR.node.stmt.IRBlockNode;
 
 public class binaryInstNode extends instNode {
     public enum opEnum {
@@ -35,8 +36,8 @@ public class binaryInstNode extends instNode {
         };
     }
 
-    public binaryInstNode(ExprNode expr, IRVar dest, binaryExprNode.binaryOpType op, IREntity lhs, IREntity rhs) {
-        super(expr);
+    public binaryInstNode(ASTNode expr, IRBlockNode _parent, IRVar dest, binaryExprNode.binaryOpType op, IREntity lhs, IREntity rhs) {
+        super(expr,_parent);
         this.dest = dest;
         this.op = switch (op) {
             case add -> opEnum.add;
@@ -52,6 +53,7 @@ public class binaryInstNode extends instNode {
             default -> {
                 System.err.println("Invalid binary operation");
                 System.exit(1);
+                yield null;
             }
         };
         this.lhs = lhs;

@@ -12,7 +12,7 @@ public class Type {
     }
     static public class funInfo{
         public boolean inGlobal =false;
-        public boolean isInBuildMethod = false;//全局内建函数不在此列
+        public boolean isInBuildMethod = false;//全局内建函数不在此列,也就是只有形如array.size()的
         public String funName;
         public String className;
         public funInfo(String funName, String className){
@@ -28,7 +28,7 @@ public class Type {
     public boolean isfString = false;
     public TypeEnum atomType = null;
     public boolean isArray = false;
-    public boolean isFun = false;
+    public boolean isFun = false;//函数表达式
     public funInfo fun = new funInfo(null, null);
     public int dim = 0;
     //    public boolean isClass = false;

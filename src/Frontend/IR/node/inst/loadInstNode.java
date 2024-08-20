@@ -1,15 +1,16 @@
 package Frontend.IR.node.inst;
 
-import AST.expr.ExprNode;
+import AST.ASTNode;
 import Frontend.IR.entity.IRVar;
+import Frontend.IR.node.stmt.IRBlockNode;
 import Frontend.IR.type.IRType;
 
 public class loadInstNode extends instNode{
-    public IRVar dest,ptr;
+    public String dest;
+    public String ptr;
     public IRType type;
-    public loadInstNode(ExprNode expr,IRVar dest, IRVar ptr, IRType type){
-        super(expr);
-        assert ptr.typeInfo.type==IRType.irTypeEnum.ptr;
+    public loadInstNode(ASTNode expr, IRBlockNode _parent, String dest, String ptr, IRType type){
+        super(expr, _parent);
         this.dest = dest;
         this.ptr = ptr;
         this.type = type;
@@ -17,6 +18,6 @@ public class loadInstNode extends instNode{
 
     @Override
     public String toString() {
-        return dest.toString()+" = load "+type.toString()+", ptr "+ptr.toString();
+        return dest+" = load "+type.toString()+", ptr "+ptr;
     }
 }

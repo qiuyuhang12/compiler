@@ -1,0 +1,24 @@
+%/@为变量名，函数名的一部分,
+        但renamer不包含它们(这是必须的，否则无法找到一个名字),
+        renamer的返回值不包含，
+
+        getRenamed的返回值和currentTmpValName包含它们,
+        获得匿名变量包含
+
+%是label的一部分
+
+、
+renamer进退：fun里，class里，scope里
+return块里边，临时返回变量是%r.e.t
+
+expr处理：末尾更新currentTmpValName
+
+atomExpr:新建指针，存储，回传
+
+函数命名规则：
+不进入renamer
+global:f->@f
+class:f->@class.f,第一个参数是this
+
+//todo::binary:entity->string
+//todo:binary:visit

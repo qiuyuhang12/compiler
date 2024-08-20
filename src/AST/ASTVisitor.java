@@ -16,7 +16,7 @@ public interface ASTVisitor {
 
     //expr.atom
     void visit(arrayNode it);
-    void visit(atomExprNode it);
+//    void visit(atomExprNode it);
     void visit(boolNode it);
     void visit(identifierNode it);
     void visit(intNode it);

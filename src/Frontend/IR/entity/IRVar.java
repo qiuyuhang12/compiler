@@ -8,33 +8,34 @@ public class IRVar extends IREntity{
     public IRVar(String type, String name, boolean isGlobal){
         switch (type){
             case "i1":
-                typeInfo = new IRType(IRType.irTypeEnum.i1);
+                typeInfo = new IRType(IRType.IRTypeEnum.i1);
                 break;
             case "i32":
-                typeInfo = new IRType(IRType.irTypeEnum.i32);
+                typeInfo = new IRType(IRType.IRTypeEnum.i32);
                 break;
             case "ptr":
-                typeInfo = new IRType(IRType.irTypeEnum.ptr);
+                typeInfo = new IRType(IRType.IRTypeEnum.ptr);
                 break;
             case "void":
                 assert false;
             default:
-                typeInfo = new IRType(IRType.irTypeEnum.struct);
+                typeInfo = new IRType(IRType.IRTypeEnum.struct);
         }
         this.name = name;
         this.isGlobal = isGlobal;
     }
     public IRVar(){
-        typeInfo = new IRType(IRType.irTypeEnum.void_);
+        typeInfo = new IRType(IRType.IRTypeEnum.void_);
     }
     @Override
     public String toString(){
-        if (isGlobal){
-//            return typeInfo.toString()+" @"+name;
-            return "@"+name;
-        }else {
-//            return typeInfo.toString()+" %"+name;
-            return "%"+name;
-        }
+        return name;
+//        if (isGlobal){
+////            return typeInfo.toString()+" @"+name;
+//            return "@"+name;
+//        }else {
+////            return typeInfo.toString()+" %"+name;
+//            return "%"+name;
+//        }
     }
 }

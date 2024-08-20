@@ -6,7 +6,7 @@ public class IRIntLiteral extends IRLiteral {
     public int value;
     public IRIntLiteral(int value) {
         this.value = value;
-        typeInfo.type = IRType.irTypeEnum.i32;
+        typeInfo.type = IRType.IRTypeEnum.i32;
     }
     @Override
     public String toString() {

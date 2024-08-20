@@ -105,9 +105,9 @@ public class SymbolCollector implements ASTVisitor {
     public void visit(arrayNode it) {
     }
 
-    @Override
-    public void visit(atomExprNode it) {
-    }
+//    @Override
+//    public void visit(atomExprNode it) {
+//    }
 
     @Override
     public void visit(boolNode it) {

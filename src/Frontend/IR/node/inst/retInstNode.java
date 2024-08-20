@@ -1,17 +1,18 @@
 package Frontend.IR.node.inst;
 
-import AST.expr.ExprNode;
+import AST.ASTNode;
 import Frontend.IR.entity.IREntity;
 import Frontend.IR.entity.IRVar;
+import Frontend.IR.node.stmt.IRBlockNode;
 
 public class retInstNode extends instNode{
     public IREntity value;
-    public retInstNode(ExprNode expr){
-        super(expr);
+    public retInstNode(ASTNode expr, IRBlockNode _parent){
+        super(expr,_parent);
         value = new IRVar();
     }
-    public retInstNode(ExprNode expr,IREntity value){
-        super(expr);
+    public retInstNode(ASTNode expr, IRBlockNode _parent, IREntity value){
+        super(expr, _parent);
         this.value = value;
     }
     @Override
