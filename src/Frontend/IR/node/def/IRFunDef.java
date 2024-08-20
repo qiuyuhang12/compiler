@@ -8,15 +8,18 @@ import Frontend.IR.type.IRType;
 import java.util.ArrayList;
 
 public class IRFunDef extends IRFunDeclare {
-    public ArrayList<IRBlockNode> blocks =new ArrayList<>();
-    public IRFunDef(IRType returnType, String name, IRVar... parameters){
+    public ArrayList<IRBlockNode> blocks = new ArrayList<>();
+
+    public IRFunDef(IRType returnType, String name, IRVar... parameters) {
         super(returnType, name, parameters);
     }
-    public void push(IRBlockNode block){
+
+    public void push(IRBlockNode block) {
         blocks.add(block);
     }
+
     @Override
-    public String toString(){
+    public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("define ").append(returnType.toString()).append(" ").append(name).append("(");
         for (int i = 0; i < parameters.size(); i++) {
@@ -28,6 +31,6 @@ public class IRFunDef extends IRFunDeclare {
             sb.append("\n").append(bl.toString());
         }
         sb.append("\n}");
-        return sb.toString();
+        return sb.toString() + "\n";
     }
 }

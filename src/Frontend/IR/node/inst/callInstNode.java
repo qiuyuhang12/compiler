@@ -63,6 +63,6 @@ public class callInstNode extends instNode {
             sb.append(args.get(i).typeInfo.toString()).append(" ").append(args.get(i).toString());
         }
         sb.append(")");
-        return sb.toString();
+        return sb.toString() + "\n";
     }
 }

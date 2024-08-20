@@ -46,6 +46,6 @@ public class icmpInstNode extends instNode {
 
     @Override
     public String toString() {
-        return dest.toString() + " = icmp " + op.toString() + " " + lhs.typeInfo.toString() + " " + lhs.toString() + ", " + rhs.toString();
+        return dest.toString() + " = icmp " + op.toString() + " " + lhs.typeInfo.toString() + " " + lhs.toString() + ", " + rhs.toString() + "\n";
     }
 }

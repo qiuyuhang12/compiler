@@ -35,6 +35,6 @@ public class phiInstNode extends instNode {
             if (i != 0) sb.append(", ");
             sb.append("[ ").append(values.get(i).toString()).append(", %").append(labels.get(i)).append(" ]");
         }
-        return sb.toString();
+        return sb.toString() + "\n";
     }
 }

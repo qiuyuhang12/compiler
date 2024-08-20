@@ -8,6 +8,8 @@ import Frontend.IR.type.IRType;
 public class brInstNode extends instNode {
     public IREntity cond;
     public String ifTrue, ifFalse, dest;
+    //br i1 %cond, label %ifTrue, label %ifFalse ; Conditional branch
+    //br label %dest ; Unconditional branch
     public boolean isCondBr;
 
     public brInstNode(ASTNode expr, IRBlockNode _parent, IREntity cond, String ifTrue, String ifFalse) {
@@ -28,9 +30,9 @@ public class brInstNode extends instNode {
     @Override
     public String toString() {
         if (isCondBr) {
-            return "br i1 " + cond.toString() + ", label %" + ifTrue + ", label %" + ifFalse;
+            return "br i1 " + cond.toString() + ", label %" + ifTrue + ", label %" + ifFalse + "\n";
         } else {
-            return "br label %" + dest;
+            return "br label %" + dest + "\n";
         }
     }
 }

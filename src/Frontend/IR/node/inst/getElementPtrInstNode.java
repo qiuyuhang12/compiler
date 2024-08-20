@@ -33,6 +33,6 @@ public class getElementPtrInstNode extends instNode {
         for (int i = 0; i < tys.size(); i++) {
             sb.append(", ").append(tys.get(i).toString()).append(" ").append(idxs.get(i));
         }
-        return sb.toString();
+        return sb.toString() + "\n";
     }
 }

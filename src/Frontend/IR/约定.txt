@@ -5,7 +5,7 @@
         getRenamed的返回值和currentTmpValName包含它们,
         获得匿名变量包含
 
-%是label的一部分
+%不是label的一部分
 
 、
 renamer进退：fun里，class里，scope里
@@ -20,5 +20,16 @@ atomExpr:新建指针，存储，回传
 global:f->@f
 class:f->@class.f,第一个参数是this
 
-//todo::binary:entity->string
-//todo:binary:visit
+
+函数返回的label：return
+函数返回值：%r.e.t
+
+
+for,while
+    String condLabel = renamer.rename("cond..");//为了跳转方便，while没有这个但有step
+    String bodyLabel = renamer.rename("body..");
+    String stepLabel = renamer.rename("step..");
+    String endLabel = renamer.rename("end..");
+
+
+return;的it.value==null;还是void？

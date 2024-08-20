@@ -26,11 +26,15 @@ public class IRBuilder implements ASTVisitor {
     public Renamer renamer = new Renamer();
     public IRProgramNode irProgramNode = new IRProgramNode();
     public IRBlockNode currentBlock;
-    public String currentTmpValName;
+    public String currentTmpValName;//可能是字面量
     public String currentLeftVarAddr;
 
     public IRBuilder(ProgramNode programNode) {
         programNode.accept(this);
+    }
+
+    public void print() {
+        System.out.println(irProgramNode.toString());
     }
 
     public IRFunDef currentFunDef;//谁使用谁复原
@@ -74,7 +78,6 @@ public class IRBuilder implements ASTVisitor {
                 return null;
         }
     }
-
 
     @Override
     public void visit(funDefNode it) {
@@ -123,7 +126,6 @@ public class IRBuilder implements ASTVisitor {
         currentFunDef = null;
         renamer.out();
     }
-
 
     @Override
     public void visit(varDefNode it) {
@@ -213,7 +215,6 @@ public class IRBuilder implements ASTVisitor {
         }
     }
 
-
     @Override
     public void visit(funParaList it) {
 
@@ -236,22 +237,25 @@ public class IRBuilder implements ASTVisitor {
 
     @Override
     public void visit(boolNode it) {
-
+        currentTmpValName = it.value ? "1" : "0";
     }
 
     @Override
     public void visit(identifierNode it) {
-
+        currentTmpValName = renamer.getAnonymousName();
+        currentLeftVarAddr = currentTmpValName;
+        currentBlock.push(new loadInstNode(it, currentBlock, currentTmpValName, renamer.getRenamed(it.name), getIRtype(it.typeNd.type)));
     }
 
     @Override
     public void visit(intNode it) {
-
+        currentTmpValName = String.valueOf(it.value);
     }
 
     @Override
     public void visit(nullNode it) {
-
+        currentTmpValName = "null";
+        currentLeftVarAddr = null;
     }
 
     @Override
@@ -419,8 +423,8 @@ public class IRBuilder implements ASTVisitor {
     public void visit(preSelfExprNode it) {
         it.body.accept(this);
         IRVar body = new IRVar(getIRtype(it.body.typeNd.type).toString(), currentTmpValName, false);
-        IRVar dest = new IRVar(getIRtype(it.typeNd.type).toString(), "%" + renamer.rename("pre."+it.op.toString()), false);
-        currentBlock.push(new binaryInstNode(it, currentBlock, dest, it.op== preSelfExprNode.opType.Dec? binaryExprNode.binaryOpType.sub: binaryExprNode.binaryOpType.add, body, new IRIntLiteral(1)));
+        IRVar dest = new IRVar(getIRtype(it.typeNd.type).toString(), "%" + renamer.rename("pre." + it.op.toString()), false);
+        currentBlock.push(new binaryInstNode(it, currentBlock, dest, it.op == preSelfExprNode.opType.Dec ? binaryExprNode.binaryOpType.sub : binaryExprNode.binaryOpType.add, body, new IRIntLiteral(1)));
         IRVar addr = new IRVar("ptr", currentLeftVarAddr, false);
         addr.typeInfo = getIRtype(it.typeNd.type);
         currentBlock.push(new storeInstNode(it, currentBlock, dest, addr));
@@ -430,71 +434,144 @@ public class IRBuilder implements ASTVisitor {
 
     @Override
     public void visit(unaryExprNode it) {
-        switch (it.opCode){
+        it.body.accept(this);
+        IRVar body = new IRVar(getIRtype(it.body.typeNd.type).toString(), currentTmpValName, false);
+        IRVar dest = new IRVar(getIRtype(it.typeNd.type).toString(), "%" + renamer.rename(it.opCode.toString()), false);
+        switch (it.opCode) {
             case Inc:
             case Dec:
-                it.body.accept(this);
-                IRVar body = new IRVar(getIRtype(it.body.typeNd.type).toString(), currentTmpValName, false);
-                IRVar dest = new IRVar(getIRtype(it.typeNd.type).toString(), "%" + renamer.rename(it.opCode.toString()), false);
-                currentBlock.push(new binaryInstNode(it, currentBlock, dest, it.opCode== unaryExprNode.unaryOpType.Dec? binaryExprNode.binaryOpType.sub: binaryExprNode.binaryOpType.add, body, new IRIntLiteral(1)));
-                currentTmpValName = "%" + dest.name;
+                currentBlock.push(new binaryInstNode(it, currentBlock, dest, it.opCode == unaryExprNode.unaryOpType.Dec ? binaryExprNode.binaryOpType.sub : binaryExprNode.binaryOpType.add, body, new IRIntLiteral(1)));
                 IRVar addr = new IRVar("ptr", currentLeftVarAddr, false);
                 addr.typeInfo = getIRtype(it.typeNd.type);
                 currentBlock.push(new storeInstNode(it, currentBlock, dest, addr));
+//                currentTmpValName = currentTmpValName;
+                currentLeftVarAddr = null;
                 break;
             case logNot:
-            case bitNot:
-            case minus:
-            case plus:
-                it.body.accept(this);
-                IRVar body = new IRVar(getIRtype(it.body.typeNd.type).toString(), currentTmpValName, false);
-                IRVar dest = new IRVar(getIRtype(it.typeNd.type).toString(), "%" + renamer.rename(it.opCode.toString()), false);
-                currentBlock.push(new unaryInstNode(it, currentBlock, dest, it.opCode, body));
+                currentBlock.push(new binaryInstNode(it, currentBlock, dest, binaryExprNode.binaryOpType.xor, body, new IRBoolLiteral(true)));
                 currentTmpValName = "%" + dest.name;
                 break;
-            default:
-                assert false;
+            case bitNot:
+                currentBlock.push(new binaryInstNode(it, currentBlock, dest, binaryExprNode.binaryOpType.xor, body, new IRIntLiteral(-1)));
+                currentTmpValName = "%" + dest.name;
+                break;
+            case minus:
+                currentBlock.push(new binaryInstNode(it, currentBlock, dest, binaryExprNode.binaryOpType.sub, new IRIntLiteral(0), body));
+                currentTmpValName = "%" + dest.name;
+                break;
+            case plus:
+                break;
         }
     }
 
     @Override
     public void visit(blockStmtNode it) {
-
+        renamer.in();
+        for (StmtNode stmt : it.stmts) {
+            stmt.accept(this);
+        }
+        renamer.out();
     }
 
     @Override
     public void visit(breakStmtNode it) {
-
+        currentBlock.push(new brInstNode(it, currentBlock, renamer.getRenamed("end..")));
     }
 
     @Override
     public void visit(continueStmtNode it) {
-
+        currentBlock.push(new brInstNode(it, currentBlock, renamer.getRenamed("step..")));
     }
 
     @Override
     public void visit(exprStmtNode it) {
-
+        it.expr.accept(this);
     }
 
     @Override
     public void visit(forStmtNode it) {
-
+        renamer.in();
+        if (it.init != null) {
+            it.init.accept(this);
+        }
+        String condLabel = renamer.rename("cond..");
+        String bodyLabel = renamer.rename("body..");
+        String stepLabel = renamer.rename("step..");
+        String endLabel = renamer.rename("end..");
+        currentBlock.push(new brInstNode(it, currentBlock, condLabel));
+        currentBlock = new IRBlockNode(currentBlock, currentFunDef, condLabel);
+        if (it.cond != null) {
+            it.cond.accept(this);
+            IRVar cond = new IRVar("i1", currentTmpValName, false);
+            currentBlock.push(new brInstNode(it, currentBlock, cond, bodyLabel, endLabel));
+        } else {
+            currentBlock.push(new brInstNode(it, currentBlock, bodyLabel));
+        }
+        currentBlock = new IRBlockNode(currentBlock, currentFunDef, bodyLabel);
+        if (it.body != null) {
+            it.body.accept(this);
+        }
+        currentBlock.push(new brInstNode(it, currentBlock, stepLabel));
+        currentBlock = new IRBlockNode(currentBlock, currentFunDef, stepLabel);
+        if (it.step != null) {
+            it.step.accept(this);
+        }
+        currentBlock.push(new brInstNode(it, currentBlock, condLabel));
+        currentBlock = new IRBlockNode(currentBlock, currentFunDef, endLabel);
+        renamer.out();
     }
 
     @Override
     public void visit(ifStmtNode it) {
-
+        it.condition.accept(this);
+        IRVar cond = new IRVar("i1", currentTmpValName, false);
+        String trueLabel = renamer.rename("if.true");
+        String falseLabel = renamer.rename("if.false");
+        String endLabel = renamer.rename("if.end");
+        renamer.in();
+        currentBlock.push(new brInstNode(it, currentBlock, cond, trueLabel, falseLabel));
+        currentBlock = new IRBlockNode(currentBlock, currentFunDef, trueLabel);
+        if (it.thenStmt != null) {
+            it.thenStmt.accept(this);
+        }
+        currentBlock.push(new brInstNode(it, currentBlock, endLabel));
+        currentBlock = new IRBlockNode(currentBlock, currentFunDef, falseLabel);
+        if (it.elseStmt != null) {
+            it.elseStmt.accept(this);
+        }
+        currentBlock.push(new brInstNode(it, currentBlock, endLabel));
+        currentBlock = new IRBlockNode(currentBlock, currentFunDef, endLabel);
+        renamer.out();
     }
 
     @Override
     public void visit(returnStmtNode it) {
-
+        //TODO:return;是null还是void？
+        assert false;
+        if (it.value != null) {
+            it.value.accept(this);
+            IRVar ret = new IRVar(getIRtype(it.value.typeNd.type).toString(), currentTmpValName, false);
+            currentBlock.push(new storeInstNode(it, currentBlock, ret, new IRVar(getIRtype(it.value.typeNd.type).toString(), "%r.e.t", false)));
+        }
+        currentBlock.push(new brInstNode(it, currentBlock, renamer.getRenamed("return")));
     }
 
     @Override
     public void visit(whileStmtNode it) {
-
+        renamer.in();
+        String condLabel = renamer.rename("step..");
+        String bodyLabel = renamer.rename("body..");
+        String endLabel = renamer.rename("end..");
+        currentBlock.push(new brInstNode(it, currentBlock, condLabel));
+        currentBlock = new IRBlockNode(currentBlock, currentFunDef, condLabel);
+        it.condition.accept(this);
+        IRVar cond = new IRVar("i1", currentTmpValName, false);
+        currentBlock.push(new brInstNode(it, currentBlock, cond, bodyLabel, endLabel));
+        currentBlock = new IRBlockNode(currentBlock, currentFunDef, bodyLabel);
+        it.body.accept(this);
+        currentBlock.push(new brInstNode(it, currentBlock, condLabel));
+        currentBlock = new IRBlockNode(currentBlock, currentFunDef, endLabel);
+        renamer.out();
     }
 
     @Override
@@ -504,6 +581,5 @@ public class IRBuilder implements ASTVisitor {
 
     @Override
     public void visit(emptyStmtNode it) {
-
     }
 }

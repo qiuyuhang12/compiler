@@ -14,23 +14,29 @@ public class IRProgramNode extends IRNode {
     public ArrayList<IRFunDef> initFuns = new ArrayList<>();
     public ArrayList<IRGlobalVarDef> globalVarDefs = new ArrayList<>();
     public ArrayList<IRStructDef> structDefs = new ArrayList<>();
-    public void pushVarDef(IRGlobalVarDef varDef){
+
+    public void pushVarDef(IRGlobalVarDef varDef) {
         globalVarDefs.add(varDef);
     }
-    public void pushFunDef(IRFunDef funDef){
+
+    public void pushFunDef(IRFunDef funDef) {
         funDefs.add(funDef);
     }
-    public void pushFunDecl(IRFunDeclare funDecl){
+
+    public void pushFunDecl(IRFunDeclare funDecl) {
         funDecls.add(funDecl);
     }
-    public void pushStructDef(IRStructDef structDef){
+
+    public void pushStructDef(IRStructDef structDef) {
         structDefs.add(structDef);
     }
-    public void pushInitFun(IRFunDef funDef){
+
+    public void pushInitFun(IRFunDef funDef) {
         initFuns.add(funDef);
     }
+
     @Override
-    public String toString(){
+    public String toString() {
         StringBuilder sb = new StringBuilder();
         for (IRStructDef structDef : structDefs) {
             sb.append(structDef.toString()).append("\n");
@@ -46,6 +52,6 @@ public class IRProgramNode extends IRNode {
         }
         //TODO:Init Function加入main
         assert false;
-        return sb.toString();
+        return sb.toString() + "\n";
     }
 }

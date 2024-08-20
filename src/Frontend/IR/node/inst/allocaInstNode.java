@@ -16,6 +16,6 @@ public class allocaInstNode extends instNode{
     }
     @Override
     public String toString() {
-        return dest.toString()+" = alloca "+type.toString();
+        return dest.toString()+" = alloca "+type.toString() + "\n";
     }
 }

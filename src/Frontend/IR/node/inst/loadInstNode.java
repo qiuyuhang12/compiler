@@ -18,6 +18,6 @@ public class loadInstNode extends instNode{
 
     @Override
     public String toString() {
-        return dest+" = load "+type.toString()+", ptr "+ptr;
+        return dest+" = load "+type.toString()+", ptr "+ptr + "\n";
     }
 }

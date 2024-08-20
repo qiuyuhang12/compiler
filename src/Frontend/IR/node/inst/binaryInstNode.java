@@ -37,7 +37,7 @@ public class binaryInstNode extends instNode {
     }
 
     public binaryInstNode(ASTNode expr, IRBlockNode _parent, IRVar dest, binaryExprNode.binaryOpType op, IREntity lhs, IREntity rhs) {
-        super(expr,_parent);
+        super(expr, _parent);
         this.dest = dest;
         this.op = switch (op) {
             case add -> opEnum.add;
@@ -66,6 +66,6 @@ public class binaryInstNode extends instNode {
 
     @Override
     public String toString() {
-        return dest.toString() + " = i32 " + opToString() + " " + lhs.toString() + ", " + rhs.toString();
+        return dest.toString() + " = i32 " + opToString() + " " + lhs.toString() + ", " + rhs.toString() + "\n";
     }
 }
