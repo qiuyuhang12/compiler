@@ -7,7 +7,6 @@ import Util.position;
 public class varDefUnitNode extends ASTNode {
     public String name = null;
     public ExprNode init = null;
-
     public varDefUnitNode(position pos) {
         super(pos);
     }

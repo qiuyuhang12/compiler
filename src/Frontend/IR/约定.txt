@@ -33,3 +33,7 @@ for,while
 
 
 return;的it.value==null;还是void？
+
+入参是xx.val
+
+member function : xxclass.f

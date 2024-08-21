@@ -6,6 +6,7 @@ import AST.ProgramNode;
 //import MIR.block;
 //import MIR.mainFn;
 import Frontend.ASTBuilder;
+import Frontend.IR.IRBuilder;
 import Frontend.SemanticChecker;
 import Frontend.SymbolCollector;
 import Parser.MxLexer;
@@ -52,6 +53,9 @@ public class Main {
                 throw new semanticError("main not int", programNode.pos);
             }
             new SemanticChecker(gScope).visit(programNode);
+
+            IRBuilder ib=new IRBuilder(programNode);
+            ib.print();
 
 //            mainFn f = new mainFn();
 //            new IRBuilder(f, gScope).visit(ASTRoot);

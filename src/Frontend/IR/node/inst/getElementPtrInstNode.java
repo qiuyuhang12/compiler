@@ -8,20 +8,32 @@ import Frontend.IR.type.IRType;
 import java.util.ArrayList;
 
 public class getElementPtrInstNode extends instNode {
-    public IRVar dest, ptr;
+    public String dest, ptr;
     public IRType type;
     public ArrayList<IRType> tys = new ArrayList<>();
-    public ArrayList<Integer> idxs = new ArrayList<>();
+    public ArrayList<String> idxs = new ArrayList<>();
 
     public getElementPtrInstNode(ASTNode expr, IRBlockNode _parent, IRVar dest, IRVar ptr, IRType type) {
         super(expr, _parent);
-        this.dest = dest;
+        this.dest = dest.name;
         assert ptr.typeInfo.type == IRType.IRTypeEnum.ptr;
+        this.ptr = ptr.name;
+        this.type = type;
+    }
+
+    public getElementPtrInstNode(ASTNode expr, IRBlockNode _parent, String dest, String ptr, IRType type) {
+        super(expr, _parent);
+        this.dest = dest;
         this.ptr = ptr;
         this.type = type;
     }
 
     public void push(IRType ty, int idx) {
+        tys.add(ty);
+        idxs.add(idx + "");
+    }
+
+    public void push(IRType ty, String idx) {
         tys.add(ty);
         idxs.add(idx);
     }
