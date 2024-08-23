@@ -14,6 +14,7 @@ import Frontend.IR.entity.IRIntLiteral;
 import Frontend.IR.entity.IRVar;
 import Frontend.IR.node.def.IRFunDef;
 import Frontend.IR.node.def.IRGlobalVarDef;
+import Frontend.IR.node.def.IRStringDef;
 import Frontend.IR.node.def.IRStructDef;
 import Frontend.IR.node.inst.*;
 import Frontend.IR.node.stmt.IRBlockNode;
@@ -37,22 +38,21 @@ public class IRBuilder implements ASTVisitor {
     public IRFunDef currentFunDef;//谁使用谁复原
     public IRVar currentNoneStmtVarForFun;
     public status currentStatus = status.global;
-
+    public String currentArray;//处理数组常量
+    
     public IRBuilder(ProgramNode programNode) {
         programNode.accept(this);
     }
-
+    
     public void print() {
         System.out.println(irProgramNode.toString());
     }
-
+    
     public enum status {
-        global,
-        inClass,
-        inFun
+        global, inClass, inFun
     }
-
-
+    
+    
     @Override
     public void visit(ProgramNode it) {
         renamer.in();
@@ -61,14 +61,14 @@ public class IRBuilder implements ASTVisitor {
         }
         renamer.out();
     }
-
+    
     @Override
     public void visit(classBuildNode it) {
         assert currentFunDef == null;
         status retStatus = currentStatus;
         currentStatus = status.inClass;
         renamer.in();
-
+        
         currentFunDef = new IRFunDef(new IRType(), "@" + renamer.rename(it.name));
         irProgramNode.pushFunDef(currentFunDef);
         assert currentBlock == null;
@@ -87,12 +87,12 @@ public class IRBuilder implements ASTVisitor {
         retInstNode rin = new retInstNode(null, currentBlock);
         currentBlock.push(rin);
         currentBlock = null;
-
+        
         currentStatus = retStatus;
         currentFunDef = null;
         renamer.out();
     }
-
+    
     @Override
     public void visit(classDefNode it) {
         assert currentStatus == status.global;
@@ -127,37 +127,39 @@ public class IRBuilder implements ASTVisitor {
         currentStatus = status.global;
         renamer.out(it.name);
     }
-
+    
     private IRType getIRtype(Type tp) {
+        if (tp.isArray) {
+            return new IRType(IRType.IRTypeEnum.ptr);
+        }
         switch (tp.atomType) {
             case INT:
                 return new IRType(IRType.IRTypeEnum.i32);
             case BOOL:
                 return new IRType(IRType.IRTypeEnum.i1);
             case CLASS:
-                return new IRType(IRType.IRTypeEnum.ptr);
             case STRING:
+                return new IRType(IRType.IRTypeEnum.ptr);
             default:
                 assert false;
                 return null;
         }
     }
-
+    
     @Override
     public void visit(funDefNode it) {
         assert currentFunDef == null;
         status retStatus = currentStatus;
         currentStatus = status.inFun;
         renamer.in();
-
+        
         currentFunDef = new IRFunDef(getIRtype(it.typeNd.type), "@" + renamer.rename(it.name));
         irProgramNode.pushFunDef(currentFunDef);
         assert currentBlock == null;
         currentBlock = new IRBlockNode(null, currentFunDef, "entry");
-        if (MemberGets != null)
-            for (instNode inst : MemberGets) {
-                currentBlock.push(inst);
-            }
+        if (MemberGets != null) for (instNode inst : MemberGets) {
+            currentBlock.push(inst);
+        }
         //处理参数
         if (retStatus.equals(status.inClass)) {
             currentFunDef.pushPara(new IRVar("ptr", "%this", false));
@@ -165,15 +167,14 @@ public class IRBuilder implements ASTVisitor {
             currentBlock.push(new allocaInstNode(it, currentBlock, currentNoneStmtVarForFun, new IRType(IRType.IRTypeEnum.ptr)));
             currentBlock.push(new storeInstNode(it, currentBlock, new IRVar("ptr", "%this.val", false), new IRVar("ptr", "%" + renamer.getRenamed("this"), false)));
         }
-        if (it.paraList != null)
-            for (varDefNode varDef : it.paraList.paraList) {
-                assert currentNoneStmtVarForFun == null;
-                varDef.accept(this);
-                currentFunDef.pushPara(currentNoneStmtVarForFun);
-                currentNoneStmtVarForFun = null;
-                currentBlock.push(new allocaInstNode(varDef, currentBlock, new IRVar(getIRtype(varDef.typeNd.type).toString(), "%" + renamer.rename(varDef.units.getFirst().name), false), getIRtype(varDef.typeNd.type)));
-                currentBlock.push(new storeInstNode(varDef, currentBlock, new IRVar(getIRtype(varDef.typeNd.type).toString(), "%" + varDef.units.getFirst().name + ".val", false), new IRVar(getIRtype(varDef.typeNd.type).toString(), "%" + renamer.getRenamed(varDef.units.getFirst().name), false)));
-            }
+        if (it.paraList != null) for (varDefNode varDef : it.paraList.paraList) {
+            assert currentNoneStmtVarForFun == null;
+            varDef.accept(this);
+            currentFunDef.pushPara(currentNoneStmtVarForFun);
+            currentNoneStmtVarForFun = null;
+            currentBlock.push(new allocaInstNode(varDef, currentBlock, new IRVar(getIRtype(varDef.typeNd.type).toString(), "%" + renamer.rename(varDef.units.getFirst().name), false), getIRtype(varDef.typeNd.type)));
+            currentBlock.push(new storeInstNode(varDef, currentBlock, new IRVar(getIRtype(varDef.typeNd.type).toString(), "%" + varDef.units.getFirst().name + ".val", false), new IRVar(getIRtype(varDef.typeNd.type).toString(), "%" + renamer.getRenamed(varDef.units.getFirst().name), false)));
+        }
         currentFunDef.push(currentBlock);
         //留返回值
         if (it.typeNd.type.atomType != Type.TypeEnum.VOID) {
@@ -200,20 +201,60 @@ public class IRBuilder implements ASTVisitor {
             currentBlock.push(rin);
         }
         currentBlock = null;
-
-
+        
+        
         currentStatus = retStatus;
         currentFunDef = null;
         renamer.out();
     }
-
+    
+    
+    private void addInitFun(varDefNode it, varDefUnitNode unit, String type) {
+        IRFunDef funDef = new IRFunDef(new IRType(), "@" + renamer.rename(unit.name + ".init"));
+        irProgramNode.pushInitFun(funDef);
+        
+        
+        currentStatus = status.inFun;
+        renamer.in();
+        
+        currentFunDef = funDef;
+        assert currentBlock == null;
+        currentBlock = new IRBlockNode(null, currentFunDef, "entry");
+        currentFunDef.push(currentBlock);
+        //处理函数体
+        if (unit.init instanceof arrayNode) {//int []a={9};
+            currentLeftVarAddr = renamer.getAnonymousName();
+            currentArray = currentLeftVarAddr;
+            allocaInstNode alloc2 = new allocaInstNode(it, currentBlock, new IRVar("ptr", "%" + currentLeftVarAddr, false), new IRType(IRType.IRTypeEnum.ptr));
+            currentBlock.push(alloc2);
+            unit.init.accept(this);
+        } else {//int []a=f(0);//int []a=new int [4] ;or int []a=new int []{1,2,3,4};
+            unit.init.accept(this);
+            storeInstNode store = new storeInstNode(it, currentBlock, new IRVar(getIRtype(it.typeNd.type).toString(), currentLeftVarAddr, false), new IRVar("ptr", renamer.getRenamed(unit.name), true));
+            
+        }
+        //处理返回值
+        currentBlock = new IRBlockNode(currentBlock, currentFunDef, "return");
+        retInstNode rin = new retInstNode(null, currentBlock);
+        currentBlock.push(rin);
+        currentBlock = null;
+        currentStatus = status.global;
+        currentFunDef = null;
+        renamer.out();
+    }
+    
     @Override
     public void visit(varDefNode it) {
         if (it.isStmt) {
             assert currentBlock != null;
             if (it.typeNd.type.isArray) {
-                //TODO:array变量定义
-                assert false;
+                for (varDefUnitNode unit : it.units) {
+                    unit.init.accept(this);
+                    storeInstNode store = new storeInstNode(it, currentBlock, new IRVar("ptr", currentLeftVarAddr, false), new IRVar("ptr", "%" + renamer.rename(unit.name), false));
+                    currentBlock.push(store);
+                    currentLeftVarAddr = store.ptr.name;
+                    currentTmpValName = store.ptr.name;
+                }
             }
             IRType irType = getIRtype(it.typeNd.type);
             for (varDefUnitNode unit : it.units) {
@@ -226,8 +267,15 @@ public class IRBuilder implements ASTVisitor {
         } else {
             if (currentStatus == status.global) {
                 if (it.typeNd.type.isArray) {
-                    //TODO:array变量定义
-                    assert false;
+                    for (varDefUnitNode unit : it.units) {
+                        allocaInstNode alloc = new allocaInstNode(it, null, new IRVar("ptr", "@" + renamer.rename(unit.name), true), new IRType(IRType.IRTypeEnum.ptr));
+                        irProgramNode.pushVarDef(alloc);
+                        if (unit.init == null) {//int []a;
+                            continue;
+                        } else {
+                            addInitFun(it, unit, "array");
+                        }
+                    }
                 } else {
                     switch (it.typeNd.type.atomType) {
                         case INT:
@@ -238,8 +286,7 @@ public class IRBuilder implements ASTVisitor {
                                     irProgramNode.pushVarDef(new IRGlobalVarDef("@" + renamer.rename(unit.name), new IRIntLiteral(((intNode) unit.init).value)));
                                 } else {//int a=f(0);
                                     irProgramNode.pushVarDef(new IRGlobalVarDef("@" + renamer.rename(unit.name), new IRIntLiteral(0)));
-                                    //TODO:init function
-                                    assert false;
+                                    addInitFun(it, unit, "int");
                                 }
                             }
                             break;
@@ -251,99 +298,140 @@ public class IRBuilder implements ASTVisitor {
                                     irProgramNode.pushVarDef(new IRGlobalVarDef("@" + renamer.rename(unit.name), new IRBoolLiteral(((boolNode) unit.init).value)));
                                 } else {//int a=f(0);
                                     irProgramNode.pushVarDef(new IRGlobalVarDef("@" + renamer.rename(unit.name), new IRBoolLiteral(false)));
-                                    //TODO:init function
-                                    assert false;
+                                    addInitFun(it, unit, "bool");
                                 }
                             }
                             break;
                         case STRING:
-                            //TODO:string
-                            assert false;
+                            for (varDefUnitNode unit : it.units) {
+                                allocaInstNode alloc = new allocaInstNode(it, null, new IRVar("ptr", "@" + renamer.rename(unit.name), true), new IRType(IRType.IRTypeEnum.ptr));
+                                irProgramNode.pushVarDef(alloc);
+                                if (unit.init == null) {//string a;
+                                    continue;
+                                } else {
+                                    addInitFun(it, unit, "string");
+                                }
+                            }
                             break;
                         case CLASS:
-                            //TODO:class
-                            assert false;
+                            for (varDefUnitNode unit : it.units) {
+                                allocaInstNode alloc = new allocaInstNode(it, null, new IRVar("ptr", "@" + renamer.rename(unit.name), true), new IRType(IRType.IRTypeEnum.ptr));
+                                irProgramNode.pushVarDef(alloc);
+                                if (unit.init == null) {//string a;
+                                    continue;
+                                } else {
+                                    addInitFun(it, unit, "class");
+                                }
+                            }
+                            break;
                         default:
                             assert false;
                     }
                 }
             } else if (currentStatus == status.inClass) {
-                //TODO:class
                 assert false;
-            } else if (currentStatus == status.inFun) {//函数声明或定义的para
-                if (it.typeNd.type.isArray) {
-                    //TODO:array变量定义
-                    assert false;
-                } else {
-                    assert it.units.size() == 1;
-                    varDefUnitNode unit = it.units.getFirst();
-                    assert unit.init == null;
-                    switch (it.typeNd.type.atomType) {
-                        case INT:
-                            currentNoneStmtVarForFun = new IRVar("i32", "%" + unit.name + ".val", false);
-                            break;
-                        case BOOL:
-                            currentNoneStmtVarForFun = new IRVar("i1", "%" + unit.name + ".val", false);
-                            break;
-                        case STRING:
-                        case CLASS:
-                        default:
-                            assert false;
-                    }
-                }
+            } else if (currentStatus == status.inFun) {//(函数声明或定义)的para
+                currentNoneStmtVarForFun = new IRVar(getIRtype(it.typeNd.type).toString(), "%" + it.units.getFirst().name + ".val", false);
+//                if (it.typeNd.type.isArray) {
+//                    assert false;
+//                } else {
+//                    assert it.units.size() == 1;
+//                    varDefUnitNode unit = it.units.getFirst();
+//                    assert unit.init == null;
+//                    switch (it.typeNd.type.atomType) {
+//                        case INT:
+//                            currentNoneStmtVarForFun = new IRVar("i32", "%" + unit.name + ".val", false);
+//                            break;
+//                        case BOOL:
+//                            currentNoneStmtVarForFun = new IRVar("i1", "%" + unit.name + ".val", false);
+//                            break;
+//                        case STRING:
+//                        case CLASS:
+//                        default:
+//                            assert false;
+//                    }
+//                }
             }
         }
     }
-
+    
     @Override
     public void visit(funParaList it) {
         assert false;
     }
-
+    
     @Override
     public void visit(varDefUnitNode it) {
         assert false;
     }
-
+    
     @Override
     public void visit(arrayNode it) {
-
+        String arrayAddr = currentArray;
+        Type arrType = it.typeNd.type;
+        callInstNode call = new callInstNode(it, currentBlock, new IRVar("ptr", "%" + renamer.rename("call"), false), new IRType(IRType.IRTypeEnum.ptr), "%array.alloca", new IRIntLiteral(getSize(arrType)), new IRIntLiteral(1), new IRIntLiteral(1));
+        storeInstNode store = new storeInstNode(it, currentBlock, call.dest, new IRVar("ptr", arrayAddr, false));
+        currentBlock.push(call);
+        currentBlock.push(store);
+        if (arrType.dim == 1) {
+            for (int i = 0; i < it.value.size(); ++i) {
+                it.value.get(i).accept(this);
+                String dest = "%" + renamer.rename("arrayinit");
+                getElementPtrInstNode get = new getElementPtrInstNode(it, currentBlock, dest, arrayAddr, getIRtype(arrType));
+                get.push(getIRtype(it.value.get(i).typeNd.type), i);
+                currentBlock.push(get);
+                currentBlock.push(new storeInstNode(it, currentBlock, currentTmpValName, new IRVar(getIRtype(arrType).toString(), dest, false)));
+            }
+        } else {
+            for (int i = 0; i < it.value.size(); ++i) {
+                getElementPtrInstNode get = new getElementPtrInstNode(it, currentBlock, "%" + renamer.rename("arrayinit"), arrayAddr, getIRtype(arrType));
+                get.push(getIRtype(it.value.get(i).typeNd.type), i);
+                currentBlock.push(get);
+                currentArray = get.dest;
+                it.value.get(i).accept(this);
+            }
+        }
+        currentTmpValName = null;
+        currentLeftVarAddr = null;
     }
-
+    
     @Override
     public void visit(boolNode it) {
         currentTmpValName = it.value ? "1" : "0";
     }
-
+    
     @Override
     public void visit(identifierNode it) {
         currentTmpValName = renamer.getAnonymousName();
         currentLeftVarAddr = currentTmpValName;
         currentBlock.push(new loadInstNode(it, currentBlock, currentTmpValName, renamer.getRenamed(it.name), getIRtype(it.typeNd.type)));
     }
-
+    
     @Override
     public void visit(intNode it) {
         currentTmpValName = String.valueOf(it.value);
     }
-
+    
     @Override
     public void visit(nullNode it) {
         currentTmpValName = "null";
         currentLeftVarAddr = null;
     }
-
+    
     @Override
     public void visit(stringNode it) {
-
+        IRStringDef irStringDef = new IRStringDef("@" + renamer.rename("string"), it.value);
+        irProgramNode.pushStringDef(irStringDef);
+        currentTmpValName = null;
+        currentLeftVarAddr = irStringDef.name;
     }
-
+    
     @Override
     public void visit(thisNode it) {
         currentLeftVarAddr = renamer.getRenamed("this");
         currentTmpValName = null;
     }
-
+    
     @Override
     public void visit(arrayExprNode it) {
         it.array.accept(this);
@@ -356,7 +444,7 @@ public class IRBuilder implements ASTVisitor {
         getElementPtrInstNode get = new getElementPtrInstNode(it, currentBlock, dest, array, getIRtype(it.array.typeNd.type));
         get.push(new IRType(IRType.IRTypeEnum.i32), indexName);
     }
-
+    
     @Override
     public void visit(assignExprNode it) {
         it.lhs.accept(this);
@@ -366,7 +454,7 @@ public class IRBuilder implements ASTVisitor {
         currentBlock.push(new loadInstNode(it, currentBlock, lhsName, rhsName, getIRtype(it.lhs.typeNd.type)));
         currentTmpValName = lhsName;
     }
-
+    
     @Override
     public void visit(binaryExprNode it) {
         if (it.opCode == binaryExprNode.binaryOpType.andLg || it.opCode == binaryExprNode.binaryOpType.orLg) {
@@ -433,7 +521,7 @@ public class IRBuilder implements ASTVisitor {
         }
         currentTmpValName = "%" + dest.name;
     }
-
+    
     @Override
     public void visit(conditionalExprNode it) {
         it.condition.accept(this);
@@ -460,12 +548,72 @@ public class IRBuilder implements ASTVisitor {
         phi.push(new IRVar(getIRtype(it.falseExpr.typeNd.type).toString(), falseAddr, false), falseLabel);
         currentBlock.push(phi);
     }
-
+    
     @Override
     public void visit(formatStringExprNode it) {
-
+        System.err.println("formatStringExprNode:$x+y$$x+y$中间的string是null吗？");
+        String rslAddr = null;
+        for (int i = 0; i < it.strings.size(); ++i) {
+            if (it.strings.get(i) != null && !it.strings.get(i).isEmpty()) {
+                IRStringDef irStringDef = new IRStringDef("@" + renamer.rename("string"), it.strings.get(i));
+                irProgramNode.pushStringDef(irStringDef);
+                currentTmpValName = null;
+                currentLeftVarAddr = irStringDef.name;
+                if (rslAddr == null) {
+                    rslAddr = currentLeftVarAddr;
+                } else {
+                    callInstNode call = new callInstNode(it, currentBlock, new IRVar("ptr", "%" + renamer.rename("call"), false), new IRType(IRType.IRTypeEnum.ptr), "%string.concat", new IRVar("ptr", rslAddr, false), new IRVar("ptr", currentLeftVarAddr, false));
+                    rslAddr = call.dest.name;
+                    currentBlock.push(call);
+                }
+            }
+            if (i < it.exprs.size()) {
+                if (it.exprs.get(i) == null) {
+                    continue;
+                }
+                it.exprs.get(i).accept(this);
+                String tmp = null;
+                callInstNode call;
+                switch (it.exprs.get(i).typeNd.type.atomType) {
+                    case INT:
+                        tmp = "%" + renamer.rename("int");
+                        call = new callInstNode(it, currentBlock, new IRVar("ptr", tmp, false), new IRType(IRType.IRTypeEnum.ptr), "%toString", new IRVar("ptr", currentTmpValName, false));
+                        currentBlock.push(call);
+                        break;
+                    case BOOL:
+                        tmp = "%" + renamer.rename("bool");
+                        call = new callInstNode(it, currentBlock, new IRVar("ptr", tmp, false), new IRType(IRType.IRTypeEnum.ptr), "%bool.toString", new IRVar("ptr", currentTmpValName, false));
+                        currentBlock.push(call);
+                        break;
+                    case STRING:
+                        tmp = currentTmpValName;
+                        break;
+                    default:
+                        assert false;
+                }
+                if (rslAddr == null) {
+                    rslAddr = tmp;
+                } else {
+                    callInstNode call2 = new callInstNode(it, currentBlock, new IRVar("ptr", "%" + renamer.rename("call"), false), new IRType(IRType.IRTypeEnum.ptr), "%string.concat", new IRVar("ptr", rslAddr, false), new IRVar("ptr", tmp, false));
+                    rslAddr = call2.dest.name;
+                    currentBlock.push(call2);
+                }
+            }
+        }
     }
-
+    
+    
+    private String getInBuildFunName(funExprNode it) {
+        memberExprNode memberExpr = (memberExprNode) it.fun;
+        if (memberExpr.object.typeNd.type.isArray) return "array." + memberExpr.member.name;
+        else if (memberExpr.object.typeNd.type.atomType.equals(Type.TypeEnum.STRING))
+            return "string." + memberExpr.member.name;
+        else {
+            assert false;
+            return null;
+        }
+    }
+    
     //a.f().h();
     @Override
     public void visit(funExprNode it) {
@@ -483,17 +631,21 @@ public class IRBuilder implements ASTVisitor {
                 currentBlock.push(new callInstNode(it, currentBlock, dest, getIRtype(it.typeNd.type), "@" + it.typeNd.type.fun.funName, paras));
             }
         } else if (it.typeNd.type.fun.isInBuildMethod) {
-            //TODO:member-inbuild-function call
-            assert false;
+            it.fun.accept(this);
+            String funName = getInBuildFunName(it);
+            callInstNode call = new callInstNode(it, currentBlock, funName, new IRVar("ptr", currentLeftVarAddr, false));
+            for (ExprNode para : it.paras) {
+                para.accept(this);
+                call.args.add(new IRVar(getIRtype(para.typeNd.type).toString(), currentTmpValName, false));
+            }
         } else {
-            //TODO: member-function call
             it.fun.accept(this);
             Type funTypeInfo = it.fun.typeNd.type;
             String thisPtr = currentLeftVarAddr;
             callInstNode call;
             if (funTypeInfo.atomType == Type.TypeEnum.VOID) {
                 call = new callInstNode(it, currentBlock, funTypeInfo.fun.className + "." + funTypeInfo.fun.funName, new IRVar("ptr", thisPtr, false));
-
+                
                 currentLeftVarAddr = null;
                 currentTmpValName = null;
             } else {
@@ -509,7 +661,7 @@ public class IRBuilder implements ASTVisitor {
             currentBlock.push(call);
         }
     }
-
+    
     @Override
     public void visit(memberExprNode it) {
         it.object.accept(this);
@@ -527,17 +679,48 @@ public class IRBuilder implements ASTVisitor {
             //交给funcExpr
         }
     }
-
+    
+    private Integer getSize(Type type) {
+        if (type.isArray) {
+            return 4;
+        }
+        return switch (type.atomType) {
+            case INT, STRING, CLASS, BOOL -> 4;
+            default -> {
+                assert false;
+                yield 0;
+            }
+        };
+    }
+    
     @Override
     public void visit(newArrayExprNode it) {
-
+        callInstNode call = new callInstNode(it, currentBlock, new IRVar("ptr", "%" + renamer.rename("call"), false), new IRType(IRType.IRTypeEnum.ptr), "%array.alloca", new IRIntLiteral(getSize(it.typeNd.type)), new IRIntLiteral(it.dim), new IRIntLiteral(it.sizeInit.size()));
+        for (ExprNode expr : it.sizeInit) {
+            expr.accept(this);
+            call.args.add(new IRVar("i32", currentTmpValName, false));
+        }
+        currentBlock.push(call);
+        currentTmpValName = null;
+        currentLeftVarAddr = call.dest.name;
+        if (it.init != null) {
+            currentArray = call.dest.name;
+            it.init.accept(this);
+        }
     }
-
+    
     @Override
     public void visit(newVarExprNode it) {
-
+        assert !it.typeNd.type.isArray;
+        assert it.typeNd.type.atomType.equals(Type.TypeEnum.CLASS);
+        allocaInstNode alloca = new allocaInstNode(it, currentBlock, new IRVar("ptr", "%" + renamer.rename(it.typeNd.type.name), false), new IRType(IRType.IRTypeEnum.ptr));
+        callInstNode call = new callInstNode(it, currentBlock, "%" + it.typeNd.type.name + ".build", alloca.dest);
+        currentBlock.push(alloca);
+        currentBlock.push(call);
+        currentTmpValName = null;
+        currentLeftVarAddr = call.dest.name;
     }
-
+    
     @Override
     public void visit(preSelfExprNode it) {
         it.body.accept(this);
@@ -550,7 +733,7 @@ public class IRBuilder implements ASTVisitor {
 //        currentLeftVarAddr = currentLeftVarAddr;
         currentTmpValName = "%" + dest.name;
     }
-
+    
     @Override
     public void visit(unaryExprNode it) {
         it.body.accept(this);
@@ -582,7 +765,7 @@ public class IRBuilder implements ASTVisitor {
                 break;
         }
     }
-
+    
     @Override
     public void visit(blockStmtNode it) {
         renamer.in();
@@ -591,22 +774,22 @@ public class IRBuilder implements ASTVisitor {
         }
         renamer.out();
     }
-
+    
     @Override
     public void visit(breakStmtNode it) {
         currentBlock.push(new brInstNode(it, currentBlock, renamer.getRenamed("end..")));
     }
-
+    
     @Override
     public void visit(continueStmtNode it) {
         currentBlock.push(new brInstNode(it, currentBlock, renamer.getRenamed("step..")));
     }
-
+    
     @Override
     public void visit(exprStmtNode it) {
         it.expr.accept(this);
     }
-
+    
     @Override
     public void visit(forStmtNode it) {
         renamer.in();
@@ -639,7 +822,7 @@ public class IRBuilder implements ASTVisitor {
         currentBlock = new IRBlockNode(currentBlock, currentFunDef, endLabel);
         renamer.out();
     }
-
+    
     @Override
     public void visit(ifStmtNode it) {
         it.condition.accept(this);
@@ -662,7 +845,7 @@ public class IRBuilder implements ASTVisitor {
         currentBlock = new IRBlockNode(currentBlock, currentFunDef, endLabel);
         renamer.out();
     }
-
+    
     @Override
     public void visit(returnStmtNode it) {
         //TODO:return;是null还是void？
@@ -674,7 +857,7 @@ public class IRBuilder implements ASTVisitor {
         }
         currentBlock.push(new brInstNode(it, currentBlock, renamer.getRenamed("return")));
     }
-
+    
     @Override
     public void visit(whileStmtNode it) {
         renamer.in();
@@ -692,12 +875,12 @@ public class IRBuilder implements ASTVisitor {
         currentBlock = new IRBlockNode(currentBlock, currentFunDef, endLabel);
         renamer.out();
     }
-
+    
     @Override
     public void visit(typeNode it) {
         assert false;
     }
-
+    
     @Override
     public void visit(emptyStmtNode it) {
         assert false;

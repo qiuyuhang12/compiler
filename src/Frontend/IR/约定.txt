@@ -19,6 +19,7 @@ atomExpr:新建指针，存储，回传
 不进入renamer
 global:f->@f
 class:f->@class.f,第一个参数是this
+构造：@class.build
 
 
 函数返回的label：return
@@ -37,3 +38,5 @@ return;的it.value==null;还是void？
 入参是xx.val
 
 member function : xxclass.f
+
+指针visit的currentTmpValName是null,curentLeftValName是地址
