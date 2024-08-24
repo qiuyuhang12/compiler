@@ -57,7 +57,9 @@ void *alloca_helper(int size, int length) {
     return a + 1;
 }
 
-int array_size(void *array) { return ((int *) array)[-1]; }
+int array_size(void *array) {
+    return ((int *) array)[-1];
+}
 
 int string_length(char *s) {
     int i = 0;
@@ -87,8 +89,8 @@ int string_parseInt(char *s) {
         for (int i = 0; s[i] != '\0'; i++) {
             result = result * 10 + s[i] - '0';
         }
-        return result;
     }
+    return result;
 }
 
 int string_compare(char *s1, char *s2) {

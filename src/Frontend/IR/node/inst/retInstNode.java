@@ -20,6 +20,6 @@ public class retInstNode extends instNode {
 
     @Override
     public String toString() {
-        return "ret " + value.typeInfo.toString() + value.toString() + "\n";
+        return "ret " + value.typeInfo.toString() +" "+ value.toString() + "\n";
     }
 }

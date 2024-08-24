@@ -149,7 +149,7 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
             else if (ctx.literal().Null() != null)
                 return new nullNode(new position(ctx.literal().Null()));
             else if (ctx.literal().StringConst() != null)
-                return new stringNode(new position(ctx.literal().StringConst()), ctx.literal().StringConst().toString());
+                return new stringNode(new position(ctx.literal().StringConst()), ctx.literal().StringConst().toString().substring(1, ctx.literal().StringConst().toString().length() - 1));
             else if (ctx.literal().IntegerConst() != null)
                 return new intNode(new position(ctx.literal().IntegerConst()), Integer.parseInt(ctx.literal().IntegerConst().toString()));
             else if (ctx.literal().arrayConst() != null)
@@ -319,14 +319,14 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
         formatStringExprNode format = new formatStringExprNode(new position(ctx));
         if (ctx.formatString().FmtStringS() != null) {
             assert ctx.formatString().FmtStringL() == null &&
-                    ctx.formatString().FmtStringM() == null &&
-                    ctx.formatString().FmtStringS() == null &&
+                    ctx.formatString().FmtStringM().isEmpty() &&
+                    ctx.formatString().FmtStringR() == null &&
                     ctx.formatString().expression().isEmpty();
-            format.strings.add(ctx.formatString().FmtStringS().toString());
+            format.strings.add(ctx.formatString().FmtStringS().toString().substring(2, ctx.formatString().FmtStringS().toString().length() - 1));
         } else {
-            format.strings.add(ctx.formatString().FmtStringL().toString());
-            ctx.formatString().FmtStringM().forEach(m -> format.strings.add(m.toString()));
-            format.strings.add(ctx.formatString().FmtStringR().toString());
+            format.strings.add(ctx.formatString().FmtStringL().toString().substring(2, ctx.formatString().FmtStringL().toString().length() - 1));
+            ctx.formatString().FmtStringM().forEach(m -> format.strings.add(m.toString().substring(1, m.toString().length() - 1)));
+            format.strings.add(ctx.formatString().FmtStringR().toString().substring(1, ctx.formatString().FmtStringR().toString().length() - 1));
             ctx.formatString().expression().forEach(exp -> format.exprs.add((ExprNode) visit(exp)));
         }
 //        format.str = ctx.formatString().toString();

@@ -14,6 +14,11 @@ public class IRStringDef extends IRNode {
 
     @Override
     public String toString() {
-        return name + " = private unnamed_addr constant [" + value.length() + " x i8] c\"" + value + "\\00\"\n";
+        assert false;
+//        十进制
+        value.replace("\"", "\22");
+        value.replace("\n", "\12");
+//        value.replace("\\", "\");
+        return name + " = private unnamed_addr constant [" + (value.length()+1) + " x i8] c\"" + value + "\\00\"\n";
     }
 }

@@ -13,24 +13,33 @@ public class IRBlockNode extends IRNode {
     public IRFunDeclare func;
     public String label;
     public ArrayList<instNode> insts = new ArrayList<>();
-
+    
     public IRBlockNode(IRBlockNode jumpSrc, IRFunDeclare func, String label) {
         this.jumpSrc = jumpSrc;
         this.func = func;
         this.label = label;
     }
-
+    
     public void push(instNode inst) {
         insts.add(inst);
     }
-
+    
     @Override
     public String toString() {
+        assert insts != null && !insts.isEmpty();
         assert insts.getLast() instanceof brInstNode || insts.getLast() instanceof retInstNode;
         StringBuilder sb = new StringBuilder();
-        sb.append(label).append(":");
+        sb.append(label).append(":\n");
+        int i = 0;
         for (instNode inst : insts) {
-            sb.append("\n").append(inst.toString());
+            i++;
+            sb.append(inst.toString());
+            if (inst instanceof brInstNode || inst instanceof retInstNode) {
+                if (i + 1 < insts.size()) {
+                    insts.subList(i, insts.size()).clear();
+                }
+                break;
+            }
         }
         return sb.toString() + "\n";
     }

@@ -12,4 +12,6 @@ public abstract class instNode extends IRNode {
         parent = _parent;
         src = _src;
     }
+    @Override
+    public abstract String toString();
 }

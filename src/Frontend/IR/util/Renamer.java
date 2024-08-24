@@ -17,6 +17,7 @@ public class Renamer {
         return "%anon."+cnt++;
     }
     public String rename(String name) {
+        assert name.charAt(0)!='@'&&name.charAt(0)!='%';
         if(inClass&&nameMapStack.size()==2){
             nameMapStack.peek().put(name, -1);
             return className+"."+name;
@@ -38,6 +39,9 @@ public class Renamer {
                 if(inClass&&nameMapStack.size()==2){
                     assert nameMapStack.get(i).get(name)==-1;
                     return "%"+className+"."+name;
+                }
+                if (nameMapStack.get(i).get(name)==0){
+                    return (i == 0 ? "@" : "%") + name;
                 }
                 return (i == 0 ? "@" : "%") + name + "." + nameMapStack.get(i).get(name);
             }

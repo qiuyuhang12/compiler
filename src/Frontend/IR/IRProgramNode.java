@@ -36,7 +36,17 @@ public class IRProgramNode extends IRNode {
     public void pushStringDef(IRStringDef stringDef) {
         stringDefs.add(stringDef);
     }
-
+    
+    public String initCall(){
+        StringBuilder sb = new StringBuilder();
+        sb.append("define void @_.init() {\n");
+        for (IRFunDef initFun : initFuns) {
+            sb.append("call void ").append(initFun.name).append("()").append("\n");
+        }
+        sb.append("ret void\n");
+        sb.append("}\n");
+        return sb.toString();
+    }
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -49,14 +59,16 @@ public class IRProgramNode extends IRNode {
         for (IRStringDef stringDef : stringDefs) {
             sb.append(stringDef.toString()).append("\n");
         }
+        for (IRFunDef initFun : initFuns) {
+            sb.append(initFun.toString()).append("\n");
+        }
+        sb.append(initCall());
         for (IRFunDeclare funDecl : funDecls) {
             sb.append(funDecl.toString()).append("\n");
         }
         for (IRFunDef funDef : funDefs) {
             sb.append(funDef.toString()).append("\n");
         }
-        //TODO:Init Function加入main
-        assert false;
         return sb.toString() + "\n";
     }
 }
