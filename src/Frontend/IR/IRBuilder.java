@@ -81,6 +81,7 @@ public class IRBuilder implements ASTVisitor {
         for (instNode inst : MemberGets) {
             currentBlock.push(inst);
         }
+        currentFunDef.pushPara(new IRVar("ptr", "%this", false));
         currentFunDef.push(currentBlock);
         //处理函数体
         for (StmtNode stmt : it.stmts) {
@@ -913,7 +914,7 @@ public class IRBuilder implements ASTVisitor {
         callInstNode call0 = new callInstNode(it, currentBlock, new IRVar("ptr", renamer.getAnonymousName(), false), new IRType(IRType.IRTypeEnum.ptr), "malloc", new IRIntLiteral(classVarIndex.get(it.typeNd.type.name).size() * 4));
         currentBlock.push(call0);
         if (hasBuildClass.contains(it.typeNd.type.name)) {
-            callInstNode call = new callInstNode(it, currentBlock, it.typeNd.type.name + ".build", alloca.dest);
+            callInstNode call = new callInstNode(it, currentBlock, it.typeNd.type.name + ".build", call0.dest);
             currentBlock.push(call);
         }
         currentLeftVarAddr = alloca.dest.name;
