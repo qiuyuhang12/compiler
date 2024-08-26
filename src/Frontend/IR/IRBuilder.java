@@ -537,7 +537,7 @@ public class IRBuilder implements ASTVisitor {
     @Override
     public void visit(thisNode it) {
         currentLeftVarAddr = renamer.getRenamed("this");
-        currentTmpValName = null;
+        currentTmpValName = "%this";
     }
     
     @Override
