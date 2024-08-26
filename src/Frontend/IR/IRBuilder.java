@@ -18,6 +18,7 @@ import Frontend.IR.node.stmt.IRBlockNode;
 import Frontend.IR.type.IRStruct;
 import Frontend.IR.type.IRType;
 import Frontend.IR.util.Renamer;
+import Util.Scope;
 import Util.Type;
 
 import java.util.ArrayList;
@@ -39,9 +40,11 @@ public class IRBuilder implements ASTVisitor {
     public status currentStatus = status.global;
     public String currentArray;//处理数组常量
     public HashSet<String> hasBuildClass = new HashSet<>();
+    private Scope gScope;
     
-    public IRBuilder(ProgramNode programNode) {
+    public IRBuilder(ProgramNode programNode, Scope gScope) {
         programNode.accept(this);
+        this.gScope = gScope;
     }
     
     public void print() {
@@ -109,7 +112,7 @@ public class IRBuilder implements ASTVisitor {
         //初始this
         renamer.rename("this");
         allocaInstNode alloc = new allocaInstNode(it, null, new IRVar("ptr", "%" + renamer.rename("this"), false), new IRType(IRType.IRTypeEnum.ptr));
-        storeInstNode store = new storeInstNode(it, null, new IRVar("ptr", "this", false), new IRVar("ptr", renamer.getRenamed("this"), false));
+        storeInstNode store = new storeInstNode(it, null, new IRVar("ptr", "%this", false), new IRVar("ptr", renamer.getRenamed("this"), false));
         MemberGets = new ArrayList<>();
         MemberGets.add(alloc);
         MemberGets.add(store);
@@ -120,7 +123,10 @@ public class IRBuilder implements ASTVisitor {
                 classVarIndex.get(it.name).put(unit.name, i + j);
 //                unit.irIndex = i + j;
                 irStruct.struct.add(getIRtype(varDef.typeNd.type));
-                getElementPtrInstNode get = new getElementPtrInstNode(varDef, currentBlock, "%" + it.name + "." + unit.name, renamer.getRenamed("this"), getIRTypeForGetElementPtr(varDef.typeNd.type));
+                IRType irType = new IRType(IRType.IRTypeEnum.struct);
+                irType.structInfo = irStructDef.name;
+//                getElementPtrInstNode get = new getElementPtrInstNode(varDef, currentBlock, "%" + it.name + "." + unit.name, renamer.getRenamed("this"), irType);
+                getElementPtrInstNode get = new getElementPtrInstNode(varDef, currentBlock, "%" + it.name + "." + unit.name, "%this", irType);
                 get.push(new IRType(IRType.IRTypeEnum.i32), 0);
                 get.push(new IRType(IRType.IRTypeEnum.i32), i + j);
                 MemberGets.add(get);
@@ -128,6 +134,7 @@ public class IRBuilder implements ASTVisitor {
             }
         }
         for (funDefNode funDef : it.funDefs) {
+//            renamer.rename(funDef.name);
             funDef.name = it.name + "." + funDef.name;
             funDef.accept(this);
         }
@@ -172,7 +179,7 @@ public class IRBuilder implements ASTVisitor {
             case BOOL:
             case STRING:
             case VOID:
-                return getIRtype(tp);
+//                return getIRtype(tp);
             case CLASS:
                 IRType it = new IRType(IRType.IRTypeEnum.struct);
                 it.structInfo = "%class." + tp.name;
@@ -200,7 +207,7 @@ public class IRBuilder implements ASTVisitor {
         //处理参数
         if (retStatus.equals(status.inClass)) {
             currentFunDef.pushPara(new IRVar("ptr", "%this", false));
-            currentNoneStmtVarForFun = new IRVar("ptr", "%this", false);
+//            currentNoneStmtVarForFun = new IRVar("ptr", "%this", false);
 //            currentBlock.push(new allocaInstNode(it, currentBlock, currentNoneStmtVarForFun, new IRType(IRType.IRTypeEnum.ptr)));
 //            currentBlock.push(new storeInstNode(it, currentBlock, new IRVar("ptr", "%this.val", false), new IRVar("ptr", renamer.getRenamed("this"), false)));
         }
@@ -475,7 +482,7 @@ public class IRBuilder implements ASTVisitor {
         if (arrType.dim == 1) {
             for (int i = 0; i < it.value.size(); ++i) {
                 it.value.get(i).accept(this);
-                String dest = "%" + renamer.rename("arrayinit");
+                String dest = "%" + renamer.rename("array-init");
                 getElementPtrInstNode get = new getElementPtrInstNode(it, currentBlock, dest, arrayAddr, getIRtype(arrType));
 //                get.push(new IRType("i32"), 0);
                 get.push(getIRtype(it.value.get(i).typeNd.type), i);
@@ -484,7 +491,7 @@ public class IRBuilder implements ASTVisitor {
             }
         } else {
             for (int i = 0; i < it.value.size(); ++i) {
-                getElementPtrInstNode get = new getElementPtrInstNode(it, currentBlock, "%" + renamer.rename("arrayinit"), arrayAddr, getIRtype(arrType));
+                getElementPtrInstNode get = new getElementPtrInstNode(it, currentBlock, "%" + renamer.rename("array-init"), arrayAddr, getIRtype(arrType));
 //                get.push(new IRType("i32"), 0);
                 get.push(getIRtype(it.value.get(i).typeNd.type), i);
                 currentBlock.push(get);
@@ -541,12 +548,12 @@ public class IRBuilder implements ASTVisitor {
         String indexName = currentTmpValName;
         IRVar array = new IRVar("ptr", arrayName, false);
         IRVar index = new IRVar("i32", indexName, false);
-        IRVar dest = new IRVar("ptr", "%" + renamer.rename("arrayidx"), false);
+        IRVar dest = new IRVar("ptr", "%" + renamer.rename("array.idx"), false);
         getElementPtrInstNode get = new getElementPtrInstNode(it, currentBlock, dest, array, getIRtype(it.array.typeNd.type));
         get.push(new IRType(IRType.IRTypeEnum.i32), indexName);
         currentBlock.push(get);
         currentLeftVarAddr = dest.name;
-        IRVar dest2 = new IRVar(getArrElementType(it.array.typeNd.type).toString(), "%" + renamer.rename("arrayidx.val"), false);
+        IRVar dest2 = new IRVar(getArrElementType(it.array.typeNd.type).toString(), "%" + renamer.rename("array.idx.val"), false);
         currentBlock.push(new loadInstNode(it, currentBlock, dest2.name, dest.name, new IRType(getArrElementType(it.array.typeNd.type).toString())));
         currentTmpValName = dest2.name;
     }
@@ -806,18 +813,29 @@ public class IRBuilder implements ASTVisitor {
             currentTmpValName = call.dest.name;
             currentLeftVarAddr = call.dest.name;
         } else {
-            it.fun.accept(this);
             Type funTypeInfo = it.fun.typeNd.type;
-            String thisPtr = currentLeftVarAddr;
+            String thisPtr;
+            if (it.fun instanceof identifierNode) {
+                thisPtr = "%this";
+            }else {
+                assert it.fun instanceof memberExprNode;
+                it.fun.accept(this);
+                thisPtr = currentTmpValName;
+            }
             callInstNode call;
+            String currentTmpValNameRET;
+            String currentLeftVarAddrRET;
             if (funTypeInfo.atomType == Type.TypeEnum.VOID) {
                 call = new callInstNode(it, currentBlock, funTypeInfo.fun.className + "." + funTypeInfo.fun.funName, new IRVar("ptr", thisPtr, false));
-                
                 currentLeftVarAddr = null;
                 currentTmpValName = null;
+                currentLeftVarAddrRET = null;
+                currentTmpValNameRET = null;
             } else {
                 currentTmpValName = "%call." + renamer.rename(it.typeNd.type.fun.funName + ".ret");
                 currentLeftVarAddr = currentTmpValName;
+                currentLeftVarAddrRET = currentTmpValName;
+                currentTmpValNameRET = currentTmpValName;
                 IRVar dest = new IRVar(getIRtype(it.typeNd.type).toString(), currentTmpValName, false);
                 call = new callInstNode(it, currentBlock, dest, getIRtype(it.typeNd.type), funTypeInfo.fun.className + "." + funTypeInfo.fun.funName, new IRVar("ptr", thisPtr, false));
             }
@@ -826,15 +844,18 @@ public class IRBuilder implements ASTVisitor {
                 call.args.add(new IRVar(getIRtype(para.typeNd.type).toString(), currentTmpValName, false));
             }
             currentBlock.push(call);
+            currentTmpValName = currentTmpValNameRET;
+            currentLeftVarAddr = currentLeftVarAddrRET;
         }
     }
     
     @Override
     public void visit(memberExprNode it) {
         it.object.accept(this);
-        String ob = currentLeftVarAddr;
+//        String ob = currentLeftVarAddr;
+        String ob = currentTmpValName;
         if (!it.typeNd.type.isFun) {
-            getElementPtrInstNode get = new getElementPtrInstNode(it, currentBlock, "%" + renamer.rename(it.member.name), currentTmpValName, getIRTypeForGetElementPtr(it.object.typeNd.type));
+            getElementPtrInstNode get = new getElementPtrInstNode(it, currentBlock, renamer.getAnonymousName(), ob, getIRTypeForGetElementPtr(it.object.typeNd.type));
             get.push(new IRType(IRType.IRTypeEnum.i32), 0);
             get.push(new IRType(IRType.IRTypeEnum.i32), classVarIndex.get(it.object.typeNd.type.name).get(it.member.name));
             currentBlock.push(get);
@@ -889,14 +910,14 @@ public class IRBuilder implements ASTVisitor {
         assert it.typeNd.type.atomType.equals(Type.TypeEnum.CLASS);
         allocaInstNode alloca = new allocaInstNode(it, currentBlock, new IRVar("ptr", "%" + renamer.rename(it.typeNd.type.name), false), new IRType(IRType.IRTypeEnum.ptr));
 //        currentBlock.push(alloca);
-        callInstNode call0 = new callInstNode(it, currentBlock, new IRVar("ptr", renamer.getRenamed(it.typeNd.type.name), false), new IRType(IRType.IRTypeEnum.ptr), "malloc", new IRIntLiteral(classVarIndex.get(it.typeNd.type.name).size() * 4));
+        callInstNode call0 = new callInstNode(it, currentBlock, new IRVar("ptr", renamer.getAnonymousName(), false), new IRType(IRType.IRTypeEnum.ptr), "malloc", new IRIntLiteral(classVarIndex.get(it.typeNd.type.name).size() * 4));
         currentBlock.push(call0);
         if (hasBuildClass.contains(it.typeNd.type.name)) {
             callInstNode call = new callInstNode(it, currentBlock, it.typeNd.type.name + ".build", alloca.dest);
             currentBlock.push(call);
         }
         currentLeftVarAddr = alloca.dest.name;
-        currentTmpValName = alloca.dest.name;
+        currentTmpValName = call0.dest.name;
     }
     
     @Override

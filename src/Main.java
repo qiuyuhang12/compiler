@@ -42,9 +42,9 @@ public class Main {
 //            System.setErr(fileErr);
         }
         
-        String name = "test.mx";
-        InputStream input = new FileInputStream(name);
-//        InputStream input = System.in;
+//        String name = "test.mx";
+//        InputStream input = new FileInputStream(name);
+        InputStream input = System.in;
         try {
             ProgramNode programNode;
             Scope gScope = new Scope(null);
@@ -67,7 +67,7 @@ public class Main {
             }
             new SemanticChecker(gScope).visit(programNode);
 
-            IRBuilder ib=new IRBuilder(programNode);
+            IRBuilder ib=new IRBuilder(programNode, gScope);
             ib.print();
 
 //            mainFn f = new mainFn();

@@ -15,6 +15,7 @@ public class getElementPtrInstNode extends instNode {
 
     public getElementPtrInstNode(ASTNode expr, IRBlockNode _parent, IRVar dest, IRVar ptr, IRType type) {
         super(expr, _parent);
+        assert !ptr.toString().equals("null");
         this.dest = dest.name;
         assert ptr.typeInfo.type == IRType.IRTypeEnum.ptr;
         this.ptr = ptr.name;
@@ -23,6 +24,10 @@ public class getElementPtrInstNode extends instNode {
 
     public getElementPtrInstNode(ASTNode expr, IRBlockNode _parent, String dest, String ptr, IRType type) {
         super(expr, _parent);
+        if (ptr==null) {
+            System.err.println("ptr is null");
+        }
+        assert !ptr.equals("null");
         this.dest = dest;
         this.ptr = ptr;
         this.type = type;
@@ -41,7 +46,7 @@ public class getElementPtrInstNode extends instNode {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append(dest).append(" = getelementptr ").append(type.toString()).append(", ptr ").append(ptr.toString());
+        sb.append(dest).append(" = getelementptr ").append(type.toString()).append(", ptr ").append(ptr);
         for (int i = 0; i < tys.size(); i++) {
             sb.append(", ").append(tys.get(i).toString()).append(" ").append(idxs.get(i));
         }
