@@ -34,7 +34,8 @@ public class icmpInstNode extends instNode {
             case less -> opEnum.slt;
             case lessEq -> opEnum.sle;
             default -> {
-                System.err.println("Invalid icmp operation");
+                //hh
+//                System.err.println("Invalid icmp operation");
                 System.exit(1);
                 yield null;
             }

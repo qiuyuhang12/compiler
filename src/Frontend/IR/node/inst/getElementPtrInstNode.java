@@ -41,7 +41,7 @@ public class getElementPtrInstNode extends instNode {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append(dest.toString()).append(" = getelementptr ").append(type.toString()).append(", ptr ").append(ptr.toString());
+        sb.append(dest).append(" = getelementptr ").append(type.toString()).append(", ptr ").append(ptr.toString());
         for (int i = 0; i < tys.size(); i++) {
             sb.append(", ").append(tys.get(i).toString()).append(" ").append(idxs.get(i));
         }

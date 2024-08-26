@@ -9,16 +9,16 @@ public class IRStringDef extends IRNode {
     public IRStringDef(String name, String value) {
         assert name.charAt(0) == '@';
         this.name = name;
-        this.value = value;
+        this.value = value.replace("$$","$");
     }
 
     @Override
     public String toString() {
-        assert false;
-//        十进制
-        value.replace("\"", "\22");
-        value.replace("\n", "\12");
-//        value.replace("\\", "\");
-        return name + " = private unnamed_addr constant [" + (value.length()+1) + " x i8] c\"" + value + "\\00\"\n";
+        String tmp=value.replace("\\\"", "\042");
+        tmp=tmp.replace("\\n", "\012");
+        tmp=tmp.replace("\\\\", "\134");
+        value=value.replace("\\\"", "\\22");
+        value=value.replace("\\n", "\\0A");
+        return name + " = private unnamed_addr constant [" + (tmp.length()+1) + " x i8] c\"" + value + "\\00\"\n";
     }
 }

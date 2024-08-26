@@ -11,6 +11,7 @@ public class loadInstNode extends instNode{
     public IRType type;
     public loadInstNode(ASTNode expr, IRBlockNode _parent, String dest, String ptr, IRType type){
         super(expr, _parent);
+        assert ptr.charAt(1) != '%';
         this.dest = dest;
         this.ptr = ptr;
         this.type = type;

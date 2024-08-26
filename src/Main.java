@@ -21,14 +21,27 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.io.PrintStream;
 
 
 public class Main {
 //todo::内建函数
 
     public static void main(String[] args) throws Exception {
-
+//        if (false){
+        if (true) {
+            // 创建一个 PrintStream 对象，将输出重定向到文件
+            PrintStream fileOut = new PrintStream(new FileOutputStream("output.ll"));
+//            PrintStream output =new PrintStream(new FileOutputStream("src/output.ll"));
+//            PrintStream fileErr = new PrintStream(new FileOutputStream("errput.txt"));
+            
+            // 将标准输出流重定向到文件
+            System.setOut(fileOut);
+//            System.setErr(fileErr);
+        }
+        
         String name = "test.mx";
         InputStream input = new FileInputStream(name);
 //        InputStream input = System.in;

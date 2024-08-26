@@ -82,11 +82,12 @@ char *string_substring(char *s, int left, int right) {
 int string_parseInt(char *s) {
     int result = 0;
     if (s[0] == '-') {
-        for (int i = 1; s[i] != '\0'; i++)
+        for (int i = 1; s[i] != '\0'&&s[i]>='0'&&s[i]<='9'; i++){
             result = result * 10 + s[i] - '0';
+        }
         result = -result;
     } else {
-        for (int i = 0; s[i] != '\0'; i++) {
+        for (int i = 0; s[i] != '\0'&&s[i]>='0'&&s[i]<='9'; i++) {
             result = result * 10 + s[i] - '0';
         }
     }
@@ -127,7 +128,7 @@ void string_copy(char **s1, char *s2) {
     (*s1)[len] = '\0';
 }
 
-int __string_ord(char *s, int i) {
+int string_ord(char *s, int i) {
     return s[i];
 }
 

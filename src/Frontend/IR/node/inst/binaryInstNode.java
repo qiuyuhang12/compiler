@@ -51,7 +51,8 @@ public class binaryInstNode extends instNode {
             case or -> opEnum.or;
             case xor -> opEnum.xor;
             default -> {
-                System.err.println("Invalid binary operation");
+                //hh
+//                System.err.println("Invalid binary operation");
                 System.exit(1);
                 yield null;
             }
@@ -66,6 +67,6 @@ public class binaryInstNode extends instNode {
 
     @Override
     public String toString() {
-        return dest.toString() + " = i32 " + opToString() + " " + lhs.toString() + ", " + rhs.toString() + "\n";
+        return dest.toString() + " = " + opToString() +" "+ lhs.typeInfo.toString() +" "+ lhs.toString() + ", " + rhs.toString() + "\n";
     }
 }

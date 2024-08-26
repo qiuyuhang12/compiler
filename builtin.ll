@@ -142,53 +142,59 @@ define dso_local noalias noundef ptr @string.substring(ptr nocapture noundef rea
 ; Function Attrs: nofree norecurse nosync nounwind memory(argmem: read)
 define dso_local i32 @string.parseInt(ptr nocapture noundef readonly %0) local_unnamed_addr #8 {
   %2 = load i8, ptr %0, align 1, !tbaa !10
-  switch i8 %2, label %22 [
-    i8 45, label %3
-    i8 0, label %34
-  ]
+  %3 = icmp eq i8 %2, 45
+  br i1 %3, label %7, label %4
 
-3:                                                ; preds = %1
-  %4 = getelementptr inbounds i8, ptr %0, i32 1
-  %5 = load i8, ptr %4, align 1, !tbaa !10
-  %6 = icmp eq i8 %5, 0
-  br i1 %6, label %7, label %10
+4:                                                ; preds = %1
+  %5 = add i8 %2, -48
+  %6 = icmp ult i8 %5, 10
+  br i1 %6, label %28, label %41
 
-7:                                                ; preds = %10, %3
-  %8 = phi i32 [ 0, %3 ], [ %17, %10 ]
-  %9 = sub nsw i32 0, %8
-  br label %34
+7:                                                ; preds = %1
+  %8 = getelementptr inbounds i8, ptr %0, i32 1
+  %9 = load i8, ptr %8, align 1, !tbaa !10
+  %10 = add i8 %9, -48
+  %11 = icmp ult i8 %10, 10
+  br i1 %11, label %15, label %12
 
-10:                                               ; preds = %3, %10
-  %11 = phi i8 [ %20, %10 ], [ %5, %3 ]
-  %12 = phi i32 [ %18, %10 ], [ 1, %3 ]
-  %13 = phi i32 [ %17, %10 ], [ 0, %3 ]
-  %14 = zext i8 %11 to i32
-  %15 = mul nsw i32 %13, 10
-  %16 = add i32 %15, -48
-  %17 = add i32 %16, %14
-  %18 = add nuw nsw i32 %12, 1
-  %19 = getelementptr inbounds i8, ptr %0, i32 %18
-  %20 = load i8, ptr %19, align 1, !tbaa !10
-  %21 = icmp eq i8 %20, 0
-  br i1 %21, label %7, label %10, !llvm.loop !14
+12:                                               ; preds = %15, %7
+  %13 = phi i32 [ 0, %7 ], [ %22, %15 ]
+  %14 = sub nsw i32 0, %13
+  br label %41
 
-22:                                               ; preds = %1, %22
-  %23 = phi i8 [ %32, %22 ], [ %2, %1 ]
-  %24 = phi i32 [ %30, %22 ], [ 0, %1 ]
-  %25 = phi i32 [ %29, %22 ], [ 0, %1 ]
-  %26 = zext i8 %23 to i32
-  %27 = mul nsw i32 %25, 10
-  %28 = add i32 %27, -48
-  %29 = add i32 %28, %26
-  %30 = add nuw nsw i32 %24, 1
-  %31 = getelementptr inbounds i8, ptr %0, i32 %30
-  %32 = load i8, ptr %31, align 1, !tbaa !10
-  %33 = icmp eq i8 %32, 0
-  br i1 %33, label %34, label %22, !llvm.loop !15
+15:                                               ; preds = %7, %15
+  %16 = phi i8 [ %25, %15 ], [ %9, %7 ]
+  %17 = phi i32 [ %23, %15 ], [ 1, %7 ]
+  %18 = phi i32 [ %22, %15 ], [ 0, %7 ]
+  %19 = zext nneg i8 %16 to i32
+  %20 = mul nsw i32 %18, 10
+  %21 = add i32 %20, -48
+  %22 = add i32 %21, %19
+  %23 = add nuw nsw i32 %17, 1
+  %24 = getelementptr inbounds i8, ptr %0, i32 %23
+  %25 = load i8, ptr %24, align 1, !tbaa !10
+  %26 = add i8 %25, -48
+  %27 = icmp ult i8 %26, 10
+  br i1 %27, label %15, label %12, !llvm.loop !14
 
-34:                                               ; preds = %22, %1, %7
-  %35 = phi i32 [ %9, %7 ], [ 0, %1 ], [ %29, %22 ]
-  ret i32 %35
+28:                                               ; preds = %4, %28
+  %29 = phi i8 [ %38, %28 ], [ %2, %4 ]
+  %30 = phi i32 [ %36, %28 ], [ 0, %4 ]
+  %31 = phi i32 [ %35, %28 ], [ 0, %4 ]
+  %32 = zext nneg i8 %29 to i32
+  %33 = mul nsw i32 %31, 10
+  %34 = add i32 %33, -48
+  %35 = add i32 %34, %32
+  %36 = add nuw nsw i32 %30, 1
+  %37 = getelementptr inbounds i8, ptr %0, i32 %36
+  %38 = load i8, ptr %37, align 1, !tbaa !10
+  %39 = add i8 %38, -48
+  %40 = icmp ult i8 %39, 10
+  br i1 %40, label %28, label %41, !llvm.loop !15
+
+41:                                               ; preds = %28, %4, %12
+  %42 = phi i32 [ %14, %12 ], [ 0, %4 ], [ %35, %28 ]
+  ret i32 %42
 }
 
 ; Function Attrs: nofree norecurse nosync nounwind memory(argmem: read)
@@ -334,7 +340,7 @@ define dso_local void @string.copy(ptr nocapture noundef %0, ptr nocapture nound
 }
 
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(argmem: read)
-define dso_local i32 @__string.ord(ptr nocapture noundef readonly %0, i32 noundef %1) local_unnamed_addr #7 {
+define dso_local i32 @string.ord(ptr nocapture noundef readonly %0, i32 noundef %1) local_unnamed_addr #7 {
   %3 = getelementptr inbounds i8, ptr %0, i32 %1
   %4 = load i8, ptr %3, align 1, !tbaa !10
   %5 = zext i8 %4 to i32

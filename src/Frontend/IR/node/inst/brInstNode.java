@@ -15,6 +15,7 @@ public class brInstNode extends instNode {
     public brInstNode(ASTNode expr, IRBlockNode _parent, IREntity cond, String ifTrue, String ifFalse) {
         super(expr,_parent);
         assert cond.typeInfo.type == IRType.IRTypeEnum.i1;
+        assert ifTrue.charAt(0) != '%' && ifFalse.charAt(0) != '%';
         this.cond = cond;
         this.ifTrue = ifTrue;
         this.ifFalse = ifFalse;
@@ -23,6 +24,7 @@ public class brInstNode extends instNode {
 
     public brInstNode(ASTNode expr, IRBlockNode _parent, String dest) {
         super(expr, _parent);
+        assert dest.charAt(0) != '%';
         this.dest = dest;
         isCondBr = false;
     }

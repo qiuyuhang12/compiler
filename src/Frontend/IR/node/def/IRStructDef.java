@@ -15,6 +15,6 @@ public class IRStructDef extends IRNode {
 
     @Override
     public String toString() {
-        return name + " = type " + struct.toString() + "\n";
+        return name + " = type { " + struct.toString() + " }\n";
     }
 }

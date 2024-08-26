@@ -19,8 +19,10 @@ public class varDefNode extends StmtNode {
     public void accept(ASTVisitor visitor) {
         //TODO:修改stmt
 //        assert false;
+        
+        //hh
         if (isStmt) {
-            System.err.println("WARNING:你有没有考虑classVarDef");
+//            System.err.println("WARNING:你有没有考虑classVarDef");
         }
         visitor.visit(this);
     }

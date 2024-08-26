@@ -11,10 +11,10 @@ public class Renamer {
     private int cnt=0;
     public Renamer(){
         nameMap=new HashMap<>();
-        nameMapStack.push(nameMap);
+        nameMapStack.push(new HashMap<>());
     }
     public String getAnonymousName(){
-        return "%anon."+cnt++;
+        return "%"+cnt++;
     }
     public String rename(String name) {
         assert name.charAt(0)!='@'&&name.charAt(0)!='%';
@@ -30,16 +30,17 @@ public class Renamer {
         int cnt = nameMap.get(name);
         nameMap.put(name, cnt + 1);
         nameMapStack.peek().put(name, cnt + 1);
-        return name + "." + cnt;
+        return name + "." + (cnt+1);
     }
 
     public String getRenamed(String name) {
         for (int i = nameMapStack.size() - 1; i >= 0; i--) {
             if (nameMapStack.get(i).containsKey(name)) {
-                if(inClass&&nameMapStack.size()==2){
+                if(inClass&&i==1){
                     assert nameMapStack.get(i).get(name)==-1;
                     return "%"+className+"."+name;
                 }
+                assert nameMapStack.get(i).get(name)!=-1;
                 if (nameMapStack.get(i).get(name)==0){
                     return (i == 0 ? "@" : "%") + name;
                 }

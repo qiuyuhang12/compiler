@@ -20,6 +20,7 @@ atomExpr:新建指针，存储，回传
 global:f->@f
 class:f->@class.f,第一个参数是this
 构造：@class.build
+call不包含@
 
 
 函数返回的label：return
