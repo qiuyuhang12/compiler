@@ -40,6 +40,10 @@ public class icmpInstNode extends instNode {
                 yield null;
             }
         };
+        if (!lhs.typeInfo.type.equals(rhs.typeInfo.type)) {
+            System.err.println("Invalid icmp operation");
+            System.exit(1);
+        }
         assert lhs.typeInfo.type.equals(rhs.typeInfo.type);
         this.lhs = lhs;
         this.rhs = rhs;

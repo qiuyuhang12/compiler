@@ -410,8 +410,10 @@ public class IRBuilder implements ASTVisitor {
                             break;
                         case CLASS:
                             for (varDefUnitNode unit : it.units) {
-                                allocaInstNode alloc = new allocaInstNode(it, null, new IRVar("ptr", "@" + renamer.rename(unit.name), true), new IRType(IRType.IRTypeEnum.ptr));
-                                irProgramNode.pushVarDef(alloc);
+                                IRGlobalVarDef irGlobalVarDef = new IRGlobalVarDef("@" + renamer.rename(unit.name), new IRNullPtrLiteral());
+                                irProgramNode.pushVarDef(irGlobalVarDef);
+//                                allocaInstNode alloc = new allocaInstNode(it, null, new IRVar("ptr", "@" + renamer.rename(unit.name), true), new IRType(IRType.IRTypeEnum.ptr));
+//                                irProgramNode.pushVarDef(alloc);
                                 if (unit.init == null) {//string a;
                                     continue;
                                 } else {
@@ -653,8 +655,8 @@ public class IRBuilder implements ASTVisitor {
                 currentBlock.push(new callInstNode(it, currentBlock, dest, new IRType(IRType.IRTypeEnum.ptr), "string.concat", lhs, rhs));
             } else {
                 String name = renamer.getAnonymousName();
-                IRVar tmp = new IRVar("ptr", name, false);
-                currentBlock.push(new callInstNode(it, currentBlock, tmp, new IRType(IRType.IRTypeEnum.i1), "string.cmp", lhs, rhs));
+                IRVar tmp = new IRVar("i32", name, false);
+                currentBlock.push(new callInstNode(it, currentBlock, tmp, new IRType(IRType.IRTypeEnum.i32), "string.compare", lhs, rhs));
                 switch (it.opCode) {
                     case greater:
                     case less:
@@ -674,6 +676,7 @@ public class IRBuilder implements ASTVisitor {
     
     @Override
     public void visit(conditionalExprNode it) {
+        boolean isVoid = it.typeNd.type.atomType.equals(Type.TypeEnum.VOID);
         it.condition.accept(this);
         String condName = currentTmpValName;
         IRVar cond = new IRVar("i1", condName, false);
@@ -683,6 +686,7 @@ public class IRBuilder implements ASTVisitor {
         currentBlock.push(new brInstNode(it, currentBlock, cond, trueLabel, falseLabel));
         currentBlock = new IRBlockNode(currentBlock, currentFunDef, trueLabel);
         currentFunDef.push(currentBlock);
+        it.trueExpr.accept(this);
         String trueAddr = currentTmpValName;
         currentBlock.push(new brInstNode(it, currentBlock, endLabel));
         currentBlock = currentBlock.jumpSrc;
@@ -695,11 +699,13 @@ public class IRBuilder implements ASTVisitor {
         currentBlock = new IRBlockNode(currentBlock, currentFunDef, endLabel);
         currentFunDef.push(currentBlock);
         currentTmpValName = "%" + renamer.rename("cond");
-        IRVar dest = new IRVar(getIRtype(it.typeNd.type).toString(), currentTmpValName, false);
-        phiInstNode phi = new phiInstNode(it, currentBlock, dest);
-        phi.push(new IRVar(getIRtype(it.trueExpr.typeNd.type).toString(), trueAddr, false), trueLabel);
-        phi.push(new IRVar(getIRtype(it.falseExpr.typeNd.type).toString(), falseAddr, false), falseLabel);
-        currentBlock.push(phi);
+        if (!isVoid) {
+            IRVar dest = new IRVar(getIRtype(it.typeNd.type).toString(), currentTmpValName, false);
+            phiInstNode phi = new phiInstNode(it, currentBlock, dest);
+            phi.push(new IRVar(getIRtype(it.trueExpr.typeNd.type).toString(), trueAddr, false), trueLabel);
+            phi.push(new IRVar(getIRtype(it.falseExpr.typeNd.type).toString(), falseAddr, false), falseLabel);
+            currentBlock.push(phi);
+        }
     }
     
     @Override
@@ -731,7 +737,7 @@ public class IRBuilder implements ASTVisitor {
                 switch (it.exprs.get(i).typeNd.type.atomType) {
                     case INT:
                         tmp = "%" + renamer.rename("int");
-                        call = new callInstNode(it, currentBlock, new IRVar("ptr", tmp, false), new IRType(IRType.IRTypeEnum.ptr), "toString", new IRVar("ptr", currentTmpValName, false));
+                        call = new callInstNode(it, currentBlock, new IRVar("ptr", tmp, false), new IRType(IRType.IRTypeEnum.ptr), "toString", new IRVar("i32", currentTmpValName, false));
                         currentBlock.push(call);
                         break;
                     case BOOL:

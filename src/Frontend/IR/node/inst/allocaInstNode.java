@@ -11,6 +11,7 @@ public class allocaInstNode extends instNode{
     public IRType type;
     public allocaInstNode(ASTNode expr, IRBlockNode _parent, IRVar dest, IRType type){
         super(expr, _parent);
+        assert dest.name.charAt(0) == '%';
         this.dest = dest;
         this.type = type;
     }
