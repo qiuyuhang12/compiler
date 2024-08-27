@@ -275,13 +275,15 @@ public class IRBuilder implements ASTVisitor {
         currentBlock = new IRBlockNode(null, currentFunDef, "entry");
         currentFunDef.push(currentBlock);
         //处理函数体
+        currentLeftVarAddr=null;
+        currentTmpValName=null;
         if (unit.init instanceof arrayNode) {//int []a={9};
             currentLeftVarAddr = renamer.getAnonymousName();
             currentArray = currentLeftVarAddr;
             allocaInstNode alloc2 = new allocaInstNode(it, currentBlock, new IRVar("ptr", currentLeftVarAddr, false), new IRType(IRType.IRTypeEnum.ptr));
             currentBlock.push(alloc2);
             unit.init.accept(this);
-        } else {//int []a=f(0);//int []a=new int [4] ;or int []a=new int []{1,2,3,4};
+        } else {//int []a=f(0);//int []a=new int [4] ;or int []a=new int []{1,2,3,4};//int a=b+c;
             unit.init.accept(this);
             storeInstNode store = new storeInstNode(it, currentBlock, new IRVar(getIRtype(it.typeNd.type).toString(), currentTmpValName, false), new IRVar("ptr", renamer.getRenamed(unit.name), true));
             currentBlock.push(store);
@@ -325,7 +327,7 @@ public class IRBuilder implements ASTVisitor {
                             store = new storeInstNode(it, currentBlock, new IRVar("ptr", tmp, false), new IRVar("ptr", renamer.getRenamed(unit.name), false));
                         } else {//int []a=f(0);//int []a=new int [4] ;or int []a=new int []{1,2,3,4};
                             unit.init.accept(this);
-                            store = new storeInstNode(it, currentBlock, new IRVar("ptr", currentLeftVarAddr, false), new IRVar("ptr", renamer.getRenamed(unit.name), false));
+                            store = new storeInstNode(it, currentBlock, new IRVar("ptr", currentTmpValName, false), new IRVar("ptr", renamer.getRenamed(unit.name), false));
                         }
                         currentBlock.push(store);
                     }
@@ -807,9 +809,12 @@ public class IRBuilder implements ASTVisitor {
                 paras.add(new IRVar(getIRtype(para.typeNd.type).toString(), currentTmpValName, false));
             }
             if (it.typeNd.type.atomType == Type.TypeEnum.VOID) {
+                currentLeftVarAddr = null;
+                currentTmpValName = null;
                 currentBlock.push(new callInstNode(it, currentBlock, it.fun.typeNd.type.fun.funName, paras));
             } else {
                 currentTmpValName = "%" + renamer.rename(it.fun.typeNd.type.fun.funName + ".ret");
+                currentLeftVarAddr = currentTmpValName;
                 IRVar dest = new IRVar(getIRtype(it.typeNd.type).toString(), currentTmpValName, false);
                 currentBlock.push(new callInstNode(it, currentBlock, dest, getIRtype(it.typeNd.type), it.fun.typeNd.type.fun.funName, paras));
             }
@@ -897,7 +902,9 @@ public class IRBuilder implements ASTVisitor {
     
     @Override
     public void visit(newArrayExprNode it) {
+        allocaInstNode alloc = new allocaInstNode(it, currentBlock, new IRVar("ptr", renamer.getAnonymousName(), false), new IRType(IRType.IRTypeEnum.ptr));
         if (it.init == null) {
+            currentBlock.push(alloc);
             callInstNode call;
             call = new callInstNode(it, currentBlock, new IRVar("ptr", "%" + renamer.rename("call"), false), new IRType(IRType.IRTypeEnum.ptr), "array.alloca", new IRIntLiteral(getSize(it.typeNd.type)), new IRIntLiteral(it.dim), new IRIntLiteral(it.sizeInit.size()));
             for (ExprNode expr : it.sizeInit) {
@@ -905,19 +912,20 @@ public class IRBuilder implements ASTVisitor {
                 call.args.add(new IRVar("i32", currentTmpValName, false));
             }
             currentBlock.push(call);
+            currentBlock.push(new storeInstNode(it, currentBlock, new IRVar("ptr", call.dest.name, false), new IRVar("ptr", alloc.dest.name, false)));
             currentTmpValName = call.dest.name;
-            currentLeftVarAddr = call.dest.name;
+            currentLeftVarAddr = alloc.dest.name;
         }
         if (it.init != null) {
-            allocaInstNode call = new allocaInstNode(it, currentBlock, new IRVar("ptr", renamer.getAnonymousName(), false), new IRType(IRType.IRTypeEnum.ptr));
+            currentBlock.push(alloc);
             Type arrType = it.init.typeNd.type;
-            callInstNode call1 = new callInstNode(it, currentBlock, new IRVar("ptr", "%" + renamer.rename("call"), false), new IRType(IRType.IRTypeEnum.ptr), "array.alloca", new IRIntLiteral(getSize(arrType)), new IRIntLiteral(1), new IRIntLiteral(1), new IRIntLiteral(it.init.value.size()));
-            currentArray = call1.dest.name;
+            callInstNode call = new callInstNode(it, currentBlock, new IRVar("ptr", "%" + renamer.rename("call"), false), new IRType(IRType.IRTypeEnum.ptr), "array.alloca", new IRIntLiteral(getSize(arrType)), new IRIntLiteral(1), new IRIntLiteral(1), new IRIntLiteral(it.init.value.size()));
+            currentArray = call.dest.name;
             currentBlock.push(call);
-            currentBlock.push(call1);
+            currentBlock.push(new storeInstNode(it, currentBlock, new IRVar("ptr", call.dest.name, false), new IRVar("ptr", alloc.dest.name, false)));
             it.init.accept(this);
-            currentTmpValName = call1.dest.name;
-            currentLeftVarAddr = call1.dest.name;
+            currentTmpValName = call.dest.name;
+            currentLeftVarAddr = alloc.dest.name;
         }
     }
     
