@@ -275,8 +275,8 @@ public class IRBuilder implements ASTVisitor {
         currentBlock = new IRBlockNode(null, currentFunDef, "entry");
         currentFunDef.push(currentBlock);
         //处理函数体
-        currentLeftVarAddr=null;
-        currentTmpValName=null;
+        currentLeftVarAddr = null;
+        currentTmpValName = null;
         if (unit.init instanceof arrayNode) {//int []a={9};
             currentLeftVarAddr = renamer.getAnonymousName();
             currentArray = currentLeftVarAddr;
@@ -717,6 +717,22 @@ public class IRBuilder implements ASTVisitor {
         }
     }
     
+//        boolean isVoid = it.typeNd.type.atomType.equals(Type.TypeEnum.VOID);
+//        it.condition.accept(this);
+//        String condName = currentTmpValName;
+//        IRVar cond = new IRVar("i1", condName, false);
+//        it.trueExpr.accept(this);
+//        String trueAddr = currentTmpValName;
+//        it.falseExpr.accept(this);
+//        String falseAddr = currentTmpValName;
+//        if (!isVoid) {
+//            currentTmpValName = "%" + renamer.rename("cond");
+//            currentLeftVarAddr = null;
+//            IRVar dest = new IRVar(getIRtype(it.typeNd.type).toString(), currentTmpValName, false);
+//            selectInstNode select = new selectInstNode(it, currentBlock, dest, cond, new IRVar(getIRtype(it.trueExpr.typeNd.type).toString(), trueAddr, false), new IRVar(getIRtype(it.falseExpr.typeNd.type).toString(), falseAddr, false));
+//            currentBlock.push(select);
+//        }
+
     @Override
     public void visit(formatStringExprNode it) {
         //hh
@@ -836,7 +852,7 @@ public class IRBuilder implements ASTVisitor {
             String thisPtr;
             if (it.fun instanceof identifierNode) {
                 thisPtr = "%this";
-            }else {
+            } else {
                 assert it.fun instanceof memberExprNode;
                 it.fun.accept(this);
                 thisPtr = currentTmpValName;

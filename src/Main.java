@@ -42,9 +42,9 @@ public class Main {
 //            System.setErr(fileErr);
         }
         
-//        String name = "test.mx";
-//        InputStream input = new FileInputStream(name);
-        InputStream input = System.in;
+        String name = "test.mx";
+        InputStream input = new FileInputStream(name);
+//        InputStream input = System.in;
         try {
             ProgramNode programNode;
             Scope gScope = new Scope(null);

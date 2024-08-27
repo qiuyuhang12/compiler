@@ -1,3 +1,5 @@
+@a = global i32 0
+
 define void @_.init() {
 ret void
 }
@@ -5,7 +7,8 @@ define i32 @main() {
 entry:
 %ret.val = alloca i32
 call void @_.init()
-%a = alloca i32
+%0 = load i32, ptr @a
+store i32 9, ptr @a
 br label %return
 
 
