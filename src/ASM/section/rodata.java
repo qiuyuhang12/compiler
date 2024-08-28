@@ -13,6 +13,6 @@ public class rodata extends section {
         return "\t.section .rodata\n" +
                 "\t.globl " + label + "\n" +
                 label + ":\n" +
-                "\t.asciz  " + value + "\n";
+                "\t.asciz  \"" + value + "\"\n";
     }
 }

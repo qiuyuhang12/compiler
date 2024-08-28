@@ -56,7 +56,7 @@ public class asmBuilder {
             t.push(new Li(reg, entity.getVal()));
         } else if (entity instanceof IRVar var) {
             if (var.name.charAt(0) == '@') {
-                t.push(new La(reg, var.name.substring(1)));
+                t.push(new La(reg, var.name));
             } else {
                 if (!(var.name.charAt(0) == '%')) {
                     t.push(new Li(reg, Integer.parseInt(var.name)));
@@ -79,7 +79,7 @@ public class asmBuilder {
             t.push(new Li(reg, Integer.parseInt(entity)));
         } else {
             if (entity.charAt(0) == '@') {
-                t.push(new La(reg, entity.substring(1)));
+                t.push(new La(reg, entity));
             } else {
                 assert entity.charAt(0) == '%';
                 if (paraReg.containsKey(entity)) {
@@ -92,8 +92,8 @@ public class asmBuilder {
         }
     }
     
-    private void buildGlobalVar(IRGlobalVarDef it) {//去掉@，加入.data
-        data d = new data(it.name.substring(1), literalToInt(it.value));
+    private void buildGlobalVar(IRGlobalVarDef it) {//不去掉@，加入.data
+        data d = new data(it.name, literalToInt(it.value));
         asm.pushData(d);
     }
     
@@ -143,7 +143,7 @@ public class asmBuilder {
                     t.push(sw);
                 }
             }
-            t.push(new Call(is.funName + "_entry"));
+            t.push(new Call(is.funName));
             Lw lw = new Lw("ra", "sp", regOffset.get("ra"));
             t.push(lw);
             if (is.dest != null) {
@@ -233,8 +233,10 @@ public class asmBuilder {
     private void collectVar(IRFunDef it) {
         varOffset.clear();
         regOffset.clear();
+        fromAlloc.clear();
+        paraReg.clear();
         stackSize = 0;
-        int offset = 0;
+        int offset = 1;
         regOffset.put("t0", (++offset) * 4);
         regOffset.put("t1", (++offset) * 4);
         regOffset.put("t2", (++offset) * 4);
@@ -263,9 +265,9 @@ public class asmBuilder {
 //        offset+=3*4;//t0-t2,ra,sp,a0
         int cnt = (it.parameters.size() - 8);
         cnt = Math.max(cnt, 0);
-        offset += cnt * 4;
+        offset += cnt;
 //        assert offset % 4 == 0;
-        stackSize = offset * 4+4;
+        stackSize = offset * 4 + 4;
     }
     
     //约定：被调用者保存寄存器t0-t2
@@ -296,8 +298,10 @@ public class asmBuilder {
                 continue;
             }
             text t;
-            if (funName.equals("main") && block.label.equals("entry")) {
-                t = new text("main");
+//            if (funName.equals("main") && block.label.equals("entry")) {
+//                t = new text("main");
+            if (block.label.equals("entry")) {
+                t = new text(funName);
             } else {
                 t = new text(funName + "_" + block.label);
             }

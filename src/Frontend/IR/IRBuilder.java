@@ -585,11 +585,15 @@ public class IRBuilder implements ASTVisitor {
         if (it.opCode == binaryExprNode.binaryOpType.andLg || it.opCode == binaryExprNode.binaryOpType.orLg) {
             it.lhs.accept(this);
             String lhsName = currentTmpValName;
-            String tmplabel = currentBlock.label;
+//            String tmplabel = currentBlock.label;
             String nextlabel = renamer.rename("shortcircuit.next");
             String endlabel = renamer.rename("shortcircuit.end");
+            IRVar dest = new IRVar("ptr", "%" + renamer.rename("shortcircuit.ptr"), false);
+            currentBlock.push(new allocaInstNode(it, currentBlock, dest, new IRType(IRType.IRTypeEnum.i1)));
             //lhs:
             IRVar lhs = new IRVar("i1", lhsName, false);
+            storeInstNode store = new storeInstNode(it, currentBlock, lhs, dest);
+            currentBlock.push(store);
 //            allocaInstNode rsl = new allocaInstNode(it, currentBlock, new IRVar("i1", renamer.getAnonymousName(), false), new IRType(IRType.IRTypeEnum.i1));
 //            currentBlock.push(rsl);
 //            currentBlock.push(new storeInstNode(it, currentBlock, new IRVar("i1", lhsName, false), new IRVar("i1", rsl.dest.name, false)));
@@ -604,18 +608,24 @@ public class IRBuilder implements ASTVisitor {
             it.rhs.accept(this);
             String rhsName = currentTmpValName;
             IRVar rhs = new IRVar("i1", rhsName, false);
+            storeInstNode store2 = new storeInstNode(it, currentBlock, rhs, dest);
+            currentBlock.push(store2);
 //            currentBlock.push(new storeInstNode(it, currentBlock, new IRVar("i1", rhsName, false), new IRVar("i1", rsl.dest.name, false)));
             currentBlock.push(new brInstNode(it, currentBlock, endlabel));
             //end:
             currentBlock = new IRBlockNode(currentBlock, currentFunDef, endlabel);
             currentFunDef.push(currentBlock);
-            IRVar dest = new IRVar("i1", "%" + renamer.rename("shortcircuit"), false);
+            loadInstNode load = new loadInstNode(it, currentBlock, renamer.getAnonymousName(), dest.name, new IRType(IRType.IRTypeEnum.i1));
+            currentBlock.push(load);
+//            IRVar dest = new IRVar("i1", "%" + renamer.rename("shortcircuit"), false);
 //            currentBlock.push(new loadInstNode(it, currentBlock, dest.name, rsl.dest.name, new IRType(IRType.IRTypeEnum.i1)));
-            phiInstNode phi = new phiInstNode(it, currentBlock, dest);
-            phi.push(lhs, tmplabel);
-            phi.push(rhs, nextlabel);
-            currentBlock.push(phi);
-            currentTmpValName = dest.name;
+//            phiInstNode phi = new phiInstNode(it, currentBlock, dest);
+//            phi.push(lhs, tmplabel);
+//            phi.push(rhs, nextlabel);
+//            currentBlock.push(phi);
+            currentTmpValName = load.dest;
+//            currentLeftVarAddr = dest.name;
+            currentLeftVarAddr = null;
             return;
         }
         it.lhs.accept(this);
@@ -694,7 +704,7 @@ public class IRBuilder implements ASTVisitor {
         currentBlock = new IRBlockNode(currentBlock, currentFunDef, trueLabel);
         currentFunDef.push(currentBlock);
         it.trueExpr.accept(this);
-        trueLabel= currentBlock.label;
+        trueLabel = currentBlock.label;
         String trueAddr = currentTmpValName;
         currentBlock.push(new brInstNode(it, currentBlock, endLabel));
         currentBlock = currentBlock.jumpSrc;
@@ -716,7 +726,7 @@ public class IRBuilder implements ASTVisitor {
             currentBlock.push(phi);
         }
     }
-    
+
 //        boolean isVoid = it.typeNd.type.atomType.equals(Type.TypeEnum.VOID);
 //        it.condition.accept(this);
 //        String condName = currentTmpValName;
@@ -732,7 +742,7 @@ public class IRBuilder implements ASTVisitor {
 //            selectInstNode select = new selectInstNode(it, currentBlock, dest, cond, new IRVar(getIRtype(it.trueExpr.typeNd.type).toString(), trueAddr, false), new IRVar(getIRtype(it.falseExpr.typeNd.type).toString(), falseAddr, false));
 //            currentBlock.push(select);
 //        }
-
+    
     @Override
     public void visit(formatStringExprNode it) {
         //hh
@@ -767,7 +777,7 @@ public class IRBuilder implements ASTVisitor {
                         break;
                     case BOOL:
                         tmp = "%" + renamer.rename("bool");
-                        call = new callInstNode(it, currentBlock, new IRVar("ptr", tmp, false), new IRType(IRType.IRTypeEnum.ptr), "bool.toString", new IRVar("ptr", currentTmpValName, false));
+                        call = new callInstNode(it, currentBlock, new IRVar("ptr", tmp, false), new IRType(IRType.IRTypeEnum.ptr), "bool_toString", new IRVar("i1", currentTmpValName, false));
                         currentBlock.push(call);
                         break;
                     case STRING:

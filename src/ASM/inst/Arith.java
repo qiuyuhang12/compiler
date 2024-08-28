@@ -19,6 +19,6 @@ public class Arith extends Inst {
     }
     
     void check(String op) {
-        assert op.equals("add") || op.equals("sub") || op.equals("mul") || op.equals("and") || op.equals("or") || op.equals("xor") || op.equals("sll") || op.equals("sra") || op.equals("srl");
+        assert op.equals("add") || op.equals("sub") || op.equals("mul") || op.equals("and") || op.equals("or") || op.equals("xor") || op.equals("sll") || op.equals("sra") || op.equals("srl")|| op.equals("div") || op.equals("rem");
     }
 }

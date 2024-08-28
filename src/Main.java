@@ -29,29 +29,29 @@ import java.io.PrintStream;
 
 public class Main {
 //todo::内建函数
-
+    
     public static void main(String[] args) throws Exception {
-//        if (false){
-        if (true) {
+        if (false) {
+//        if (true) {
             // 创建一个 PrintStream 对象，将输出重定向到文件
 //            PrintStream fileOut = new PrintStream(new FileOutputStream("output.ll"));
             PrintStream fileOut = new PrintStream(new FileOutputStream("test.s"));
 //            PrintStream output =new PrintStream(new FileOutputStream("src/output.ll"));
-//            PrintStream fileErr = new PrintStream(new FileOutputStream("errput.txt"));
             
             // 将标准输出流重定向到文件
             System.setOut(fileOut);
-//            System.setErr(fileErr);
         }
-        
-        String name = "test.mx";
-        InputStream input = new FileInputStream(name);
-//        InputStream input = System.in;
+        PrintStream fileErr = new PrintStream(new FileOutputStream("errput.txt"));
+        System.setErr(fileErr);
+
+//        String name = "test.mx";
+//        InputStream input = new FileInputStream(name);
+        InputStream input = System.in;
         try {
             ProgramNode programNode;
             Scope gScope = new Scope(null);
             gScope.addBuiltInFunction();
-
+            
             MxLexer lexer = new MxLexer(CharStreams.fromStream(input));
             lexer.removeErrorListeners();
             lexer.addErrorListener(new MxErrorListener());
@@ -68,11 +68,12 @@ public class Main {
                 throw new semanticError("main not int", programNode.pos);
             }
             new SemanticChecker(gScope).visit(programNode);
-
-            IRBuilder ib=new IRBuilder(programNode, gScope);
-            ib.irProgramNode.toString();
+            
+            IRBuilder ib = new IRBuilder(programNode, gScope);
+            String s = ib.irProgramNode.toString();
+//            System.out.println(s);
 //            ib.irProgramNode.initCall();
-            asmBuilder ab=new asmBuilder(ib.irProgramNode);
+            asmBuilder ab = new asmBuilder(ib.irProgramNode);
             ab.build();
             ab.print();
 //            ib.print();

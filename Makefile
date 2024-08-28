@@ -14,17 +14,25 @@ run:
 	java -cp ./src/Parser/lib/antlr-4.13.2-complete.jar:bin Main
 
 
-.PHONY: Sema
-Sema: build
-	./testcases/sema/scripts/test.bash 'java -cp /usr/share/java/antlr-4.13.2-complete.jar:bin Main' $(file)
-
-
-
-.PHONY: Semall
+# .PHONY: Sema
+# Sema: build
+# 	./testcases/sema/scripts/test.bash 'java -cp /usr/share/java/antlr-4.13.2-complete.jar:bin Main' $(file)
+.PHONY: Codegen
 Semall: build
-	./testcases/sema/scripts/test_all.bash 'java -cp /usr/share/java/antlr-4.13.2-complete.jar:bin Main' testcases/sema/
+	./testcases/codegen/scripts/test_asm.bash 'java -cp /usr/share/java/antlr-4.13.2-complete.jar:bin Main' $(file)
+
+
+
+.PHONY: Codegenall
+Semall: build
+	./testcases/codegen/scripts/test_asm_all.bash 'java -cp /usr/share/java/antlr-4.13.2-complete.jar:bin Main -S' testcases/codegen/ builtin.s
 
 
 # .PHONY: test
 # test:
 #     java -Xss8m -cp ulib/antlr-4.13.2-complete.jar:bin Main
+
+#testcases/codegen/scripts/test_asm_all.bash 'java -cp /usr/share/java/antlr-4.13.2-complete.jar:bin Main -S' testcases/codegen/ builtin.s
+
+# testcases/codegen/scripts/test_asm.bash 'java -cp /usr/share/java/antlr-runtime-4.13.2.jar:bin Main -S' testcases/codegen/e1.mx bin/builtin.s
+
