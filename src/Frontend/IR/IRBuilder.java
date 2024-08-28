@@ -918,6 +918,9 @@ public class IRBuilder implements ASTVisitor {
         if (!it.typeNd.type.isFun) {
             getElementPtrInstNode get = new getElementPtrInstNode(it, currentBlock, renamer.getAnonymousName(), ob, getIRTypeForGetElementPtr(it.object.typeNd.type));
             get.push(new IRType(IRType.IRTypeEnum.i32), 0);
+            if (!classVarIndex.containsKey(it.object.typeNd.type.name)) {
+                System.exit(0);
+            }
             get.push(new IRType(IRType.IRTypeEnum.i32), classVarIndex.get(it.object.typeNd.type.name).get(it.member.name));
             currentBlock.push(get);
             currentLeftVarAddr = get.dest;
@@ -975,8 +978,11 @@ public class IRBuilder implements ASTVisitor {
     public void visit(newVarExprNode it) {
         assert !it.typeNd.type.isArray;
         assert it.typeNd.type.atomType.equals(Type.TypeEnum.CLASS);
-        allocaInstNode alloca = new allocaInstNode(it, currentBlock, new IRVar("ptr", "%" + renamer.rename(it.typeNd.type.name), false), new IRType(IRType.IRTypeEnum.ptr));
+        allocaInstNode alloca = new allocaInstNode(it, currentBlock, new IRVar("ptr", "%" + renamer.rename("_."+it.typeNd.type.name), false), new IRType(IRType.IRTypeEnum.ptr));
 //        currentBlock.push(alloca);
+        if (!classVarIndex.containsKey(it.typeNd.type.name)) {
+            System.exit(0);
+        }
         callInstNode call0 = new callInstNode(it, currentBlock, new IRVar("ptr", renamer.getAnonymousName(), false), new IRType(IRType.IRTypeEnum.ptr), "malloc", new IRIntLiteral(classVarIndex.get(it.typeNd.type.name).size() * 4));
         currentBlock.push(call0);
         if (hasBuildClass.contains(it.typeNd.type.name)) {
