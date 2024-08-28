@@ -52,4 +52,8 @@ public class getElementPtrInstNode extends instNode {
         }
         return sb.toString() + "\n";
     }
+    @Override
+    public String getVal(){
+        return dest;
+    }
 }

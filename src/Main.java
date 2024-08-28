@@ -1,3 +1,4 @@
+import ASM.asmBuilder;
 import AST.ProgramNode;
 //import Assembly.AsmFn;
 //import Backend.*;
@@ -33,7 +34,8 @@ public class Main {
 //        if (false){
         if (true) {
             // 创建一个 PrintStream 对象，将输出重定向到文件
-            PrintStream fileOut = new PrintStream(new FileOutputStream("output.ll"));
+//            PrintStream fileOut = new PrintStream(new FileOutputStream("output.ll"));
+            PrintStream fileOut = new PrintStream(new FileOutputStream("test.s"));
 //            PrintStream output =new PrintStream(new FileOutputStream("src/output.ll"));
 //            PrintStream fileErr = new PrintStream(new FileOutputStream("errput.txt"));
             
@@ -68,7 +70,12 @@ public class Main {
             new SemanticChecker(gScope).visit(programNode);
 
             IRBuilder ib=new IRBuilder(programNode, gScope);
-            ib.print();
+            ib.irProgramNode.toString();
+//            ib.irProgramNode.initCall();
+            asmBuilder ab=new asmBuilder(ib.irProgramNode);
+            ab.build();
+            ab.print();
+//            ib.print();
 
 //            mainFn f = new mainFn();
 //            new IRBuilder(f, gScope).visit(ASTRoot);

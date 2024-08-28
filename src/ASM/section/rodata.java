@@ -10,7 +10,7 @@ public class rodata extends section {
     }
     
     public String toString() {
-        return "\t.section rodata\n" +
+        return "\t.section .rodata\n" +
                 "\t.globl " + label + "\n" +
                 label + ":\n" +
                 "\t.asciz  " + value + "\n";

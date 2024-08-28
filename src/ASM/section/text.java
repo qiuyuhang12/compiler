@@ -5,7 +5,6 @@ import ASM.inst.Inst;
 import java.util.ArrayList;
 
 public class text extends section {
-    public String label=null;
     public ArrayList<Inst> insts = new ArrayList<>();
     
     public text(String label) {
@@ -18,7 +17,7 @@ public class text extends section {
     
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("\t.section text\n");
+        sb.append("\t.section .text\n");
         sb.append("\t.globl ").append(label).append("\n");
         sb.append(label).append(":\n");
         for (Inst inst : insts) {

@@ -9,7 +9,7 @@ public class data extends section {
     }
     
     public String toString() {
-        return "\t.section data\n" +
+        return "\t.section .data\n" +
                 "\t.globl " + label + "\n" +
                 label + ":\n" +
                 "\t.word  " + value + "\n";

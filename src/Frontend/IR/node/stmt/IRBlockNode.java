@@ -35,7 +35,7 @@ public class IRBlockNode extends IRNode {
             i++;
             sb.append(inst.toString());
             if (inst instanceof brInstNode || inst instanceof retInstNode) {
-                if (i + 1 < insts.size()) {
+                if (i < insts.size()) {
                     insts.subList(i, insts.size()).clear();
                 }
                 break;

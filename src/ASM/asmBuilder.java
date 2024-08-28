@@ -55,9 +55,13 @@ public class asmBuilder {
         if (entity instanceof IRLiteral) {
             t.push(new Li(reg, entity.getVal()));
         } else if (entity instanceof IRVar var) {
-            if (var.isGlobal) {
+            if (var.name.charAt(0) == '@') {
                 t.push(new La(reg, var.name.substring(1)));
             } else {
+                if (!(var.name.charAt(0) == '%')) {
+                    t.push(new Li(reg, Integer.parseInt(var.name)));
+                    return;
+                }
                 if (paraReg.containsKey(var.name)) {
                     t.push(new Mv(reg, paraReg.get(var.name)));
                 } else {
@@ -69,8 +73,9 @@ public class asmBuilder {
             assert false;
         }
     }
+    
     public void ldVar(String entity, String reg, text t) {
-        if (entity.charAt(0) != '@'&&entity.charAt(0) != '%') {
+        if (entity.charAt(0) != '@' && entity.charAt(0) != '%') {
             t.push(new Li(reg, Integer.parseInt(entity)));
         } else {
             if (entity.charAt(0) == '@') {
@@ -125,7 +130,26 @@ public class asmBuilder {
                 t.push(new Jump(nowFun + "_" + is.dest));
             }
         } else if (it instanceof callInstNode is) {
-            //todo:传参：a0-a7，ret：返回值：a0
+            //done:传参：a0-a7，ret：返回值：a0,恢复ra
+            Sw sw = new Sw("ra", "sp", regOffset.get("ra"));
+            t.push(sw);
+            for (int i = 0; i < is.args.size(); i++) {
+                if (i < 8) {
+                    ldVar(is.args.get(i), "a" + i, t);
+                } else {
+                    ldVar(is.args.get(i), "t0", t);
+                    int d = -(is.args.size() - i) * 4;
+                    sw = new Sw("t0", "sp", d);
+                    t.push(sw);
+                }
+            }
+            t.push(new Call(is.funName + "_entry"));
+            Lw lw = new Lw("ra", "sp", regOffset.get("ra"));
+            t.push(lw);
+            if (is.dest != null) {
+                int offset = varOffset.get(is.dest.name);
+                t.push(new Sw("a0", "sp", offset));
+            }
         } else if (it instanceof getElementPtrInstNode is) {//一般而言，第一个变量是堆地址
             System.err.println("我默认长度全是4,即都是i32");
             ldVar(is.ptr, "t0", t);
@@ -162,8 +186,11 @@ public class asmBuilder {
             int offset = varOffset.get(is.dest.name);
             t.push(new Sw("t2", "sp", offset));
         } else if (it instanceof loadInstNode is) {
-            Lw lw = new Lw("t0", "sp", varOffset.get(is.ptr));
-            t.push(lw);
+            ldVar(is.ptr, "t0", t);
+//            Lw lw = new Lw("t0", "sp", varOffset.get(is.ptr));
+            Lw lw1 = new Lw("t0", "t0", 0);
+//            t.push(lw);
+            t.push(lw1);
             int offset = varOffset.get(is.dest);
             t.push(new Sw("t0", "sp", offset));
         } else if (it instanceof retInstNode is) {
@@ -180,10 +207,11 @@ public class asmBuilder {
             t.push(arithimm);
             t.push(new Ret());
         } else if (it instanceof storeInstNode is) {
-            ldVar(is.ptr, "t0", t);
-            int offset = varOffset.get(is.ptr.name);
-            Lw lw = new Lw("t1", "sp", offset);
-            t.push(lw);
+            ldVar(is.value, "t0", t);
+            ldVar(is.ptr, "t1", t);
+//            int offset = varOffset.get(is.ptr.name);
+//            Lw lw = new Lw("t1", "sp", offset);
+//            t.push(lw);
             t.push(new Sw("t0", "t1", 0));
         } else {
             assert false;
@@ -207,10 +235,17 @@ public class asmBuilder {
         regOffset.clear();
         stackSize = 0;
         int offset = 0;
+        regOffset.put("t0", (++offset) * 4);
+        regOffset.put("t1", (++offset) * 4);
+        regOffset.put("t2", (++offset) * 4);
+        regOffset.put("ra", (++offset) * 4);
+        regOffset.put("a0", (++offset) * 4);
         for (IRBlockNode bl : it.blocks) {
             for (instNode inst : bl.insts) {
                 if (inst instanceof allocaInstNode allo) {
                     int d = (++offset) * 4, d_val = (++offset) * 4;
+                    Comment comment = new Comment(allo.toString().substring(0, allo.toString().length() - 1));
+                    fromAlloc.add(comment);
                     Arithimm arithimm = new Arithimm("addi", "t0", "sp", d_val);
                     Sw sw = new Sw("t0", "sp", d);
                     fromAlloc.add(arithimm);
@@ -226,19 +261,11 @@ public class asmBuilder {
             }
         }
 //        offset+=3*4;//t0-t2,ra,sp,a0
-        regOffset.put("t0", (++offset) * 4);
-        regOffset.put("t1", (++offset) * 4);
-        regOffset.put("t2", (++offset) * 4);
-        regOffset.put("ra", (++offset) * 4);
-        regOffset.put("a0", (++offset) * 4);
         int cnt = (it.parameters.size() - 8);
         cnt = Math.max(cnt, 0);
         offset += cnt * 4;
-        if (offset % 16 != 0) {
-            stackSize = (offset / 16 + 1) * 16;
-        } else {
-            stackSize = offset;
-        }
+//        assert offset % 4 == 0;
+        stackSize = offset * 4+4;
     }
     
     //约定：被调用者保存寄存器t0-t2
@@ -251,18 +278,19 @@ public class asmBuilder {
         t.push(sw);
         sw = new Sw("t2", "sp", regOffset.get("t2"));
         t.push(sw);
-        sw = new Sw("ra", "sp", regOffset.get("ra"));
-        t.push(sw);
-        sw = new Sw("a0", "sp", regOffset.get("a0"));
-        t.push(sw);
+//        sw = new Sw("ra", "sp", regOffset.get("ra"));
+//        t.push(sw);
+//        sw = new Sw("a0", "sp", regOffset.get("a0"));
+//        t.push(sw);
     }
     
     private void buildFun(IRFunDef it) {
-        String funName = it.name;
+        String funName = it.name.substring(1);
         nowFun = funName;
         //ret：
         //done:返回值传递
         //done:恢复t0-t2，ra，sp（栈释放），a0;
+        
         for (IRBlockNode block : it.blocks) {
             if (block == null) {
                 continue;
@@ -271,20 +299,27 @@ public class asmBuilder {
             if (funName.equals("main") && block.label.equals("entry")) {
                 t = new text("main");
             } else {
-                t = new text(funName + block.label);
+                t = new text(funName + "_" + block.label);
             }
             if (block.label.equals("entry")) {
                 collectVar(it);
                 Arithimm arithimm = new Arithimm("addi", "sp", "sp", -stackSize);
                 t.push(arithimm);
                 storeReg(t);
+                for (Inst inst : fromAlloc) {
+                    t.push(inst);
+                }
                 paraHandle(it, t);
             }
             for (instNode stmt : block.insts) {
-                //todo:添加注释
+                //done:添加注释
                 //done:处理判断是参数还是变量
                 //done:判断变量是全局变量还是局部变量
                 //done：la
+                if (!(stmt instanceof allocaInstNode)) {
+                    Comment comment = new Comment(stmt.toString().substring(0, stmt.toString().length() - 1));
+                    t.push(comment);
+                }
                 buildInst(stmt, t);
             }
             asm.pushText(t);

@@ -67,6 +67,7 @@ public class callInstNode extends instNode {
     }
     @Override
     public String getVal() {
+        if (dest == null) return null;
         return dest.toString();
     }
 }

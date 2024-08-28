@@ -12,6 +12,7 @@ public class selectInstNode extends instNode {
 
     public selectInstNode(ASTNode expr, IRBlockNode _parent, IRVar dest, IREntity cond, IREntity trueVal, IREntity falseVal) {
         super(expr, _parent);
+        assert false;
         this.dest = dest;
         assert cond.typeInfo.type == IRType.IRTypeEnum.i1;
         this.cond = cond;
