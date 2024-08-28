@@ -2,8 +2,8 @@ package ASM.inst;
 
 public class Lui extends Inst{
     public String rd;
-    public String imm;
-    public Lui(String rd, String imm){
+    public int imm;
+    public Lui(String rd, int imm){
         this.rd = rd;
         this.imm = imm;
     }

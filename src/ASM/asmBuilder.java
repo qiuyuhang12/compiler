@@ -58,6 +58,10 @@ public class asmBuilder {
             if (var.name.charAt(0) == '@') {
                 t.push(new La(reg, var.name));
             } else {
+                if (var.name.equals("null")){
+                    t.push(new Li(reg, 0));
+                    return;
+                }
                 if (!(var.name.charAt(0) == '%')) {
                     t.push(new Li(reg, Integer.parseInt(var.name)));
                     return;
@@ -101,7 +105,26 @@ public class asmBuilder {
         rodata r = new rodata(it.name, it.value);
         asm.pushRodata(r);
     }
-    
+    private void inas(text t){
+        t.push(new Sw("a0", "sp", regOffset.get("a0")));
+        t.push(new Sw("a1", "sp", regOffset.get("a1")));
+        t.push(new Sw("a2", "sp", regOffset.get("a2")));
+        t.push(new Sw("a3", "sp", regOffset.get("a3")));
+        t.push(new Sw("a4", "sp", regOffset.get("a4")));
+        t.push(new Sw("a5", "sp", regOffset.get("a5")));
+        t.push(new Sw("a6", "sp", regOffset.get("a6")));
+        t.push(new Sw("a7", "sp", regOffset.get("a7")));
+    }
+    private void outas(text t){
+        t.push(new Lw("a0", "sp", regOffset.get("a0")));
+        t.push(new Lw("a1", "sp", regOffset.get("a1")));
+        t.push(new Lw("a2", "sp", regOffset.get("a2")));
+        t.push(new Lw("a3", "sp", regOffset.get("a3")));
+        t.push(new Lw("a4", "sp", regOffset.get("a4")));
+        t.push(new Lw("a5", "sp", regOffset.get("a5")));
+        t.push(new Lw("a6", "sp", regOffset.get("a6")));
+        t.push(new Lw("a7", "sp", regOffset.get("a7")));
+    }
     private void buildInst(instNode it, text t) {
         if (it instanceof allocaInstNode is) {
         } else if (it instanceof binaryInstNode is) {
@@ -124,8 +147,11 @@ public class asmBuilder {
         } else if (it instanceof brInstNode is) {
             if (is.cond != null) {
                 ldVar(is.cond, "t0", t);
-                t.push(new Br("beq", "t0", "x0", nowFun + "_" + is.ifFalse));
-                t.push(new Jump(nowFun + "_" + is.ifTrue));//可省略？？
+                t.push(new Br("bne", "t0", "x0", ".+8"));
+                t.push(new Jump(nowFun + "_" + is.ifFalse));
+                t.push(new Jump(nowFun + "_" + is.ifTrue));
+//                t.push(new Br("beq", "t0", "x0", nowFun + "_" + is.ifFalse));
+//                t.push(new Jump(nowFun + "_" + is.ifTrue));//可省略？？
             } else {
                 t.push(new Jump(nowFun + "_" + is.dest));
             }
@@ -133,6 +159,7 @@ public class asmBuilder {
             //done:传参：a0-a7，ret：返回值：a0,恢复ra
             Sw sw = new Sw("ra", "sp", regOffset.get("ra"));
             t.push(sw);
+            inas(t);
             for (int i = 0; i < is.args.size(); i++) {
                 if (i < 8) {
                     ldVar(is.args.get(i), "a" + i, t);
@@ -150,6 +177,7 @@ public class asmBuilder {
                 int offset = varOffset.get(is.dest.name);
                 t.push(new Sw("a0", "sp", offset));
             }
+            outas(t);
         } else if (it instanceof getElementPtrInstNode is) {//一般而言，第一个变量是堆地址
             System.err.println("我默认长度全是4,即都是i32");
             ldVar(is.ptr, "t0", t);
@@ -203,8 +231,15 @@ public class asmBuilder {
             t.push(lw0);
             t.push(lw1);
             t.push(lw2);
-            Arithimm arithimm = new Arithimm("addi", "sp", "sp", stackSize);
-            t.push(arithimm);
+            if (stackSize <= 2047 && stackSize >= -2048) {
+                Arithimm arithimm = new Arithimm("addi", "sp", "sp", stackSize);
+                t.push(arithimm);
+            } else {
+                Li li = new Li("t0", stackSize);
+                t.push(li);
+                Arith arith = new Arith("add", "sp", "t0", "sp");
+                t.push(arith);
+            }
             t.push(new Ret());
         } else if (it instanceof storeInstNode is) {
             ldVar(is.value, "t0", t);
@@ -242,15 +277,29 @@ public class asmBuilder {
         regOffset.put("t2", (++offset) * 4);
         regOffset.put("ra", (++offset) * 4);
         regOffset.put("a0", (++offset) * 4);
+        regOffset.put("a1", (++offset) * 4);
+        regOffset.put("a2", (++offset) * 4);
+        regOffset.put("a3", (++offset) * 4);
+        regOffset.put("a4", (++offset) * 4);
+        regOffset.put("a5", (++offset) * 4);
+        regOffset.put("a6", (++offset) * 4);
+        regOffset.put("a7", (++offset) * 4);
         for (IRBlockNode bl : it.blocks) {
             for (instNode inst : bl.insts) {
                 if (inst instanceof allocaInstNode allo) {
                     int d = (++offset) * 4, d_val = (++offset) * 4;
                     Comment comment = new Comment(allo.toString().substring(0, allo.toString().length() - 1));
                     fromAlloc.add(comment);
-                    Arithimm arithimm = new Arithimm("addi", "t0", "sp", d_val);
+                    if (d_val <= 2047 && d_val >= -2048) {
+                        Arithimm arithimm = new Arithimm("addi", "t0", "sp", d_val);
+                        fromAlloc.add(arithimm);
+                    } else {
+                        Li li = new Li("t0", d_val);
+                        fromAlloc.add(li);
+                        Arith arith = new Arith("add", "t0", "t0", "sp");
+                        fromAlloc.add(arith);
+                    }
                     Sw sw = new Sw("t0", "sp", d);
-                    fromAlloc.add(arithimm);
                     fromAlloc.add(sw);
                     varOffset.put(allo.dest.name, d);
                     varOffset.put(allo.dest.name + "_val", d_val);
@@ -307,8 +356,15 @@ public class asmBuilder {
             }
             if (block.label.equals("entry")) {
                 collectVar(it);
-                Arithimm arithimm = new Arithimm("addi", "sp", "sp", -stackSize);
-                t.push(arithimm);
+                if (-stackSize <= 2047 && -stackSize >= -2048) {
+                    Arithimm arithimm = new Arithimm("addi", "sp", "sp", -stackSize);
+                    t.push(arithimm);
+                } else {
+                    Li li = new Li("t0", -stackSize);
+                    t.push(li);
+                    Arith arith = new Arith("add", "sp", "t0", "sp");
+                    t.push(arith);
+                }
                 storeReg(t);
                 for (Inst inst : fromAlloc) {
                     t.push(inst);

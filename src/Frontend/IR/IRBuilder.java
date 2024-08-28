@@ -700,31 +700,47 @@ public class IRBuilder implements ASTVisitor {
         String trueLabel = renamer.rename("cond.true");
         String falseLabel = renamer.rename("cond.false");
         String endLabel = renamer.rename("cond.end");
+        IRVar dest = new IRVar(getIRtype(it.typeNd.type).toString(), renamer.getAnonymousName(), false);
+        if (!isVoid) {
+            allocaInstNode alloc = new allocaInstNode(it, currentBlock, dest, getIRtype(it.typeNd.type));
+            currentBlock.push(alloc);
+        }
         currentBlock.push(new brInstNode(it, currentBlock, cond, trueLabel, falseLabel));
         currentBlock = new IRBlockNode(currentBlock, currentFunDef, trueLabel);
         currentFunDef.push(currentBlock);
         it.trueExpr.accept(this);
-        trueLabel = currentBlock.label;
-        String trueAddr = currentTmpValName;
+        if (!isVoid) {
+            storeInstNode store = new storeInstNode(it, currentBlock, new IRVar(getIRtype(it.trueExpr.typeNd.type).toString(), currentTmpValName, false), dest);
+            currentBlock.push(store);
+        }
+//        trueLabel = currentBlock.label;
+//        String trueAddr = currentTmpValName;
         currentBlock.push(new brInstNode(it, currentBlock, endLabel));
         currentBlock = currentBlock.jumpSrc;
         currentBlock = new IRBlockNode(currentBlock, currentFunDef, falseLabel);
         currentFunDef.push(currentBlock);
         it.falseExpr.accept(this);
-        falseLabel = currentBlock.label;
-        String falseAddr = currentTmpValName;
+        if (!isVoid) {
+            storeInstNode store = new storeInstNode(it, currentBlock, new IRVar(getIRtype(it.falseExpr.typeNd.type).toString(), currentTmpValName, false), dest);
+            currentBlock.push(store);
+        }
+//        falseLabel = currentBlock.label;
+//        String falseAddr = currentTmpValName;
         currentBlock.push(new brInstNode(it, currentBlock, endLabel));
         currentBlock = currentBlock.jumpSrc;
         currentBlock = new IRBlockNode(currentBlock, currentFunDef, endLabel);
         currentFunDef.push(currentBlock);
         currentTmpValName = "%" + renamer.rename("cond");
         if (!isVoid) {
-            IRVar dest = new IRVar(getIRtype(it.typeNd.type).toString(), currentTmpValName, false);
-            phiInstNode phi = new phiInstNode(it, currentBlock, dest);
-            phi.push(new IRVar(getIRtype(it.trueExpr.typeNd.type).toString(), trueAddr, false), trueLabel);
-            phi.push(new IRVar(getIRtype(it.falseExpr.typeNd.type).toString(), falseAddr, false), falseLabel);
-            currentBlock.push(phi);
+            loadInstNode load = new loadInstNode(it, currentBlock, currentTmpValName, dest.name, getIRtype(it.typeNd.type));
+            currentBlock.push(load);
         }
+//            IRVar dest = new IRVar(getIRtype(it.typeNd.type).toString(), currentTmpValName, false);
+//            phiInstNode phi = new phiInstNode(it, currentBlock, dest);
+//            phi.push(new IRVar(getIRtype(it.trueExpr.typeNd.type).toString(), trueAddr, false), trueLabel);
+//            phi.push(new IRVar(getIRtype(it.falseExpr.typeNd.type).toString(), falseAddr, false), falseLabel);
+//            currentBlock.push(phi);
+//        }
     }
 
 //        boolean isVoid = it.typeNd.type.atomType.equals(Type.TypeEnum.VOID);
