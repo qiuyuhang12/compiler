@@ -1,5 +1,3 @@
-@a = global i32 0
-
 define void @_.init() {
 ret void
 }
@@ -7,8 +5,16 @@ define i32 @main() {
 entry:
 %ret.val = alloca i32
 call void @_.init()
-%0 = load i32, ptr @a
-store i32 9, ptr @a
+%bs = alloca ptr
+%0 = alloca ptr
+%call = call ptr @array.alloca(i32 4, i32 1, i32 1, i32 5)
+store ptr %call, ptr %0
+store ptr %call, ptr %bs
+%1 = load ptr, ptr %bs
+%array.idx = getelementptr ptr, ptr %1, i32 2
+%array.idx.val = load i1, ptr %array.idx
+store i1 1, ptr %array.idx
+store i32 0, ptr %ret.val
 br label %return
 
 

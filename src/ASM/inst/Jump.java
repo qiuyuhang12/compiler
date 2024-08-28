@@ -1,9 +1,9 @@
 package ASM.inst;
 
-public class jump extends inst {
+public class Jump extends Inst {
     public String label;
 
-    public jump(String label) {
+    public Jump(String label) {
         this.label = label;
     }
 

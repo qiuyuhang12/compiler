@@ -9,4 +9,5 @@ public abstract class IREntity extends IRNode {
         typeInfo = new IRType();
     }
     public abstract String toString();
+    abstract public int getVal();
 }

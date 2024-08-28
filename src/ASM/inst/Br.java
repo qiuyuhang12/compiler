@@ -1,11 +1,11 @@
 package ASM.inst;
 
-public class br extends inst{
+public class Br extends Inst {
     public String op;
     public String label;
     public String rs1;
     public String rs2;
-    public br(String op, String rs1, String rs2, String label) {
+    public Br(String op, String rs1, String rs2, String label) {
         check(op);
         this.op = op;
         this.label = label;

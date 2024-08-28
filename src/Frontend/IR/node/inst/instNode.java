@@ -14,4 +14,7 @@ public abstract class instNode extends IRNode {
     }
     @Override
     public abstract String toString();
+    public String getVal(){
+        return null;
+    }
 }

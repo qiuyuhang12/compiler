@@ -38,4 +38,9 @@ public class IRVar extends IREntity{
 //            return "%"+name;
 //        }
     }
+    @Override
+    public int getVal(){
+        assert false;
+        return 0;
+    }
 }

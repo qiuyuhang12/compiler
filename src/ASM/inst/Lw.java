@@ -1,10 +1,10 @@
 package ASM.inst;
 
-public class lw extends inst{
+public class Lw extends Inst{
     public String rd;
     public String rs;
-    public String imm;
-    public lw(String rd, String rs, String imm){
+    public int imm;
+    public Lw(String rd, String rs, int imm){
         this.rd = rd;
         this.rs = rs;
         this.imm = imm;

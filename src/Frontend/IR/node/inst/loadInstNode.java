@@ -21,4 +21,9 @@ public class loadInstNode extends instNode{
     public String toString() {
         return dest+" = load "+type.toString()+", ptr "+ptr + "\n";
     }
+    
+    @Override
+    public String getVal() {
+        return dest;
+    }
 }

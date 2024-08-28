@@ -69,4 +69,9 @@ public class binaryInstNode extends instNode {
     public String toString() {
         return dest.toString() + " = " + opToString() +" "+ lhs.typeInfo.toString() +" "+ lhs.toString() + ", " + rhs.toString() + "\n";
     }
+    
+    @Override
+    public String getVal() {
+        return dest.toString();
+    }
 }

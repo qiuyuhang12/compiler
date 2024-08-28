@@ -1,8 +1,8 @@
 package ASM.inst;
 
-public class call extends inst{
+public class Call extends Inst{
     public String name;
-    public call(String name){
+    public Call(String name){
         this.name = name;
     }
     public String toString(){

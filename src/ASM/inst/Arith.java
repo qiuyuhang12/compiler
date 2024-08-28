@@ -1,12 +1,12 @@
 package ASM.inst;
 
-public class arith extends inst {
+public class Arith extends Inst {
     public String op;
     public String rd;
     public String rs1;
     public String rs2;
     
-    public arith(String op, String rd, String rs1, String rs2) {
+    public Arith(String op, String rd, String rs1, String rs2) {
         check(op);
         this.op = op;
         this.rd = rd;

@@ -11,4 +11,8 @@ public class IRBoolLiteral extends IRLiteral {
     public String toString() {
         return value ? "true" : "false";
     }
+    @Override
+    public int getVal() {
+        return value ? 1 : 0;
+    }
 }

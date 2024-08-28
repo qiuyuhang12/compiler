@@ -11,4 +11,9 @@ public class IRNullPtrLiteral extends IRLiteral {
     public String toString() {
         return "null";
     }
+    @Override
+    public int getVal() {
+        System.err.println("IRNullPtrLiteral getVal 0");
+        return 0;
+    }
 }

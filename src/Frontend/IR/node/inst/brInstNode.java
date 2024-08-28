@@ -6,7 +6,7 @@ import Frontend.IR.node.stmt.IRBlockNode;
 import Frontend.IR.type.IRType;
 
 public class brInstNode extends instNode {
-    public IREntity cond;
+    public IREntity cond=null;
     public String ifTrue, ifFalse, dest;
     //br i1 %cond, label %ifTrue, label %ifFalse ; Conditional branch
     //br label %dest ; Unconditional branch

@@ -65,4 +65,8 @@ public class callInstNode extends instNode {
         sb.append(")");
         return sb.toString() + "\n";
     }
+    @Override
+    public String getVal() {
+        return dest.toString();
+    }
 }

@@ -12,4 +12,8 @@ public class IRIntLiteral extends IRLiteral {
     public String toString() {
         return Integer.toString(value);
     }
+    @Override
+    public int getVal() {
+        return value;
+    }
 }

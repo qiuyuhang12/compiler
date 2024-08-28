@@ -1,12 +1,12 @@
 package ASM.inst;
 
-public class arithimm extends inst{
+public class Arithimm extends Inst {
     public String op;
     public String rd;
     public String rs;
     public int imm;
 
-    public arithimm(String op, String rd, String rs, int imm){
+    public Arithimm(String op, String rd, String rs, int imm){
         check(op);
         this.op = op;
         this.rd = rd;
