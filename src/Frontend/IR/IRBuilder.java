@@ -191,6 +191,18 @@ public class IRBuilder implements ASTVisitor {
         }
     }
     
+    private IRLiteral init(String s) {
+        if (s.equals("i1")) {
+            return new IRBoolLiteral(false);
+        } else if (s.equals("i32")) {
+            return new IRIntLiteral(0);
+        } else if (s.equals("ptr")) {
+            return new IRNullPtrLiteral();
+        }
+        assert false;
+        return null;
+    }
+    
     @Override
     public void visit(funDefNode it) {
         assert currentFunDef == null;
@@ -229,6 +241,8 @@ public class IRBuilder implements ASTVisitor {
             retVarDef.units.add(new varDefUnitNode(it.pos));
             retVarDef.units.getFirst().name = "ret.val";
             retVarDef.accept(this);
+            IREntity irEntity = init(getIRtype(it.typeNd.type).toString());
+            currentBlock.push(new storeInstNode(null, currentBlock, irEntity, new IRVar(getIRtype(it.typeNd.type).toString(), renamer.getRenamed("ret.val"), false)));
         }
         //处理函数体
         if (it.name.equals("main")) {
@@ -978,7 +992,7 @@ public class IRBuilder implements ASTVisitor {
     public void visit(newVarExprNode it) {
         assert !it.typeNd.type.isArray;
         assert it.typeNd.type.atomType.equals(Type.TypeEnum.CLASS);
-        allocaInstNode alloca = new allocaInstNode(it, currentBlock, new IRVar("ptr", "%" + renamer.rename("_."+it.typeNd.type.name), false), new IRType(IRType.IRTypeEnum.ptr));
+        allocaInstNode alloca = new allocaInstNode(it, currentBlock, new IRVar("ptr", "%" + renamer.rename("_." + it.typeNd.type.name), false), new IRType(IRType.IRTypeEnum.ptr));
 //        currentBlock.push(alloca);
         if (!classVarIndex.containsKey(it.typeNd.type.name)) {
             System.exit(0);

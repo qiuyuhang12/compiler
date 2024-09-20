@@ -24,6 +24,20 @@ public class IRBlockNode extends IRNode {
         insts.add(inst);
     }
     
+    public ArrayList<String> getNext(){
+        if (insts.getLast() instanceof brInstNode br) {
+            ArrayList<String> res = new ArrayList<>();
+            if (br.isCondBr) {
+                res.add(br.ifTrue);
+                res.add(br.ifFalse);
+            } else {
+                res.add(br.dest);
+            }
+            return res;
+        } else {
+            return null;
+        }
+    }
     @Override
     public String toString() {
         assert insts != null && !insts.isEmpty();

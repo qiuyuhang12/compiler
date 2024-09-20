@@ -17,7 +17,9 @@ public class IRFunDef extends IRFunDeclare {
     public void push(IRBlockNode block) {
         blocks.add(block);
     }
-
+    public String getEntry(){
+        return blocks.getFirst().label;
+    }
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
