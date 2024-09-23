@@ -8,6 +8,7 @@ import Frontend.IR.type.IRType;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 
 public class callInstNode extends instNode {
     public IRVar dest;
@@ -69,5 +70,14 @@ public class callInstNode extends instNode {
     public String getVal() {
         if (dest == null) return null;
         return dest.toString();
+    }
+    
+    @Override
+    public void rename(HashMap<String, String> renameMap) {
+        for (IREntity arg : args) {
+            if (arg instanceof IRVar var) {
+                var.name = renameMap.getOrDefault(var.name, var.name);
+            }
+        }
     }
 }

@@ -2,18 +2,27 @@ package Frontend.IR.node.stmt;
 
 import Frontend.IR.node.IRNode;
 import Frontend.IR.node.def.IRFunDeclare;
-import Frontend.IR.node.inst.brInstNode;
-import Frontend.IR.node.inst.instNode;
-import Frontend.IR.node.inst.retInstNode;
+import Frontend.IR.node.inst.*;
 
 import java.util.ArrayList;
 
 public class IRBlockNode extends IRNode {
+    public boolean renamed=false;
     public IRBlockNode jumpSrc;//来源
     public IRFunDeclare func;
     public String label;
     public ArrayList<instNode> insts = new ArrayList<>();
-    
+    public ArrayList<phiInstNode> phis=new ArrayList<>();
+    public boolean setPhi(String oriVar,String type){
+        for (phiInstNode phi:phis){
+            if (phi.oriVar.equals(oriVar)){
+                return false;
+            }
+        }
+        phiInstNode phi = new phiInstNode(oriVar,type);
+        phis.add(phi);
+        return true;
+    }
     public IRBlockNode(IRBlockNode jumpSrc, IRFunDeclare func, String label) {
         this.jumpSrc = jumpSrc;
         this.func = func;
@@ -44,6 +53,9 @@ public class IRBlockNode extends IRNode {
         assert insts.getLast() instanceof brInstNode || insts.getLast() instanceof retInstNode;
         StringBuilder sb = new StringBuilder();
         sb.append(label).append(":\n");
+        for (phiInstNode phi:phis){
+            sb.append(phi.toString());
+        }
         int i = 0;
         for (instNode inst : insts) {
             i++;

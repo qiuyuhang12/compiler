@@ -6,6 +6,8 @@ import Frontend.IR.entity.IRVar;
 import Frontend.IR.node.stmt.IRBlockNode;
 import Frontend.IR.type.IRType;
 
+import java.util.HashMap;
+
 public class selectInstNode extends instNode {
     public IRVar dest;
     public IREntity cond, trueVal, falseVal;
@@ -24,4 +26,11 @@ public class selectInstNode extends instNode {
     public String toString() {
         return dest.toString() + " = select i1 " + cond.toString() + ", " + trueVal.typeInfo.toString() + trueVal.toString() + ", " + falseVal.typeInfo.toString() + falseVal.toString() + "\n";
     }
+    
+    @Override
+    public void rename(HashMap<String, String> renameMap) {
+        assert false;
+    }
+    
+    
 }

@@ -6,6 +6,7 @@ import Frontend.IR.node.stmt.IRBlockNode;
 import Frontend.IR.type.IRType;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class getElementPtrInstNode extends instNode {
     public String dest, ptr;
@@ -55,5 +56,14 @@ public class getElementPtrInstNode extends instNode {
     @Override
     public String getVal(){
         return dest;
+    }
+    
+    @Override
+    public void rename(HashMap<String, String> renameMap) {
+        for (int i = 0; i < idxs.size(); i++) {
+            if (idxs.get(i).charAt(0) == '%') {
+                idxs.set(i, renameMap.getOrDefault(idxs.get(i), idxs.get(i)));
+            }
+        }
     }
 }

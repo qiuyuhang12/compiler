@@ -5,6 +5,8 @@ import Frontend.IR.entity.IRVar;
 import Frontend.IR.node.stmt.IRBlockNode;
 import Frontend.IR.type.IRType;
 
+import java.util.HashMap;
+
 public class loadInstNode extends instNode{
     public String dest;
     public String ptr;
@@ -25,5 +27,10 @@ public class loadInstNode extends instNode{
     @Override
     public String getVal() {
         return dest;
+    }
+    
+    @Override
+    public void rename(HashMap<String, String> renameMap) {
+        assert false;
     }
 }

@@ -1,9 +1,10 @@
 package Frontend.IR.node.inst;
 
 import AST.ASTNode;
-import AST.expr.ExprNode;
 import Frontend.IR.node.IRNode;
 import Frontend.IR.node.stmt.IRBlockNode;
+
+import java.util.HashMap;
 
 public abstract class instNode extends IRNode {
     public IRBlockNode parent;
@@ -17,4 +18,5 @@ public abstract class instNode extends IRNode {
     public String getVal(){
         return null;
     }
+    public abstract void rename(HashMap<String, String> renameMap);
 }

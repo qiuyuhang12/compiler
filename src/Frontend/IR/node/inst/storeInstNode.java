@@ -6,6 +6,8 @@ import Frontend.IR.entity.IRLiteral;
 import Frontend.IR.entity.IRVar;
 import Frontend.IR.node.stmt.IRBlockNode;
 
+import java.util.HashMap;
+
 public class storeInstNode extends instNode {
     public IREntity value;
     public IRVar ptr;
@@ -25,5 +27,10 @@ public class storeInstNode extends instNode {
     @Override
     public String toString() {
         return "store " + value.typeInfo.toString() + " " + value.toString() + ", ptr " + ptr.toString() + "\n";
+    }
+    
+    @Override
+    public void rename(HashMap<String, String> renameMap) {
+        assert false;
     }
 }

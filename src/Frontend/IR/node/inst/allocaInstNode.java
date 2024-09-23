@@ -6,6 +6,8 @@ import Frontend.IR.entity.IRVar;
 import Frontend.IR.node.stmt.IRBlockNode;
 import Frontend.IR.type.IRType;
 
+import java.util.HashMap;
+
 public class allocaInstNode extends instNode{
     public IRVar dest;
     public IRType type;
@@ -18,5 +20,10 @@ public class allocaInstNode extends instNode{
     @Override
     public String toString() {
         return dest.toString()+" = alloca "+type.toString() + "\n";
+    }
+    
+    @Override
+    public void rename(HashMap<String, String> renameMap) {
+        return;
     }
 }

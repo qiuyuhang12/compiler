@@ -72,7 +72,7 @@ public class IRProgramNode extends IRNode {
         for (IRStringDef stringDef : stringDefs) {
             sb.append(stringDef.toString()).append("\n");
         }
-        initCall();
+//        initCall();
         for (IRFunDef initFun : initFuns) {
             sb.append(initFun.toString()).append("\n");
         }

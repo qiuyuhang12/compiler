@@ -25,6 +25,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.util.ArrayList;
 
 
 public class Main {
@@ -43,7 +44,7 @@ public class Main {
         }
         PrintStream fileErr = new PrintStream(new FileOutputStream("errput.txt"));
         System.setErr(fileErr);
-
+        
         String name = "test.mx";
         InputStream input = new FileInputStream(name);
 //        InputStream input = System.in;
@@ -69,9 +70,13 @@ public class Main {
             }
             new SemanticChecker(gScope).visit(programNode);
             IRBuilder ib = new IRBuilder(programNode, gScope);
+            ib.irProgramNode.initCall();
             String s = ib.irProgramNode.toString();
+//            System.out.println(s);
             Mem2Reg mem2Reg = new Mem2Reg(ib.irProgramNode);
-            System.out.println(s);
+            mem2Reg.run();
+            String s1 = ib.irProgramNode.toString();
+            System.out.println(s1);
 //            ib.irProgramNode.initCall();
 //            asmBuilder ab = new asmBuilder(ib.irProgramNode);
 //            ab.build();
