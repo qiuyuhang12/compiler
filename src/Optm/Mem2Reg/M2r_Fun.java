@@ -5,11 +5,13 @@ import Frontend.IR.node.def.IRFunDef;
 import Frontend.IR.node.inst.*;
 import Frontend.IR.node.stmt.IRBlockNode;
 import Frontend.IR.type.IRType;
+import Frontend.IR.util.Renamer;
 
 import java.util.*;
 
 public class M2r_Fun {
     public IRFunDef fun;
+    public Renamer renamer;
     public HashMap<String, IRBlockNode> bl = new HashMap<>();//label to block
     public HashMap<String, ArrayList<String>> in = new HashMap<>();//label to in block
     public HashMap<String, ArrayList<String>> out = new HashMap<>();//label to out block
@@ -21,9 +23,11 @@ public class M2r_Fun {
     public HashMap<String, HashSet<String>> domFr = new HashMap<>();//label to dom frontier block
     public HashMap<String, String> var2type = new HashMap<>();//var to type
     public HashMap<String, ArrayList<String>> phiStack = new HashMap<>();//var to phi stack
+    public HashSet<String> usefulPtr = new HashSet<>();//label to ele ptr
     
-    public M2r_Fun(IRFunDef fun) {
+    public M2r_Fun(IRFunDef fun, Renamer renamer) {
         this.fun = fun;
+        this.renamer = renamer;
     }
     
     
@@ -60,12 +64,27 @@ public class M2r_Fun {
     }
     
     void handleDefUse() {
+        for (IRBlockNode block : fun.blocks) {//统计getelement的指针
+            for (instNode inst : block.insts) {
+                if (inst instanceof getElementPtrInstNode gep) {
+                    usefulPtr.add(gep.ptr);
+                } else if (inst instanceof callInstNode call) {
+                    if (call.funName.equals("string.copy")) {
+                        usefulPtr.add(call.args.getFirst().toString());
+                    }
+                }
+            }
+        }
         for (IRBlockNode block : fun.blocks) {//统计局部变量
-            int i = 0;
+            int i = -1;
             ArrayList<Integer> index = new ArrayList<>();
             for (instNode inst : block.insts) {
+                i++;
                 if (inst instanceof allocaInstNode alloc) {
-                    if (alloc.type.type == IRType.IRTypeEnum.ptr || alloc.type.type == IRType.IRTypeEnum.struct) {
+//                    if (alloc.type.type == IRType.IRTypeEnum.ptr || alloc.type.type == IRType.IRTypeEnum.struct) {
+//                        continue;
+//                    }
+                    if (usefulPtr.contains(alloc.dest.toString())) {
                         continue;
                     }
                     String var = alloc.dest.toString();
@@ -73,7 +92,7 @@ public class M2r_Fun {
                     useBl.put(var, new ArrayList<>());
                     var2type.put(var, alloc.type.toString());
                     phiStack.put(var, new ArrayList<>());
-                    index.add(i++);
+                    index.add(i);
                 }
             }
             for (int j = index.size() - 1; j >= 0; j--) {
@@ -201,6 +220,8 @@ public class M2r_Fun {
         }
     }
     
+    HashMap<String, String> renameMap = new HashMap<>();//load 带来的 rename
+    
     void rename(String label) {
         IRBlockNode block = bl.get(label);
         if (block.renamed) {
@@ -212,20 +233,23 @@ public class M2r_Fun {
             else stack.add("这不合理");
         }
         for (phiInstNode phi : block.phis) {//rename phi
-            String var = phi.oriVar + "." + label;
+//            String var = phi.oriVar + "." + label;
+            String var = renamer.getAnonymousName_m2r();
             phiStack.get(phi.oriVar).set(phiStack.get(phi.oriVar).size() - 1, var);
             phi.rename(var);
         }
-        HashMap<String, String> renameMap = new HashMap<>();//load 带来的 rename
-        int i = 0;
+//        HashMap<String, String> renameMap = new HashMap<>();//load 带来的 rename
+        int i = -1;
         ArrayList<Integer> index = new ArrayList<>();
         for (instNode inst : block.insts) {//rename inst
+            i++;
             if (inst instanceof loadInstNode ld) {
                 if (phiStack.containsKey(ld.ptr)) {
                     renameMap.put(ld.dest, phiStack.get(ld.ptr).getLast());
-                    index.add(i++);
+                    index.add(i);
                 }
             } else if (inst instanceof storeInstNode st) {
+                st.rename(renameMap);
                 if (!phiStack.containsKey(st.ptr.toString())) {
                     continue;
                 }
@@ -233,7 +257,7 @@ public class M2r_Fun {
                     var.name = renameMap.get(st.value.toString());
                 }
                 phiStack.get(st.ptr.toString()).set(phiStack.get(st.ptr.toString()).size() - 1, st.value.toString());
-                index.add(i++);
+                index.add(i);
             } else {
                 inst.rename(renameMap);
             }
@@ -245,15 +269,15 @@ public class M2r_Fun {
             IRBlockNode next = bl.get(s);
             for (phiInstNode nextPhi : next.phis) {
                 var stack = phiStack.get(nextPhi.oriVar);
-                if (!stack.isEmpty()&&!stack.getLast().equals("这不合理")) assert nextPhi.add_source_m2r(stack.getLast(), label);
-                else {
+                if (!stack.isEmpty() && !stack.getLast().equals("这不合理")) {
+                    boolean tmp = nextPhi.add_source_m2r(stack.getLast(), label);
+                    assert tmp;
+                } else {
                     if (nextPhi.type.type == IRType.IRTypeEnum.i1 || nextPhi.type.type == IRType.IRTypeEnum.i32) {
                         nextPhi.add_source_m2r("0", label);
-                    }
-//                    else if (nextPhi.type.type == IRType.IRTypeEnum.ptr) {
-//                        nextPhi.add_source_m2r("null", label);
-//                    }
-                    else {
+                    } else if (nextPhi.type.type == IRType.IRTypeEnum.ptr) {
+                        nextPhi.add_source_m2r("null", label);
+                    } else {
                         assert false;
                     }
                 }

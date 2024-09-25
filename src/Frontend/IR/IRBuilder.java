@@ -356,7 +356,7 @@ public class IRBuilder implements ASTVisitor {
                         continue;
                     } else {
                         unit.init.accept(this);
-                        callInstNode call = new callInstNode(it, currentBlock, new IRVar("ptr", "%" + renamer.rename("call"), false), new IRType(IRType.IRTypeEnum.ptr), "string.copy", alloc.dest, new IRVar("ptr", currentTmpValName, false));
+                        callInstNode call = new callInstNode(it, currentBlock, "string.copy", alloc.dest, new IRVar("ptr", currentTmpValName, false));
                         currentBlock.push(call);
                     }
                 }

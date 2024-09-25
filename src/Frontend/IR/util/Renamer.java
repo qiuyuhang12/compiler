@@ -16,6 +16,9 @@ public class Renamer {
     public String getAnonymousName(){
         return "%"+cnt++;
     }
+    public String getAnonymousName_m2r(){
+        return "%_"+cnt++;
+    }
     public String rename(String name) {
         assert name.charAt(0)!='@'&&name.charAt(0)!='%';
         if(inClass&&nameMapStack.size()==2){

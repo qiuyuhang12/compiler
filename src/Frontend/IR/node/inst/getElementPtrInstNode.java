@@ -65,5 +65,6 @@ public class getElementPtrInstNode extends instNode {
                 idxs.set(i, renameMap.getOrDefault(idxs.get(i), idxs.get(i)));
             }
         }
+        ptr = renameMap.getOrDefault(ptr, ptr);
     }
 }

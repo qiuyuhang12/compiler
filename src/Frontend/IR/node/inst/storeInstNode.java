@@ -31,6 +31,8 @@ public class storeInstNode extends instNode {
     
     @Override
     public void rename(HashMap<String, String> renameMap) {
-        assert false;
+        if (value instanceof IRVar var) {
+            var.name = renameMap.getOrDefault(var.name, var.name);
+        }
     }
 }

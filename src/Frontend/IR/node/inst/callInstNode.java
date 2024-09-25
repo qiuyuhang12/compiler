@@ -76,8 +76,15 @@ public class callInstNode extends instNode {
     public void rename(HashMap<String, String> renameMap) {
         for (IREntity arg : args) {
             if (arg instanceof IRVar var) {
-                var.name = renameMap.getOrDefault(var.name, var.name);
+//                var.name = renameMap.getOrDefault(var.name, var.name);
+                String tmp = renameMap.getOrDefault(var.name, var.name);
+                if (!tmp.equals("这不合理")) {
+                    var.name = tmp;
+                }
             }
         }
+//        if (toString().contains("这")){
+//            System.out.println("fuck！！！！");
+//        }
     }
 }
