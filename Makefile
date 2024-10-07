@@ -10,9 +10,10 @@ build:
 
 
 .PHONY: run
-run:build
+run:
+# build
 	java -cp ./src/Parser/lib/antlr-4.13.2-complete.jar:bin Main
-	# java -server -cp ./src/Parser/lib/antlr-4.13.2-complete.jar:bin Main
+# 	java -server -cp ./src/Parser/lib/antlr-4.13.2-complete.jar:bin Main
 
 #
 #

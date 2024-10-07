@@ -17,8 +17,8 @@ public class IRBlockNode extends IRNode {
     public String label;
     public ArrayList<instNode> insts = new ArrayList<>();
     public ArrayList<phiInstNode> phis = new ArrayList<>();
-//    public HashSet<String> live_in = new HashSet<>();
-    public HashSet<String> live_out = new HashSet<>();
+    public HashSet<String> live_in = new HashSet<>();
+    public HashSet<String> phi_live_out = new HashSet<>();
     
     public HashSet<String> get_phi_def() {
         HashSet<String> res = new HashSet<>();

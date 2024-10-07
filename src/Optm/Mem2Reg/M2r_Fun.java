@@ -34,6 +34,8 @@ public class M2r_Fun {
     
     public void run() {
         cfg();
+        clear();
+        cfg();
         handleDefUse();
         dom();
         idom();
@@ -44,12 +46,21 @@ public class M2r_Fun {
                 rename(entry.getKey());
             }
         }
-        SSA ssa = new SSA(fun, bl, in);
-        ssa.run();
+        Analysis analysis = new Analysis(fun, bl, in);
+        analysis.run();
+        Spill spill = new Spill(20, fun, bl);
+        spill.run();
         critical_edge();
     }
     
+    HashSet<String> visited = new HashSet<>();
+    HashSet<String> can_arrive = new HashSet<>();
+    
     void cfg() {
+        in.clear();
+        out.clear();
+        dom.clear();
+        bl.clear();
         for (IRBlockNode block : fun.blocks) {
             bl.put(block.label, block);
             in.put(block.label, new ArrayList<>());
@@ -65,6 +76,27 @@ public class M2r_Fun {
                 in.get(s).add(block.label);
             }
         }
+    }
+    
+    void clear() {
+        bfs_arrive(fun.blocks.getFirst().label);
+        for (int i = fun.blocks.size() - 1; i >= 0; i--) {
+            if (!can_arrive.contains(fun.blocks.get(i).label)) {
+                fun.blocks.remove(i);
+            }
+        }
+    }
+    
+    void bfs_arrive(String label) {
+        if (visited.contains(label)) {
+            return;
+        }
+        visited.add(label);
+        can_arrive.add(label);
+        if (out.get(label) != null)
+            for (String s : out.get(label)) {
+                bfs_arrive(s);
+            }
     }
     
     void handleDefUse() {

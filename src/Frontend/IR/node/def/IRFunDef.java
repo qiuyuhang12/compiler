@@ -6,6 +6,7 @@ import Frontend.IR.node.stmt.IRBlockNode;
 import Frontend.IR.type.IRType;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 
 public class IRFunDef extends IRFunDeclare {
     public ArrayList<IRBlockNode> blocks = new ArrayList<>();
@@ -14,6 +15,15 @@ public class IRFunDef extends IRFunDeclare {
         super(returnType, name, parameters);
     }
 
+    public HashSet<String> get_para_def() {
+        HashSet<String> res = new HashSet<>();
+        for (IRVar var : parameters) {
+            String tmp = var.toString();
+            if (tmp.charAt(0) == '%') res.add(tmp);
+        }
+        return res;
+    }
+    
     public void push(IRBlockNode block) {
         blocks.add(block);
     }

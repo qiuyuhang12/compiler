@@ -11,18 +11,20 @@ import java.util.Objects;
 import Frontend.IR.node.inst.*;
 import org.antlr.v4.runtime.misc.Pair;
 
-public class SSA {
+public class Analysis {
     public IRFunDef fun;
     public HashMap<String, IRBlockNode> bl = new HashMap<>();//label to block
     public HashMap<String, ArrayList<Pair<String, Integer>>> use = new HashMap<>();//var to inst
     public HashMap<String, ArrayList<Pair<String, String>>> use_in_phi = new HashMap<>();//var to label,jumpSrc
     //    public HashMap<String, ArrayList<instNode>> def = new HashMap<>();//var to inst
     public HashMap<String, ArrayList<String>> in = new HashMap<>();//label to in block
+//    public HashMap<String, String> idom = new HashMap<>();//label to idom block label
     
-    public SSA(IRFunDef fun, HashMap<String, IRBlockNode> bl, HashMap<String, ArrayList<String>> in) {
+    public Analysis(IRFunDef fun, HashMap<String, IRBlockNode> bl, HashMap<String, ArrayList<String>> in) {
         this.fun = fun;
         this.bl = bl;
         this.in = in;
+//        this.idom = idom;
     }
     
     public void run() {
@@ -30,6 +32,16 @@ public class SSA {
         clean();
         collect_use();
         ssa_liveness();
+        for (var entry : in.entrySet()) {
+            var label = entry.getKey();
+            var block = this.bl.get(label);
+            var ins = entry.getValue();
+            if (ins == null || ins.isEmpty()) continue;
+            for (var in : ins) {
+                var in_block = this.bl.get(in);
+                block.live_in.addAll(in_block.insts.getLast().live_out);
+            }
+        }
     }
     
     HashSet<String> del = new HashSet<>();
@@ -235,8 +247,11 @@ public class SSA {
     void scan_live_out_phi(String B, String x) {//inst,var
         var bl = this.bl.get(B);
         var D = bl.get_phi_def();
-        bl.live_out.addAll(D);
-        bl.live_out.add(x);
+        if (B.equals(fun.blocks.getFirst().label)) {
+            D.addAll(fun.get_para_def());
+        }
+        bl.phi_live_out.addAll(D);
+        bl.phi_live_out.add(x);
         if (!D.contains(x)) {
             scan_live_in_phi(B, x);
         }
@@ -257,5 +272,7 @@ public class SSA {
 //  统计use
 //  live_in live_out,存入指令
 //  活跃变量分析
+
+//todo:idom是子到父
 
 //todo:loop分析
