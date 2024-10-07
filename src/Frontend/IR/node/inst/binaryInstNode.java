@@ -96,10 +96,10 @@ public class binaryInstNode extends instNode {
     @Override
     public HashSet<String> getUses() {
         HashSet<String> res = new HashSet<>();
-        if (lhs instanceof IRVar var) {
+        if (lhs instanceof IRVar var && var.name.charAt(0) == '%') {
             res.add(var.name);
         }
-        if (rhs instanceof IRVar var) {
+        if (rhs instanceof IRVar var && var.name.charAt(0) == '%') {
             res.add(var.name);
         }
         return res;

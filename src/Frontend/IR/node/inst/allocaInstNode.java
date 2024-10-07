@@ -30,7 +30,7 @@ public class allocaInstNode extends instNode{
     
     @Override
     public String getDef() {
-        return "";
+        return null;
     }
     
     @Override

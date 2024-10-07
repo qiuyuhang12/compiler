@@ -39,16 +39,17 @@ public class storeInstNode extends instNode {
     
     @Override
     public String getDef() {
-        return "";
+        return null;
     }
     
     @Override
     public HashSet<String> getUses() {
         HashSet<String> res = new HashSet<>();
-        if (value instanceof IRVar var) {
+        if (value instanceof IRVar var && var.name.charAt(0) == '%') {
             res.add(var.name);
         }
-        res.add(ptr.name);
+        if (ptr.name.charAt(0) == '%')
+            res.add(ptr.name);
         return res;
     }
 }

@@ -99,7 +99,7 @@ public class callInstNode extends instNode {
     public HashSet<String> getUses() {
         HashSet<String> st = new HashSet<>();
         for (IREntity arg : args) {
-            if (arg instanceof IRVar var) {
+            if (arg instanceof IRVar var && var.name.charAt(0) == '%') {
                 st.add(var.name);
             }
         }

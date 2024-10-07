@@ -14,7 +14,7 @@ public class getElementPtrInstNode extends instNode {
     public IRType type;
     public ArrayList<IRType> tys = new ArrayList<>();
     public ArrayList<String> idxs = new ArrayList<>();
-
+    
     public getElementPtrInstNode(ASTNode expr, IRBlockNode _parent, IRVar dest, IRVar ptr, IRType type) {
         super(expr, _parent);
         assert !ptr.toString().equals("null");
@@ -23,10 +23,10 @@ public class getElementPtrInstNode extends instNode {
         this.ptr = ptr.name;
         this.type = type;
     }
-
+    
     public getElementPtrInstNode(ASTNode expr, IRBlockNode _parent, String dest, String ptr, IRType type) {
         super(expr, _parent);
-        if (ptr==null) {
+        if (ptr == null) {
             System.err.println("ptr is null");
         }
         assert !ptr.equals("null");
@@ -34,17 +34,17 @@ public class getElementPtrInstNode extends instNode {
         this.ptr = ptr;
         this.type = type;
     }
-
+    
     public void push(IRType ty, int idx) {
         tys.add(ty);
         idxs.add(idx + "");
     }
-
+    
     public void push(IRType ty, String idx) {
         tys.add(ty);
         idxs.add(idx);
     }
-
+    
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -54,8 +54,9 @@ public class getElementPtrInstNode extends instNode {
         }
         return sb.toString() + "\n";
     }
+    
     @Override
-    public String getVal(){
+    public String getVal() {
         return dest;
     }
     
@@ -82,7 +83,8 @@ public class getElementPtrInstNode extends instNode {
                 st.add(idx);
             }
         }
-        st.add(ptr);
+        if (ptr.charAt(0) == '%')
+            st.add(ptr);
         return st;
     }
 }

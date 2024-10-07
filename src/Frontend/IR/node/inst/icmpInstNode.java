@@ -13,7 +13,7 @@ import java.util.HashSet;
 public class icmpInstNode extends instNode {
     public IRVar dest;
     public IREntity lhs, rhs;
-
+    
     public enum opEnum {
         eq,
         ne,
@@ -22,9 +22,9 @@ public class icmpInstNode extends instNode {
         slt,
         sle
     }
-
+    
     public opEnum op;
-
+    
     public icmpInstNode(ASTNode expr, IRBlockNode _parent, IRVar dest, binaryExprNode.binaryOpType op, IREntity lhs, IREntity rhs) {
         super(expr, _parent);
         assert dest.typeInfo.type == IRType.IRTypeEnum.i1;
@@ -51,7 +51,7 @@ public class icmpInstNode extends instNode {
         this.lhs = lhs;
         this.rhs = rhs;
     }
-
+    
     @Override
     public String toString() {
         return dest.toString() + " = icmp " + op.toString() + " " + lhs.typeInfo.toString() + " " + lhs.toString() + ", " + rhs.toString() + "\n";
@@ -64,28 +64,28 @@ public class icmpInstNode extends instNode {
     
     @Override
     public void rename(HashMap<String, String> renameMap) {
-        if (lhs instanceof IRVar var){
+        if (lhs instanceof IRVar var) {
             var.name = renameMap.getOrDefault(var.name, var.name);
         }
-        if (rhs instanceof IRVar var){
+        if (rhs instanceof IRVar var) {
             var.name = renameMap.getOrDefault(var.name, var.name);
         }
     }
     
-
+    
     @Override
     public String getDef() {
         return dest.name;
     }
     
-  
+    
     @Override
     public HashSet<String> getUses() {
         HashSet<String> ret = new HashSet<>();
-        if (lhs instanceof IRVar var) {
+        if (lhs instanceof IRVar var && var.name.charAt(0) == '%') {
             ret.add(var.name);
         }
-        if (rhs instanceof IRVar var) {
+        if (rhs instanceof IRVar var && var.name.charAt(0) == '%') {
             ret.add(var.name);
         }
         return ret;

@@ -44,6 +44,8 @@ public class M2r_Fun {
                 rename(entry.getKey());
             }
         }
+        SSA ssa = new SSA(fun, bl);
+        ssa.run();
         critical_edge();
     }
     

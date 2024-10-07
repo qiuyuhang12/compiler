@@ -37,7 +37,7 @@ public class selectInstNode extends instNode {
     @Override
     public String getDef() {
         assert false;
-        return "";
+        return null;
     }
     
     @Override

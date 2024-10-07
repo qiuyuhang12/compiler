@@ -54,12 +54,12 @@ public class brInstNode extends instNode {
     
     @Override
     public String getDef() {
-        return "";
+        return null;
     }
     
     @Override
     public HashSet<String> getUses() {
-        if (isCondBr && cond instanceof IRVar var) {
+        if (isCondBr && cond instanceof IRVar var && var.name.charAt(0) == '%') {
             return new HashSet<>(Set.of(var.name));
         } else {
             return null;

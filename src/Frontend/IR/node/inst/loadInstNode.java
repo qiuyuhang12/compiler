@@ -43,6 +43,7 @@ public class loadInstNode extends instNode{
     
     @Override
     public HashSet<String> getUses() {
-        return new HashSet<>(Set.of(ptr));
+        if (ptr.charAt(0) == '%') return new HashSet<>(Set.of(ptr));
+        return null;
     }
 }

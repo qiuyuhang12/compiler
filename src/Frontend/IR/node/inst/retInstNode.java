@@ -39,13 +39,13 @@ public class retInstNode extends instNode {
     
     @Override
     public String getDef() {
-        return "";
+        return null;
     }
     
     @Override
     public HashSet<String> getUses() {
         HashSet<String> ret = new HashSet<>();
-        if (value instanceof IRVar var) {
+        if (!value.typeInfo.toString().equals("void") && value instanceof IRVar var && var.name.charAt(0) == '%') {
             ret.add(var.name);
         }
         return ret;

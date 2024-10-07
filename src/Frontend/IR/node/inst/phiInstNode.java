@@ -76,7 +76,7 @@ public class phiInstNode extends instNode {
     public HashSet<String> getUses() {
         HashSet<String> st = new HashSet<>();
         for (IREntity value : values) {
-            if (value instanceof IRVar var) {
+            if (value instanceof IRVar var&&var.name.charAt(0) == '%') {
                 st.add(var.name);
             }
         }

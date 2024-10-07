@@ -46,9 +46,9 @@ public class Main {
 //        PrintStream fileErr = new PrintStream(new FileOutputStream("errput.txt"));
 //        System.setErr(fileErr);
         
-        String name = "test.mx";
-        InputStream input = new FileInputStream(name);
-//        InputStream input = System.in;
+//        String name = "test.mx";
+//        InputStream input = new FileInputStream(name);
+        InputStream input = System.in;
         try {
             ProgramNode programNode;
             Scope gScope = new Scope(null);
