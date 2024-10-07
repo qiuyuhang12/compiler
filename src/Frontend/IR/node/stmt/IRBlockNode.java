@@ -5,6 +5,8 @@ import Frontend.IR.node.def.IRFunDeclare;
 import Frontend.IR.node.inst.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 
 public class IRBlockNode extends IRNode {
     public boolean renamed=false;
@@ -13,6 +15,10 @@ public class IRBlockNode extends IRNode {
     public String label;
     public ArrayList<instNode> insts = new ArrayList<>();
     public ArrayList<phiInstNode> phis=new ArrayList<>();
+    public HashSet<String> live_in=new HashSet<>();
+    public HashSet<String> live_out=new HashSet<>();
+    public HashSet<String> get_phi_def=new HashSet<>();
+    public HashSet<String> get_phi_use=new HashSet<>();
     public boolean setPhi(String oriVar,String type){
         for (phiInstNode phi:phis){
             if (phi.oriVar.equals(oriVar)){
@@ -26,6 +32,10 @@ public class IRBlockNode extends IRNode {
     public IRBlockNode(IRBlockNode jumpSrc, IRFunDeclare func, String label) {
         this.jumpSrc = jumpSrc;
         this.func = func;
+        this.label = label;
+    }
+    
+    public IRBlockNode(String label) {
         this.label = label;
     }
     

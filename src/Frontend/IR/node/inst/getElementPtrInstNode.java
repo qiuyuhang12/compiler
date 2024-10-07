@@ -7,6 +7,7 @@ import Frontend.IR.type.IRType;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 
 public class getElementPtrInstNode extends instNode {
     public String dest, ptr;
@@ -66,5 +67,22 @@ public class getElementPtrInstNode extends instNode {
             }
         }
         ptr = renameMap.getOrDefault(ptr, ptr);
+    }
+    
+    @Override
+    public String getDef() {
+        return dest;
+    }
+    
+    @Override
+    public HashSet<String> getUses() {
+        HashSet<String> st = new HashSet<>();
+        for (String idx : idxs) {
+            if (idx.charAt(0) == '%') {
+                st.add(idx);
+            }
+        }
+        st.add(ptr);
+        return st;
     }
 }

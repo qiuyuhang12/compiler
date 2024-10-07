@@ -7,6 +7,7 @@ import Frontend.IR.node.stmt.IRBlockNode;
 import Frontend.IR.type.IRType;
 
 import java.util.HashMap;
+import java.util.HashSet;
 
 public class allocaInstNode extends instNode{
     public IRVar dest;
@@ -25,5 +26,15 @@ public class allocaInstNode extends instNode{
     @Override
     public void rename(HashMap<String, String> renameMap) {
         return;
+    }
+    
+    @Override
+    public String getDef() {
+        return "";
+    }
+    
+    @Override
+    public HashSet<String> getUses() {
+        return null;
     }
 }

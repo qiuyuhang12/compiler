@@ -8,6 +8,7 @@ import Frontend.IR.type.IRType;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 
 public class phiInstNode extends instNode {
     public IRVar dest;
@@ -65,4 +66,27 @@ public class phiInstNode extends instNode {
     
     @Override
     public void rename(HashMap<String, String> renameMap) {}
+    
+    @Override
+    public String getDef() {
+        return dest.name;
+    }
+    
+    @Override
+    public HashSet<String> getUses() {
+        HashSet<String> st = new HashSet<>();
+        for (IREntity value : values) {
+            if (value instanceof IRVar var) {
+                st.add(var.name);
+            }
+        }
+        return st;
+    }
+    
+    public void rename_phi_bl(HashMap<String, String> renameMap) {
+        for (int i = 0; i < labels.size(); i++) {
+            var label = labels.get(i);
+            labels.set(i, renameMap.getOrDefault(label, label));
+        }
+    }
 }

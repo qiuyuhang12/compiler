@@ -9,6 +9,7 @@ public class Renamer {
     private Stack<HashMap<String, Integer>> nameMapStack=new Stack<>();
     private HashMap<String, Integer> nameMap;
     private int cnt=0;
+    private int cnt2=0;
     public Renamer(){
         nameMap=new HashMap<>();
         nameMapStack.push(new HashMap<>());
@@ -18,6 +19,9 @@ public class Renamer {
     }
     public String getAnonymousName_m2r(){
         return "%_"+cnt++;
+    }
+    public String getAnonymousBlName_m2r(){
+        return "cri"+cnt2++;
     }
     public String rename(String name) {
         assert name.charAt(0)!='@'&&name.charAt(0)!='%';

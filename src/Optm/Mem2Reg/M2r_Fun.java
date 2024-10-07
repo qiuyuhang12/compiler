@@ -6,6 +6,7 @@ import Frontend.IR.node.inst.*;
 import Frontend.IR.node.stmt.IRBlockNode;
 import Frontend.IR.type.IRType;
 import Frontend.IR.util.Renamer;
+import org.antlr.v4.runtime.misc.Pair;
 
 import java.util.*;
 
@@ -43,6 +44,7 @@ public class M2r_Fun {
                 rename(entry.getKey());
             }
         }
+        critical_edge();
     }
     
     void cfg() {
@@ -199,13 +201,14 @@ public class M2r_Fun {
     void setphi() {
         for (var entry : def.entrySet()) {
             String var = entry.getKey();
-            for (String label : entry.getValue()) {
-                _setphi(label, var);
+            if (useBl.containsKey(var))
+                for (String label : entry.getValue()) {
+                    _setphi(label, var);
 //                for (String fro : domFr.get(label)) {
 //                    IRBlockNode block = bl.get(fro);
 //                    block.setPhi(var, var2type.get(var));
 //                }
-            }
+                }
         }
     }
     
@@ -288,4 +291,61 @@ public class M2r_Fun {
             stack.removeLast();
         }
     }
+    
+    HashMap<String, String> renameBl = new HashMap<>();//critical edge 带来的 rename
+    ArrayList<Pair<Integer, IRBlockNode>> toInsert = new ArrayList<>();
+    
+    void critical_edge() {
+        for (var entry : bl.entrySet()) {
+            String label = entry.getKey();
+            IRBlockNode block = entry.getValue();
+            if (block.phis.isEmpty()) continue;
+            int i = 0;
+            for (var in_bl : in.get(label)) {
+                if (out.get(in_bl).size() > 1) {
+                    insert_block(in_bl, label, i);
+                }
+                i++;
+            }
+            for (var phi : block.phis) {
+                phi.rename_phi_bl(renameBl);
+            }
+        }
+        for (var pair : toInsert) {
+            fun.blocks.add(pair.a + 1, pair.b);
+        }
+    }
+    
+    void insert_block(String parent, String son, int i) {
+        IRBlockNode p = bl.get(parent);
+        IRBlockNode s = bl.get(son);
+        IRBlockNode new_block = new IRBlockNode(renamer.getAnonymousBlName_m2r());
+        new_block.push(new brInstNode(null, new_block, s.label));
+        brInstNode br = (brInstNode) p.insts.getLast();
+        if (br.isCondBr) {
+            if (br.ifTrue.equals(son)) {
+                br.ifTrue = new_block.label;
+            } else {
+                br.ifFalse = new_block.label;
+            }
+        } else {
+            br.dest = new_block.label;
+        }
+//        out.get(parent).remove(son);
+//        out.get(parent).add(new_block.label);
+//        in.get(son).remove(parent);
+//        in.get(son).add(new_block.label);
+//        out.put(new_block.label, new ArrayList<>(Collections.singletonList(son)));
+//        in.put(new_block.label, new ArrayList<>(Collections.singletonList(parent)));
+//        bl.put(new_block.label, new_block);
+
+//        fun.blocks.add(new_block);//todo:warning:会不会太远？
+        toInsert.add(new Pair<>(i, new_block));
+        renameBl.put(parent, new_block.label);
+//        for (phiInstNode phi : s.phis) {
+//            phi.add_source_m2r("这不合理", new_block.label);
+//        }
+    }
+    
+    
 }

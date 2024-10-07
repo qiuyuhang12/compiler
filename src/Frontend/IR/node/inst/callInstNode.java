@@ -9,13 +9,14 @@ import Frontend.IR.type.IRType;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 
 public class callInstNode extends instNode {
     public IRVar dest;
     public IRType retType;
     public String funName;
     public ArrayList<IREntity> args = new ArrayList<>();
-
+    
     public callInstNode(ASTNode expr, IRBlockNode _parent, IRVar dest, IRType retType, String funName, IREntity... args) {
         super(expr, _parent);
         this.dest = dest;
@@ -23,7 +24,7 @@ public class callInstNode extends instNode {
         this.funName = funName;
         this.args.addAll(Arrays.asList(args));
     }
-
+    
     //针对void返回值
     public callInstNode(ASTNode expr, IRBlockNode _parent, String funName, IREntity... args) {
         super(expr, _parent);
@@ -32,24 +33,24 @@ public class callInstNode extends instNode {
         this.funName = funName;
         this.args.addAll(Arrays.asList(args));
     }
-
+    
     public callInstNode(ASTNode expr, IRBlockNode _parent, IRVar dest, IRType retType, String funName, ArrayList<IREntity> args) {
         super(expr, _parent);
         this.dest = dest;
         this.retType = retType;
         this.funName = funName;
-        this.args= args;
+        this.args = args;
     }
-
+    
     //针对void返回值
     public callInstNode(ASTNode expr, IRBlockNode _parent, String funName, ArrayList<IREntity> args) {
         super(expr, _parent);
         this.dest = null;
         this.retType = new IRType(IRType.IRTypeEnum.void_);
         this.funName = funName;
-        this.args= args;
+        this.args = args;
     }
-
+    
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -66,6 +67,7 @@ public class callInstNode extends instNode {
         sb.append(")");
         return sb.toString() + "\n";
     }
+    
     @Override
     public String getVal() {
         if (dest == null) return null;
@@ -83,8 +85,24 @@ public class callInstNode extends instNode {
                 }
             }
         }
-//        if (toString().contains("这")){
-//            System.out.println("fuck！！！！");
-//        }
+        
+    }
+    
+    @Override
+    public String getDef() {
+        if (!retType.type.equals(IRType.IRTypeEnum.void_)) {
+            return dest.name;
+        } else return null;
+    }
+    
+    @Override
+    public HashSet<String> getUses() {
+        HashSet<String> st = new HashSet<>();
+        for (IREntity arg : args) {
+            if (arg instanceof IRVar var) {
+                st.add(var.name);
+            }
+        }
+        return st;
     }
 }

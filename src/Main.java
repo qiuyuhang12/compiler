@@ -1,3 +1,4 @@
+import ASM.asmBuilder;
 import AST.ProgramNode;
 //import Assembly.AsmFn;
 //import Backend.*;
@@ -42,12 +43,12 @@ public class Main {
             // 将标准输出流重定向到文件
             System.setOut(fileOut);
         }
-        PrintStream fileErr = new PrintStream(new FileOutputStream("errput.txt"));
-        System.setErr(fileErr);
+//        PrintStream fileErr = new PrintStream(new FileOutputStream("errput.txt"));
+//        System.setErr(fileErr);
         
-//        String name = "test.mx";
-//        InputStream input = new FileInputStream(name);
-        InputStream input = System.in;
+        String name = "test.mx";
+        InputStream input = new FileInputStream(name);
+//        InputStream input = System.in;
         try {
             ProgramNode programNode;
             Scope gScope = new Scope(null);
@@ -78,7 +79,6 @@ public class Main {
             System.out.println(s1);
 
 
-//            ib.irProgramNode.initCall();
 //            asmBuilder ab = new asmBuilder(ib.irProgramNode);
 //            ab.build();
 //            ab.print();

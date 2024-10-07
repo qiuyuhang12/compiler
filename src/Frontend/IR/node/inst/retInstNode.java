@@ -6,6 +6,7 @@ import Frontend.IR.entity.IRVar;
 import Frontend.IR.node.stmt.IRBlockNode;
 
 import java.util.HashMap;
+import java.util.HashSet;
 
 public class retInstNode extends instNode {
     public IREntity value;
@@ -34,5 +35,19 @@ public class retInstNode extends instNode {
         if (value instanceof IRVar var) {
             var.name = renameMap.getOrDefault(var.name, var.name);
         }
+    }
+    
+    @Override
+    public String getDef() {
+        return "";
+    }
+    
+    @Override
+    public HashSet<String> getUses() {
+        HashSet<String> ret = new HashSet<>();
+        if (value instanceof IRVar var) {
+            ret.add(var.name);
+        }
+        return ret;
     }
 }

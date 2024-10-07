@@ -8,6 +8,7 @@ import Frontend.IR.node.stmt.IRBlockNode;
 import Frontend.IR.type.IRType;
 
 import java.util.HashMap;
+import java.util.HashSet;
 
 public class icmpInstNode extends instNode {
     public IRVar dest;
@@ -69,5 +70,24 @@ public class icmpInstNode extends instNode {
         if (rhs instanceof IRVar var){
             var.name = renameMap.getOrDefault(var.name, var.name);
         }
+    }
+    
+
+    @Override
+    public String getDef() {
+        return dest.name;
+    }
+    
+  
+    @Override
+    public HashSet<String> getUses() {
+        HashSet<String> ret = new HashSet<>();
+        if (lhs instanceof IRVar var) {
+            ret.add(var.name);
+        }
+        if (rhs instanceof IRVar var) {
+            ret.add(var.name);
+        }
+        return ret;
     }
 }

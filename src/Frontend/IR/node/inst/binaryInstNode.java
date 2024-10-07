@@ -8,6 +8,7 @@ import Frontend.IR.entity.IRVar;
 import Frontend.IR.node.stmt.IRBlockNode;
 
 import java.util.HashMap;
+import java.util.HashSet;
 
 public class binaryInstNode extends instNode {
     public enum opEnum {
@@ -85,5 +86,22 @@ public class binaryInstNode extends instNode {
         if (rhs instanceof IRVar var) {
             var.name = renameMap.getOrDefault(var.name, var.name);
         }
+    }
+    
+    @Override
+    public String getDef() {
+        return dest.name;
+    }
+    
+    @Override
+    public HashSet<String> getUses() {
+        HashSet<String> res = new HashSet<>();
+        if (lhs instanceof IRVar var) {
+            res.add(var.name);
+        }
+        if (rhs instanceof IRVar var) {
+            res.add(var.name);
+        }
+        return res;
     }
 }
