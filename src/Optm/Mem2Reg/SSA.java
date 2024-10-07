@@ -8,7 +8,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Objects;
 
-import Frontend.IR.*;
 import Frontend.IR.node.inst.*;
 import org.antlr.v4.runtime.misc.Pair;
 
@@ -16,25 +15,24 @@ public class SSA {
     public IRFunDef fun;
     public HashMap<String, IRBlockNode> bl = new HashMap<>();//label to block
     public HashMap<String, ArrayList<Pair<String, Integer>>> use = new HashMap<>();//var to inst
-    public HashMap<String, ArrayList<String>> use_in_phi = new HashMap<>();//var to label
-//    public HashMap<String, HashSet<String>> rely = new HashMap<>();//var to var
-//    public HashMap<String, ArrayList<instNode>> def = new HashMap<>();//var to inst
+    public HashMap<String, ArrayList<Pair<String, String>>> use_in_phi = new HashMap<>();//var to label,jumpSrc
+    //    public HashMap<String, ArrayList<instNode>> def = new HashMap<>();//var to inst
+    public HashMap<String, ArrayList<String>> in = new HashMap<>();//label to in block
     
-    public SSA(IRFunDef fun, HashMap<String, IRBlockNode> bl) {
+    public SSA(IRFunDef fun, HashMap<String, IRBlockNode> bl, HashMap<String, ArrayList<String>> in) {
         this.fun = fun;
         this.bl = bl;
+        this.in = in;
     }
     
     public void run() {
         topo();
-        _clean();
-//        clean();
+        clean();
         collect_use();
+        ssa_liveness();
     }
     
-    //    HashMap<Integer, ArrayList<String>> num2inst = new HashMap<>();
     HashSet<String> del = new HashSet<>();
-//    HashSet<String> no_del = new HashSet<>();
     
     public void topo() {
         HashMap<String, HashSet<String>> rely = new HashMap<>();//var to var
@@ -99,10 +97,9 @@ public class SSA {
                     flag = true;
                     del.add(key);
                     var be_relied_set = be_relied.get(key);
-                    if (be_relied_set != null && !be_relied_set.isEmpty())
-                        for (var var1 : be_relied_set) {
-                            rely.get(var1).remove(key);
-                        }
+                    if (be_relied_set != null && !be_relied_set.isEmpty()) for (var var1 : be_relied_set) {
+                        rely.get(var1).remove(key);
+                    }
                     tmp.add(key);
                 }
             }
@@ -114,7 +111,7 @@ public class SSA {
         }
     }
     
-    public void _clean() {
+    public void clean() {
         for (var bl : fun.blocks) {
             for (int i = bl.insts.size() - 1; i >= 0; i--) {
                 var inst = bl.insts.get(i);
@@ -139,44 +136,6 @@ public class SSA {
         }
     }
     
-    public void clean() {
-        boolean flag = true;
-        while (flag) {
-            HashSet<String> used = new HashSet<>();
-            for (var bl : fun.blocks) {
-                for (var inst : bl.insts) {
-                    var uses = inst.getUses();
-                    if (uses == null || uses.isEmpty()) continue;
-                    used.addAll(uses);
-                }
-                for (var inst : bl.phis) {
-                    var uses = inst.getUses();
-                    if (uses == null || uses.isEmpty()) continue;
-                    used.addAll(uses);
-                }
-            }
-            flag = false;
-            for (var bl : fun.blocks) {
-                for (int i = bl.insts.size() - 1; i >= 0; i--) {
-                    var inst = bl.insts.get(i);
-                    boolean cannot_del = (inst instanceof brInstNode || inst instanceof callInstNode || inst instanceof retInstNode || inst instanceof storeInstNode);
-                    if (inst.getDef() != null && !used.contains(inst.getDef())) {
-                        flag = true;
-                        bl.insts.remove(i);
-                        assert !cannot_del;
-                    }
-                }
-                for (int i = bl.phis.size() - 1; i >= 0; i--) {
-                    var phi = bl.phis.get(i);
-                    if (!used.contains(phi.getDef())) {
-                        flag = true;
-                        bl.phis.remove(i);
-                    }
-                }
-            }
-        }
-    }
-    
     public void collect_use() {
         for (var bl : fun.blocks) {
             int i = 0;
@@ -192,17 +151,94 @@ public class SSA {
                 }
                 i++;
             }
-            for (var phi : bl.phis) {
-                var uses = phi.getUses();
-                if (uses == null || uses.isEmpty()) continue;
-                for (var var : uses) {
-                    if (!use.containsKey(var)) {
-                        use.put(var, new ArrayList<>());
-                        use_in_phi.put(var, new ArrayList<>());
-                    }
-                    use_in_phi.get(var).add(bl.label);
+            var uses = bl.get_phi_use();
+            if (uses == null || uses.isEmpty()) continue;
+            for (var var : uses.entrySet()) {
+                var key = var.getKey();
+                var value = var.getValue();
+                if (!use_in_phi.containsKey(key)) {
+                    use.put(key, new ArrayList<>());
+                    use_in_phi.put(key, new ArrayList<>());
                 }
+                use_in_phi.get(key).addAll(value);
             }
+        }
+    }
+    
+    HashSet<String> scanned_block = new HashSet<>();
+    
+    void ssa_liveness() {
+        for (var entry : use.entrySet()) {
+            scanned_block.clear();
+            var x = entry.getKey();
+            var uses = entry.getValue();
+            for (var pair : uses) {
+                var B = pair.a;
+                var id = pair.b;
+                scan_live_in(B, id, x);
+            }
+            var phi_use = use_in_phi.get(x);
+            for (var pair : phi_use) {
+//                var B = pair.a;
+                var Pi = pair.b;
+                scan_block(Pi, x);
+            }
+        }
+    }
+    
+    void scan_block(String B, String x) {//label,var
+        if (scanned_block.contains(B)) return;
+        scanned_block.add(B);
+        var insts = bl.get(B).insts;
+        if (insts == null || insts.isEmpty()) {
+            scan_live_out_phi(B, x);
+        } else {
+            scan_live_out(B, insts.size() - 1, x);
+        }
+    }
+    
+    void scan_live_in(String B, Integer id, String x) {//inst,var
+        if (id == 0) {
+            var bl = this.bl.get(B);
+            if (bl.phis == null || bl.phis.isEmpty()) {
+                for (var P : in.get(B)) {
+                    scan_block(P, x);
+                }
+            } else {
+                scan_live_out_phi(B, x);
+            }
+            
+        } else {
+            scan_live_out(B, id - 1, x);
+        }
+    }
+    
+    void scan_live_out(String B, Integer id, String x) {//inst,var
+        var bl = this.bl.get(B);
+        var inst = bl.insts.get(id);
+        var D = inst.getDef();
+        inst.live_out.add(x);
+        if (D != null) {
+            inst.live_out.add(D);
+        }
+        if (!x.equals(D)) {
+            scan_live_in(B, id, x);
+        }
+    }
+    
+    void scan_live_in_phi(String B, String x) {//inst,var
+        for (var P : in.get(B)) {
+            scan_block(P, x);
+        }
+    }
+    
+    void scan_live_out_phi(String B, String x) {//inst,var
+        var bl = this.bl.get(B);
+        var D = bl.get_phi_def();
+        bl.live_out.addAll(D);
+        bl.live_out.add(x);
+        if (!D.contains(x)) {
+            scan_live_in_phi(B, x);
         }
     }
 }
@@ -223,13 +259,3 @@ public class SSA {
 //  活跃变量分析
 
 //todo:loop分析
-
-//            var uses=bl.get_phi_use;
-//            if (uses==null||uses.isEmpty()) continue;
-//            for (var var : uses) {
-//                if (!use.containsKey(var)) {
-//                    use.put(var, new ArrayList<>());
-//                    use_in_phi.put(var, new ArrayList<>());
-//                }
-//                use_in_phi.get(var).add(bl.label);
-//            }

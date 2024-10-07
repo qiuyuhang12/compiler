@@ -90,7 +90,7 @@ public class callInstNode extends instNode {
     
     @Override
     public String getDef() {
-        if (!retType.type.equals(IRType.IRTypeEnum.void_)) {
+        if (!retType.type.equals(IRType.IRTypeEnum.void_)&&dest!=null) {
             return dest.name;
         } else return null;
     }
