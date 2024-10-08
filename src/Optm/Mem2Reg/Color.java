@@ -41,7 +41,7 @@ public class Color {
     }
     
     void ssa_color() {
-        for (int i = K-1; i >= 0; i--) {
+        for (int i = K - 1; i >= 0; i--) {
             stack.add(i);
         }
         pre_order(fun.blocks.getFirst().label);
@@ -54,20 +54,26 @@ public class Color {
                 inUse.add(tempMap.get(var));
             }
         for (var s : B.insts) {
-            for (var x : s.getUses()) {
-                if (!s.live_out.contains(x)){
-                    inUse.remove(tempMap.get(x));
-                    stack.add(tempMap.get(x));
+            if (s.getUses() != null)
+                for (var x : s.getUses()) {
+                    if (!s.lo_after_sp.contains(x)) {
+                        inUse.remove(tempMap.get(x));
+                        stack.add(tempMap.get(x));
+                    }
                 }
-            }
             var y = s.getDef();
+            if (y == null || !s.lo_after_sp.contains(y)) continue;
             assert !stack.isEmpty();
             tempMap.put(y, stack.getLast());
-            inUse.add(stack.removeLast());
+            inUse.add(stack.getLast());
             stack.removeLast();
         }
-        for (var c : dt.get(b)) {
-            pre_order(c);
-        }
+        if (dt.containsKey(b))
+            for (var c : dt.get(b)) {
+                pre_order(c);
+            }
     }
 }
+
+
+//63,64,67,69,70,18,19,24,3,31,41,...

@@ -8,6 +8,8 @@ import Frontend.IR.type.IRType;
 import Frontend.IR.util.Renamer;
 import org.antlr.v4.runtime.misc.Pair;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.*;
 
 public class M2r_Fun {
@@ -50,6 +52,11 @@ public class M2r_Fun {
         analysis.run();
         Spill spill = new Spill(20, fun, bl);
         spill.run();
+        try (FileWriter writer = new FileWriter("rubish/hh")) {
+            writer.write(spill.spill.size());
+        } catch (IOException e) {
+            assert false;
+        }
         Color color = new Color(20, fun, bl, idom);
         color.run();
         critical_edge();
