@@ -50,6 +50,8 @@ public class M2r_Fun {
         analysis.run();
         Spill spill = new Spill(20, fun, bl);
         spill.run();
+        Color color = new Color(20, fun, bl, idom);
+        color.run();
         critical_edge();
     }
     

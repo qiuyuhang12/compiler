@@ -11,34 +11,36 @@ public class Spill {
     public IRFunDef fun;
     public HashMap<String, IRBlockNode> bl = new HashMap<>();//label to block
     public static int K;
-//    public HashMap<String, Integer> degree = new HashMap<>();
+    //    public HashMap<String, Integer> degree = new HashMap<>();
     public HashSet<String> spill = new HashSet<>();
-    public Spill(final int K,IRFunDef fun, HashMap<String, IRBlockNode> bl) {
+    
+    public Spill(final int K, IRFunDef fun, HashMap<String, IRBlockNode> bl) {
         Spill.K = K;
         this.fun = fun;
         this.bl = bl;
     }
+    
     public void run() {
         for (var block : fun.blocks) {
-            if (block.phi_live_out.size() > K) {
-                var plo = block.phi_live_out;
-                for (var var: block.phi_live_out) {
-                    HashSet<String> remain = (new HashSet<>(plo));
-                    remain.removeAll(spill);//todo：未考虑phi的连带溢出
-                    if (remain.size()>K){
-                        int cnt = remain.size()-K;
-                        for (var var2:remain){
-                            if (cnt==0) break;
-                            cnt--;
-                            spill.add(var2);//todo:未考虑phi的连带溢出
-                        }
-                    }
-                }
-            }
+            do_spill(block.phi_live_out, block.plo_after_sp);
             for (var inst : block.insts) {
-            
+                do_spill(inst.live_out, inst.lo_after_sp);
             }
         }
     }
     
+    void do_spill(HashSet<String> lo, HashSet<String> lo_af) {
+        lo_af.addAll(lo);
+        lo_af.removeAll(spill);
+        if (lo_af.size() > K) {
+            int cnt = lo_af.size() - K;
+            HashSet<String> tmp = new HashSet<>();
+            for (var var : lo_af) {
+                if (cnt == 0) break;
+                tmp.add(var);
+                cnt--;
+            }
+            lo_af.removeAll(tmp);
+        }
+    }
 }

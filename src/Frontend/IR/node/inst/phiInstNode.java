@@ -83,6 +83,12 @@ public class phiInstNode extends instNode {
         return st;
     }
     
+    public HashSet<String> getAllVars() {
+        HashSet<String> st = getUses();
+        st.add(dest.name);
+        return st;
+    }
+    
     public void rename_phi_bl(HashMap<String, String> renameMap) {
         for (int i = 0; i < labels.size(); i++) {
             var label = labels.get(i);

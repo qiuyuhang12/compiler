@@ -19,7 +19,10 @@ public class IRBlockNode extends IRNode {
     public ArrayList<phiInstNode> phis = new ArrayList<>();
     public HashSet<String> live_in = new HashSet<>();
     public HashSet<String> phi_live_out = new HashSet<>();
-    
+    public HashSet<String> plo_after_sp = new HashSet<>();
+//    public UnionFind<Integer> uf = new UnionFind<>();
+//    public HashMap<Integer,HashSet<String>> var_sets = new HashMap<>();
+//    public HashSet<Integer> var_sets_spilled = new HashSet<>();
     public HashSet<String> get_phi_def() {
         HashSet<String> res = new HashSet<>();
         for (phiInstNode phi : phis) {
@@ -27,7 +30,28 @@ public class IRBlockNode extends IRNode {
         }
         return res;
     }
-    
+//    public void uf_phi(){
+//        for (int i = 0; i < phis.size(); i++) {
+//            uf.add(i);
+//        }
+//        for (int i = 0; i < phis.size(); i++) {
+//            for (int j = i + 1; j < phis.size(); j++) {
+//                HashSet<String> vars1 = phis.get(i).getAllVars();
+//                HashSet<String> vars2 = phis.get(j).getAllVars();
+//                vars2.retainAll(vars1);
+//                if (!vars2.isEmpty()) {
+//                    uf.union(i, j);
+//                }
+//            }
+//        }
+//        for (int i = 0; i < phis.size(); i++) {
+//            int root = uf.find(i);
+//            if (!var_sets.containsKey(root)) {
+//                var_sets.put(root, new HashSet<>());
+//            }
+//            var_sets.get(root).addAll(phis.get(i).getAllVars());
+//        }
+//    }
     public HashMap<String, ArrayList<Pair<String, String>>> get_phi_use() {//var to labels
         HashMap<String, ArrayList<Pair<String, String>>> res = new HashMap<>();
         for (phiInstNode phi : phis) {

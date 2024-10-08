@@ -22,6 +22,7 @@ public abstract class instNode extends IRNode {
     public abstract void rename(HashMap<String, String> renameMap);
 //    public HashSet<String> live_in = new HashSet<>();
     public HashSet<String> live_out = new HashSet<>();
+    public HashSet<String> lo_after_sp = new HashSet<>();
     public abstract String getDef();
     public abstract HashSet<String> getUses();
 }
