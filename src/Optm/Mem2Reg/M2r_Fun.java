@@ -52,14 +52,17 @@ public class M2r_Fun {
         analysis.run();
         Spill spill = new Spill(20, fun, bl);
         spill.run();
-        try (FileWriter writer = new FileWriter("rubish/hh")) {
-            writer.write(spill.spill.size());
+//        System.err.println(spill.spill.size());
+        try (FileWriter writer = new FileWriter("/run/media/qiuyuhang/data/ppca/compile/compiler/rubish/hh.txt", true)) {
+            writer.write(spill.spill.size()+" ");
         } catch (IOException e) {
             assert false;
         }
-        Color color = new Color(20, fun, bl, idom);
+        Color color = new Color(20, fun, bl, idom, spill.spill);
         color.run();
         critical_edge();
+        fun.tempMap=color.tempMap;
+        fun.spill=spill.spill;
     }
     
     HashSet<String> visited = new HashSet<>();

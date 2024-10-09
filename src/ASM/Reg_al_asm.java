@@ -11,15 +11,13 @@ import Frontend.IR.node.def.IRFunDef;
 import Frontend.IR.node.def.IRGlobalVarDef;
 import Frontend.IR.node.def.IRStringDef;
 import Frontend.IR.node.inst.*;
-
-import Frontend.IR.node.inst.instNode;
 import Frontend.IR.node.stmt.IRBlockNode;
 import Frontend.IR.type.IRType;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class asmBuilder {
+public class Reg_al_asm {
     public IRProgramNode ir;
     public prog asm;
     public HashMap<String, Integer> varOffset = new HashMap<>();//变量->栈sp偏移,包含大于8个参数的参数
@@ -29,7 +27,7 @@ public class asmBuilder {
     public int stackSize = 0;
     public String nowFun = null;
     
-    public asmBuilder(IRProgramNode ir) {
+    public Reg_al_asm(IRProgramNode ir) {
         this.ir = ir;
         asm = new prog();
     }
@@ -363,7 +361,7 @@ public class asmBuilder {
                     Arithimm arithimm = new Arithimm("addi", "sp", "sp", -stackSize);
                     t.push(arithimm);
                 } else {
-                    Li li = new Li("t0", -stackSize);
+                    Li li = new Li("t6", -stackSize);
                     t.push(li);
                     Arith arith = new Arith("add", "sp", "t0", "sp");
                     t.push(arith);
@@ -403,5 +401,4 @@ public class asmBuilder {
             buildFun(it);
         }
     }
-    
 }

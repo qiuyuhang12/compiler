@@ -22,10 +22,7 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.PrintStream;
+import java.io.*;
 import java.util.ArrayList;
 
 
@@ -45,10 +42,17 @@ public class Main {
         }
 //        PrintStream fileErr = new PrintStream(new FileOutputStream("errput.txt"));
 //        System.setErr(fileErr);
-        
+
 //        String name = "test.mx";
 //        InputStream input = new FileInputStream(name);
         InputStream input = System.in;
+        
+        try (FileWriter writer = new FileWriter("/run/media/qiuyuhang/data/ppca/compile/compiler/rubish/hh.txt")) {
+            writer.write(" ");
+        } catch (IOException e) {
+            assert false;
+        }
+        
         try {
             ProgramNode programNode;
             Scope gScope = new Scope(null);
@@ -71,7 +75,8 @@ public class Main {
             new SemanticChecker(gScope).visit(programNode);
             IRBuilder ib = new IRBuilder(programNode, gScope);
             ib.irProgramNode.initCall();
-            String s = ib.irProgramNode.toString();
+            ib.irProgramNode.clear();
+//            String s = ib.irProgramNode.toString();
             Mem2Reg mem2Reg = new Mem2Reg(ib.irProgramNode, ib.renamer);
             mem2Reg.run();
             String s1 = ib.irProgramNode.toString();

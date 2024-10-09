@@ -6,15 +6,19 @@ import Frontend.IR.node.stmt.IRBlockNode;
 import Frontend.IR.type.IRType;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 
 public class IRFunDef extends IRFunDeclare {
     public ArrayList<IRBlockNode> blocks = new ArrayList<>();
-
+    public HashMap<String, Integer> tempMap = new HashMap<>();
+    public HashSet<String> spill = new HashSet<>();
+    
+    
     public IRFunDef(IRType returnType, String name, IRVar... parameters) {
         super(returnType, name, parameters);
     }
-
+    
     public HashSet<String> get_para_def() {
         HashSet<String> res = new HashSet<>();
         for (IRVar var : parameters) {
@@ -27,8 +31,14 @@ public class IRFunDef extends IRFunDeclare {
     public void push(IRBlockNode block) {
         blocks.add(block);
     }
-    public String getEntry(){
+    
+    public String getEntry() {
         return blocks.getFirst().label;
+    }
+    public void clear(){
+        for (IRBlockNode bl : blocks) {
+            bl.clear();
+        }
     }
     @Override
     public String toString() {

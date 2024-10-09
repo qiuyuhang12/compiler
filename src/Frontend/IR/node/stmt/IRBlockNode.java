@@ -108,7 +108,18 @@ public class IRBlockNode extends IRNode {
             return null;
         }
     }
-    
+    public void clear(){
+        int i = 0;
+        for (instNode inst : insts) {
+            i++;
+            if (inst instanceof brInstNode || inst instanceof retInstNode) {
+                if (i < insts.size()) {
+                    insts.subList(i, insts.size()).clear();
+                }
+                break;
+            }
+        }
+    }
     @Override
     public String toString() {
         assert insts != null && !insts.isEmpty();

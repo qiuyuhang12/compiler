@@ -60,6 +60,14 @@ public class IRProgramNode extends IRNode {
 //        sb.append("}\n");
 //        return sb.toString();
     }
+    public void clear(){
+        for (IRFunDef initFun : initFuns) {
+            initFun.clear();
+        }
+        for (IRFunDef funDef : funDefs) {
+            funDef.clear();
+        }
+    }
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();

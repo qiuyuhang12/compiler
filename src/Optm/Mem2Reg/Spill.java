@@ -41,6 +41,7 @@ public class Spill {
                 cnt--;
             }
             lo_af.removeAll(tmp);
+            spill.addAll(tmp);
         }
     }
 }

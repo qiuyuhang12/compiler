@@ -51,6 +51,15 @@ green_msg = "\033[32m{msg}\033[0m"
 blue_msg = "\033[34m{msg}\033[0m"
 pass_cnt = 0
 
+def read_file(file_path):
+    with open(file_path, 'r', encoding='utf-8') as file:
+        content = file.read()
+    return content
+
+# file_path = 'your_file.txt'
+# content = read_file(file_path)
+# print(content)
+
 for testcase in test_file:
     # if os.path.basename(testcase) == 'e1.mx':
         try:
@@ -79,9 +88,11 @@ for testcase in test_file:
             process = subprocess.Popen(commands, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                        text=True, shell=True)
             stdout, _ = process.communicate(input=input_data)
+            file_path = '/run/media/qiuyuhang/data/ppca/compile/compiler/rubish/hh.txt'
+            content = read_file(file_path)
             print(testcase, green_msg.format(msg="output") if stdout == output_data else red_msg.format(msg="output"),
                   green_msg.format(msg="retcode") if process.returncode == int(exitcode.strip()) else red_msg.format(
-                      msg="retcode"))
+                      msg="retcode"),content)
 
             if stdout == output_data and process.returncode == int(exitcode.strip()):
                 pass_cnt += 1

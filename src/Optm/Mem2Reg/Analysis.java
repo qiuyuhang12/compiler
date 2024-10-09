@@ -153,14 +153,14 @@ public class Analysis {
             int i = 0;
             for (var inst : bl.insts) {
                 var uses = inst.getUses();
-                if (uses == null || uses.isEmpty()) continue;
-                for (var var : uses) {
-                    if (!use.containsKey(var)) {
-                        use.put(var, new ArrayList<>());
-                        use_in_phi.put(var, new ArrayList<>());
+                if (uses != null && !uses.isEmpty())
+                    for (var var : uses) {
+                        if (!use.containsKey(var)) {
+                            use.put(var, new ArrayList<>());
+                            use_in_phi.put(var, new ArrayList<>());
+                        }
+                        use.get(var).add(new Pair<>(bl.label, i));
                     }
-                    use.get(var).add(new Pair<>(bl.label, i));
-                }
                 i++;
             }
             var uses = bl.get_phi_use();

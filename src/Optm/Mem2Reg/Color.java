@@ -11,17 +11,20 @@ public class Color {
     public IRFunDef fun;
     public HashMap<String, IRBlockNode> bl = new HashMap<>();//label to block
     public HashMap<String, String> idom = new HashMap<>();//label to idom block label
-    public HashMap<String, HashSet<String>> dt = new HashMap<>();//label to son
+    public HashMap<String, HashSet<String>> dt = new HashMap<>();//label to dom son
     public static int K;
     public HashMap<String, Integer> tempMap = new HashMap<>();
     public HashSet<Integer> inUse = new HashSet<>();
     public ArrayList<Integer> stack = new ArrayList<>();
+    public HashSet<String> spill = new HashSet<>();
     
-    public Color(final int K, IRFunDef fun, HashMap<String, IRBlockNode> bl, HashMap<String, String> idom) {
+    
+    public Color(final int K, IRFunDef fun, HashMap<String, IRBlockNode> bl, HashMap<String, String> idom, HashSet<String> spill) {
         Color.K = K;
         this.fun = fun;
         this.bl = bl;
         this.idom = idom;
+        this.spill = spill;
     }
     
     public void run() {
@@ -49,11 +52,13 @@ public class Color {
     
     void pre_order(String b) {
         var B = bl.get(b);
+        B.plo_after_sp.removeAll(spill);
         if (!B.live_in.isEmpty())
             for (var var : B.live_in) {
                 inUse.add(tempMap.get(var));
             }
         for (var s : B.insts) {
+            s.lo_after_sp.removeAll(spill);
             if (s.getUses() != null)
                 for (var x : s.getUses()) {
                     if (!s.lo_after_sp.contains(x)) {
