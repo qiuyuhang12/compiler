@@ -30,8 +30,8 @@ public class Main {
 //todo::内建函数
     
     public static void main(String[] args) throws Exception {
-//        if (false) {
-        if (true) {
+        if (false) {
+//        if (true) {
             // 创建一个 PrintStream 对象，将输出重定向到文件
             PrintStream fileOut = new PrintStream(new FileOutputStream("output.ll"));
 //            PrintStream fileOut = new PrintStream(new FileOutputStream("test.s"));
@@ -40,8 +40,8 @@ public class Main {
             // 将标准输出流重定向到文件
             System.setOut(fileOut);
         }
-//        PrintStream fileErr = new PrintStream(new FileOutputStream("errput.txt"));
-//        System.setErr(fileErr);
+        PrintStream fileErr = new PrintStream(new FileOutputStream("errput.txt"));
+        System.setErr(fileErr);
 
 //        String name = "test.mx";
 //        InputStream input = new FileInputStream(name);
@@ -52,7 +52,7 @@ public class Main {
         } catch (IOException e) {
             assert false;
         }
-        
+//
         try {
             ProgramNode programNode;
             Scope gScope = new Scope(null);
@@ -76,19 +76,28 @@ public class Main {
             IRBuilder ib = new IRBuilder(programNode, gScope);
             ib.irProgramNode.initCall();
             ib.irProgramNode.clear();
-//            String s = ib.irProgramNode.toString();
-            Mem2Reg mem2Reg = new Mem2Reg(ib.irProgramNode, ib.renamer);
-            mem2Reg.run();
-            String s1 = ib.irProgramNode.toString();
-//            System.out.println(s);
-            System.out.println(s1);
+////            String s = ib.irProgramNode.toString();
+//            Mem2Reg mem2Reg = new Mem2Reg(ib.irProgramNode, ib.renamer);
+//            mem2Reg.run();
+//            String s1 = ib.irProgramNode.toString();
+////            System.out.println(s);
+//            System.out.println(s1);
 
 
-//            asmBuilder ab = new asmBuilder(ib.irProgramNode);
-//            ab.build();
-//            ab.print();
-
-
+            asmBuilder ab = new asmBuilder(ib.irProgramNode);
+            ab.build();
+            ab.print();
+//            try (FileReader reader = new FileReader("builtin.s")) {
+//                System.out.print("\n\n\n\n\n\n\n");
+//                char[] cbuf = new char[1024];
+//                int hasRead = 0;
+//                while ((hasRead = reader.read(cbuf)) > 0) {
+//                    System.out.print(new String(cbuf, 0, hasRead));
+//                }
+//            } catch (IOException e) {
+//                assert false;
+//            }
+//
 //            ib.print();
 
 //            mainFn f = new mainFn();

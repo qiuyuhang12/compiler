@@ -4,11 +4,12 @@ import ASM.inst.*;
 
 import java.util.ArrayList;
 
-public class text extends section {
+public class text_new extends section {
     public ArrayList<Inst> insts = new ArrayList<>();
-    
-    public text(String label) {
+    public String phi_and_tmp_int;
+    public text_new(String label, String phi_and_tmp_int) {
         super(label);
+        this.phi_and_tmp_int = phi_and_tmp_int;
     }
     
     public void push(Inst inst) {
@@ -16,12 +17,12 @@ public class text extends section {
             if (sw.imm <= 2047 && sw.imm >= -2048)
                 insts.add(inst);
             else {
-                Li li = new Li("t1", sw.imm);
-                assert !sw.val.equals("t1") && !sw.addr.equals("t1");
-                Arith arith = new Arith("add", "t1", sw.addr, "t1");
+                Li li = new Li("t6", sw.imm);
+//                assert !sw.val.equals("t6") && !sw.addr.equals("t6");
+                Arith arith = new Arith("add", "t6", sw.addr, "t6");
                 insts.add(li);
                 insts.add(arith);
-                insts.add(new Sw(sw.val, "t1", 0));
+                insts.add(new Sw(sw.val, "t6", 0));
             }
         } else if (inst instanceof Lw lw) {
             if (lw.imm <= 2047 && lw.imm >= -2048)

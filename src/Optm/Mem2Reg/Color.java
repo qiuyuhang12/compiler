@@ -13,9 +13,9 @@ public class Color {
     public HashMap<String, String> idom = new HashMap<>();//label to idom block label
     public HashMap<String, HashSet<String>> dt = new HashMap<>();//label to dom son
     public static int K;
-    public HashMap<String, Integer> tempMap = new HashMap<>();
     public HashSet<Integer> inUse = new HashSet<>();
     public ArrayList<Integer> stack = new ArrayList<>();
+    public HashMap<String, Integer> tempMap = new HashMap<>();
     public HashSet<String> spill = new HashSet<>();
     
     

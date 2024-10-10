@@ -20,16 +20,21 @@ run:
 # # .PHONY: Sema
 # # Sema: build
 # # 	./testcases/sema/scripts/test.bash 'java -cp /usr/share/java/antlr-4.13.2-complete.jar:bin Main' $(file)
-# .PHONY: Codegen
-# Codegen: build
-# 	./testcases/codegen/scripts/test_asm.bash 'java -cp /usr/share/java/antlr-4.13.2-complete.jar:bin Main' $(file)
+
+.PHONY: Codegen
+Codegen: build
+	./testcases/codegen/scripts/test_asm.bash 'java -cp /usr/share/java/antlr-4.13.2-complete.jar:bin Main' testcases/codegen/e1.mx builtin.s
+# 	./testcases/codegen/scripts/test_asm.bash 'java -cp /usr/share/java/antlr-4.13.2-complete.jar:bin Main' testcases/codegen/e1.mx builtin.s
 #
 #
 #
-# .PHONY: Codegenall
-# Codegenall: build
-# 	./testcases/codegen/scripts/test_asm_all.bash 'java -cp /usr/share/java/antlr-4.13.2-complete.jar:bin Main -S' testcases/codegen/ builtin.s
+.PHONY: Codegenall
+Codegenall:
+# build
+	./testcases/codegen/scripts/test_asm_all.bash 'java -cp /usr/share/java/antlr-4.13.2-complete.jar:bin Main -S' testcases/codegen/ builtin.s
 #
+
+# libfmt.so.10
 # .PHONY: Semall
 # Semall: build
 # 	./testcases/sema/scripts/test_all.bash 'java -cp /usr/share/java/antlr-4.13.2-complete.jar:bin Main' testcases/sema/

@@ -20,7 +20,7 @@ public class allocaInstNode extends instNode{
     }
     @Override
     public String toString() {
-        assert false;
+//        assert false;
         return dest.toString()+" = alloca "+type.toString() + "\n";
     }
     
