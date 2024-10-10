@@ -131,29 +131,29 @@ public class asmBuilder {
     private void buildInst(instNode it, text t) {
         if (it instanceof allocaInstNode is) {
         } else if (it instanceof binaryInstNode is) {
-            ldVar(is.lhs, "t0", t);
-            ldVar(is.rhs, "t1", t);
+            ldVar(is.lhs, "x28", t);
+            ldVar(is.rhs, "x29", t);
             switch (is.op) {
-                case add -> t.push(new Arith("add", "t2", "t0", "t1"));
-                case sub -> t.push(new Arith("sub", "t2", "t0", "t1"));
-                case mul -> t.push(new Arith("mul", "t2", "t0", "t1"));
-                case sdiv -> t.push(new Arith("div", "t2", "t0", "t1"));
-                case srem -> t.push(new Arith("rem", "t2", "t0", "t1"));
-                case shl -> t.push(new Arith("sll", "t2", "t0", "t1"));
-                case ashr -> t.push(new Arith("sra", "t2", "t0", "t1"));
-                case and -> t.push(new Arith("and", "t2", "t0", "t1"));
-                case or -> t.push(new Arith("or", "t2", "t0", "t1"));
-                case xor -> t.push(new Arith("xor", "t2", "t0", "t1"));
+                case add -> t.push(new Arith("add", "x30", "x28", "x29"));
+                case sub -> t.push(new Arith("sub", "x30", "x28", "x29"));
+                case mul -> t.push(new Arith("mul", "x30", "x28", "x29"));
+                case sdiv -> t.push(new Arith("div", "x30", "x28", "x29"));
+                case srem -> t.push(new Arith("rem", "x30", "x28", "x29"));
+                case shl -> t.push(new Arith("sll", "x30", "x28", "x29"));
+                case ashr -> t.push(new Arith("sra", "x30", "x28", "x29"));
+                case and -> t.push(new Arith("and", "x30", "x28", "x29"));
+                case or -> t.push(new Arith("or", "x30", "x28", "x29"));
+                case xor -> t.push(new Arith("xor", "x30", "x28", "x29"));
             }
             int offset = varOffset.get(is.dest.name);
-            t.push(new Sw("t2", "sp", offset));
+            t.push(new Sw("x30", "sp", offset));
         } else if (it instanceof brInstNode is) {
             if (is.cond != null) {
-                ldVar(is.cond, "t0", t);
-                t.push(new Br("bne", "t0", "x0", ".+8"));
+                ldVar(is.cond, "x28", t);
+                t.push(new Br("bne", "x28", "x0", ".+8"));
                 t.push(new Jump(nowFun + "_" + is.ifFalse));
                 t.push(new Jump(nowFun + "_" + is.ifTrue));
-//                t.push(new Br("beq", "t0", "x0", nowFun + "_" + is.ifFalse));
+//                t.push(new Br("beq", "x28", "x0", nowFun + "_" + is.ifFalse));
 //                t.push(new Jump(nowFun + "_" + is.ifTrue));//可省略？？
             } else {
                 t.push(new Jump(nowFun + "_" + is.dest));
@@ -167,9 +167,9 @@ public class asmBuilder {
                 if (i < 8) {
                     ldVar(is.args.get(i), "a" + i, t);
                 } else {
-                    ldVar(is.args.get(i), "t0", t);
+                    ldVar(is.args.get(i), "x28", t);
                     int d = -(is.args.size() - i) * 4;
-                    sw = new Sw("t0", "sp", d);
+                    sw = new Sw("x28", "sp", d);
                     t.push(sw);
                 }
             }
@@ -183,54 +183,54 @@ public class asmBuilder {
             outas(t);
         } else if (it instanceof getElementPtrInstNode is) {//一般而言，第一个变量是堆地址
             System.err.println("我默认长度全是4,即都是i32");
-            ldVar(is.ptr, "t0", t);
+            ldVar(is.ptr, "x28", t);
             for (int i = 0; i < is.tys.size(); i++) {
-                ldVar(is.idxs.get(i), "t1", t);
-                Li li = new Li("t2", 4);
+                ldVar(is.idxs.get(i), "x29", t);
+                Li li = new Li("x30", 4);
                 t.push(li);
-                t.push(new Arith("mul", "t1", "t1", "t2"));
-                t.push(new Arith("add", "t0", "t0", "t1"));
+                t.push(new Arith("mul", "x29", "x29", "x30"));
+                t.push(new Arith("add", "x28", "x28", "x29"));
             }
             int offset = varOffset.get(is.dest);
-            t.push(new Sw("t0", "sp", offset));
+            t.push(new Sw("x28", "sp", offset));
         } else if (it instanceof icmpInstNode is) {
-            ldVar(is.lhs, "t0", t);
-            ldVar(is.rhs, "t1", t);
-            Arith arith = new Arith("sub", "t2", "t0", "t1");
+            ldVar(is.lhs, "x28", t);
+            ldVar(is.rhs, "x29", t);
+            Arith arith = new Arith("sub", "x30", "x28", "x29");
             t.push(arith);
             switch (is.op) {
-                case eq -> t.push(new S_z("seqz", "t2", "t2"));
-                case ne -> t.push(new S_z("snez", "t2", "t2"));
-                case sgt -> t.push(new S_z("sgtz", "t2", "t2"));
+                case eq -> t.push(new S_z("seqz", "x30", "x30"));
+                case ne -> t.push(new S_z("snez", "x30", "x30"));
+                case sgt -> t.push(new S_z("sgtz", "x30", "x30"));
                 case sge -> {
-                    t.push(new S_z("sgtz", "t0", "t2"));
-                    t.push(new S_z("seqz", "t1", "t2"));
-                    t.push(new Arith("or", "t2", "t0", "t1"));
+                    t.push(new S_z("sgtz", "x28", "x30"));
+                    t.push(new S_z("seqz", "x29", "x30"));
+                    t.push(new Arith("or", "x30", "x28", "x29"));
                 }
-                case slt -> t.push(new S_z("sltz", "t2", "t2"));
+                case slt -> t.push(new S_z("sltz", "x30", "x30"));
                 case sle -> {
-                    t.push(new S_z("sltz", "t0", "t2"));
-                    t.push(new S_z("seqz", "t1", "t2"));
-                    t.push(new Arith("or", "t2", "t0", "t1"));
+                    t.push(new S_z("sltz", "x28", "x30"));
+                    t.push(new S_z("seqz", "x29", "x30"));
+                    t.push(new Arith("or", "x30", "x28", "x29"));
                 }
             }
             int offset = varOffset.get(is.dest.name);
-            t.push(new Sw("t2", "sp", offset));
+            t.push(new Sw("x30", "sp", offset));
         } else if (it instanceof loadInstNode is) {
-            ldVar(is.ptr, "t0", t);
-//            Lw lw = new Lw("t0", "sp", varOffset.get(is.ptr));
-            Lw lw1 = new Lw("t0", "t0", 0);
+            ldVar(is.ptr, "x28", t);
+//            Lw lw = new Lw("x28", "sp", varOffset.get(is.ptr));
+            Lw lw1 = new Lw("x28", "x28", 0);
 //            t.push(lw);
             t.push(lw1);
             int offset = varOffset.get(is.dest);
-            t.push(new Sw("t0", "sp", offset));
+            t.push(new Sw("x28", "sp", offset));
         } else if (it instanceof retInstNode is) {
             if (is.value.typeInfo.type != IRType.IRTypeEnum.void_) {
                 ldVar(is.value, "a0", t);
             }
-            Lw lw0 = new Lw("t0", "sp", regOffset.get("t0"));
-            Lw lw1 = new Lw("t1", "sp", regOffset.get("t1"));
-            Lw lw2 = new Lw("t2", "sp", regOffset.get("t2"));
+            Lw lw0 = new Lw("x28", "sp", regOffset.get("x28"));
+            Lw lw1 = new Lw("x29", "sp", regOffset.get("x29"));
+            Lw lw2 = new Lw("x30", "sp", regOffset.get("x30"));
             t.push(lw0);
             t.push(lw1);
             t.push(lw2);
@@ -238,19 +238,19 @@ public class asmBuilder {
                 Arithimm arithimm = new Arithimm("addi", "sp", "sp", stackSize);
                 t.push(arithimm);
             } else {
-                Li li = new Li("t0", stackSize);
+                Li li = new Li("x28", stackSize);
                 t.push(li);
-                Arith arith = new Arith("add", "sp", "t0", "sp");
+                Arith arith = new Arith("add", "sp", "x28", "sp");
                 t.push(arith);
             }
             t.push(new Ret());
         } else if (it instanceof storeInstNode is) {
-            ldVar(is.value, "t0", t);
-            ldVar(is.ptr, "t1", t);
+            ldVar(is.value, "x28", t);
+            ldVar(is.ptr, "x29", t);
 //            int offset = varOffset.get(is.ptr.name);
-//            Lw lw = new Lw("t1", "sp", offset);
+//            Lw lw = new Lw("x29", "sp", offset);
 //            t.push(lw);
-            t.push(new Sw("t0", "t1", 0));
+            t.push(new Sw("x28", "x29", 0));
         } else {
             assert false;
         }
@@ -275,9 +275,9 @@ public class asmBuilder {
         paraReg.clear();
         stackSize = 0;
         int offset = 1;
-        regOffset.put("t0", (++offset) * 4);
-        regOffset.put("t1", (++offset) * 4);
-        regOffset.put("t2", (++offset) * 4);
+        regOffset.put("x28", (++offset) * 4);
+        regOffset.put("x29", (++offset) * 4);
+        regOffset.put("x30", (++offset) * 4);
         regOffset.put("ra", (++offset) * 4);
         regOffset.put("a0", (++offset) * 4);
         regOffset.put("a1", (++offset) * 4);
@@ -294,15 +294,15 @@ public class asmBuilder {
                     Comment comment = new Comment(allo.toString().substring(0, allo.toString().length() - 1));
                     fromAlloc.add(comment);
                     if (d_val <= 2047 && d_val >= -2048) {
-                        Arithimm arithimm = new Arithimm("addi", "t0", "sp", d_val);
+                        Arithimm arithimm = new Arithimm("addi", "x28", "sp", d_val);
                         fromAlloc.add(arithimm);
                     } else {
-                        Li li = new Li("t0", d_val);
+                        Li li = new Li("x28", d_val);
                         fromAlloc.add(li);
-                        Arith arith = new Arith("add", "t0", "t0", "sp");
+                        Arith arith = new Arith("add", "x28", "x28", "sp");
                         fromAlloc.add(arith);
                     }
-                    Sw sw = new Sw("t0", "sp", d);
+                    Sw sw = new Sw("x28", "sp", d);
                     fromAlloc.add(sw);
                     varOffset.put(allo.dest.name, d);
                     varOffset.put(allo.dest.name + "_val", d_val);
@@ -326,11 +326,11 @@ public class asmBuilder {
     //约定：调用者保存寄存器ra
     
     private void storeReg(text t) {
-        Sw sw = new Sw("t0", "sp", regOffset.get("t0"));
+        Sw sw = new Sw("x28", "sp", regOffset.get("x28"));
         t.push(sw);
-        sw = new Sw("t1", "sp", regOffset.get("t1"));
+        sw = new Sw("x29", "sp", regOffset.get("x29"));
         t.push(sw);
-        sw = new Sw("t2", "sp", regOffset.get("t2"));
+        sw = new Sw("x30", "sp", regOffset.get("x30"));
         t.push(sw);
 //        sw = new Sw("ra", "sp", regOffset.get("ra"));
 //        t.push(sw);
@@ -363,9 +363,9 @@ public class asmBuilder {
                     Arithimm arithimm = new Arithimm("addi", "sp", "sp", -stackSize);
                     t.push(arithimm);
                 } else {
-                    Li li = new Li("t0", -stackSize);
+                    Li li = new Li("t6", -stackSize);
                     t.push(li);
-                    Arith arith = new Arith("add", "sp", "t0", "sp");
+                    Arith arith = new Arith("add", "sp", "x28", "sp");
                     t.push(arith);
                 }
                 storeReg(t);
