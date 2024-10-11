@@ -10,6 +10,7 @@ import Frontend.ASTBuilder;
 import Frontend.IR.IRBuilder;
 import Frontend.SemanticChecker;
 import Frontend.SymbolCollector;
+import Optm.Mem2Reg.Color;
 import Optm.Mem2Reg.Mem2Reg;
 import Parser.MxLexer;
 import Parser.MxParser;
@@ -30,22 +31,34 @@ public class Main {
 //todo::内建函数
     
     public static void main(String[] args) throws Exception {
-        if (false) {
+        boolean asm, redirect_input, redirect_output, redirect_err;
+        asm=true;
+//        asm = false;
+//        redirect_input = true;
+        redirect_input = false;
+//        redirect_output = true;
+        redirect_output = false;
+        redirect_err = true;
+//        redirect_err = false;
+        if (redirect_output) {
 //        if (true) {
+            PrintStream fileOut;
             // 创建一个 PrintStream 对象，将输出重定向到文件
-            PrintStream fileOut = new PrintStream(new FileOutputStream("output.ll"));
-//            PrintStream fileOut = new PrintStream(new FileOutputStream("test.s"));
+            if (!asm) fileOut = new PrintStream(new FileOutputStream("output.ll"));
+            else fileOut = new PrintStream(new FileOutputStream("test.s"));
 //            PrintStream output =new PrintStream(new FileOutputStream("src/output.ll"));
-            
             // 将标准输出流重定向到文件
             System.setOut(fileOut);
         }
-        PrintStream fileErr = new PrintStream(new FileOutputStream("errput.txt"));
-        System.setErr(fileErr);
-
-//        String name = "test.mx";
-//        InputStream input = new FileInputStream(name);
-        InputStream input = System.in;
+        if (redirect_err) {
+            PrintStream fileErr = new PrintStream(new FileOutputStream("errput.txt"));
+            System.setErr(fileErr);
+        }
+        InputStream input;
+        if (redirect_input) {
+            String name = "test.mx";
+            input = new FileInputStream(name);
+        } else input = System.in;
         
         try (FileWriter writer = new FileWriter("/run/media/qiuyuhang/data/ppca/compile/compiler/rubish/hh.txt")) {
             writer.write(" ");
@@ -76,17 +89,32 @@ public class Main {
             IRBuilder ib = new IRBuilder(programNode, gScope);
             ib.irProgramNode.initCall();
             ib.irProgramNode.clear();
-////            String s = ib.irProgramNode.toString();
-//            Mem2Reg mem2Reg = new Mem2Reg(ib.irProgramNode, ib.renamer);
-//            mem2Reg.run();
-//            String s1 = ib.irProgramNode.toString();
-////            System.out.println(s);
-//            System.out.println(s1);
-
-
-            asmBuilder ab = new asmBuilder(ib.irProgramNode);
-            ab.build();
-            ab.print();
+            if (!asm) {
+//            String s = ib.irProgramNode.toString();
+                Mem2Reg mem2Reg = new Mem2Reg(ib.irProgramNode, ib.renamer);
+                mem2Reg.run();
+                String s1 = ib.irProgramNode.toString();
+//            System.out.println(s);
+                System.out.println(s1);
+                System.out.println();
+                System.out.println();
+                System.out.println();
+                for (var fun : ib.irProgramNode.initFuns) {
+                    System.out.println("fun:\n" + fun.name);
+                    System.out.println("colour:\n" + fun.tempMap);
+                    System.out.println("spill:\n" + fun.spill);
+                }
+                for (var fun:ib.irProgramNode.funDefs){
+                    System.out.println("fun:\n"+fun.name);
+                    System.out.println("colour:\n"+fun.tempMap);
+                    System.out.println("spill:\n"+fun.spill);
+                }
+            }
+            if (asm) {
+                asmBuilder ab = new asmBuilder(ib.irProgramNode);
+                ab.build();
+                ab.print();
+            }
 //            try (FileReader reader = new FileReader("builtin.s")) {
 //                System.out.print("\n\n\n\n\n\n\n");
 //                char[] cbuf = new char[1024];

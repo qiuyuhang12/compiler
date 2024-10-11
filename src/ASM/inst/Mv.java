@@ -8,6 +8,7 @@ public class Mv extends Inst {//mv x,y   is   y->x
         this.rs = rs;
     }
     public String toString(){
+        if (rd.equals(rs)) return "";
         return "mv " + rd + ", " + rs;
     }
 }

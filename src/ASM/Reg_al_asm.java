@@ -3,6 +3,7 @@ package ASM;
 import ASM.inst.*;
 import ASM.section.data;
 import ASM.section.rodata;
+//import ASM.section.text;
 import ASM.section.text_new;
 import Frontend.IR.IRProgramNode;
 import Frontend.IR.entity.*;
@@ -13,7 +14,6 @@ import Frontend.IR.node.def.IRStringDef;
 import Frontend.IR.node.inst.*;
 import Frontend.IR.node.stmt.IRBlockNode;
 import Frontend.IR.type.IRType;
-import Optm.Mem2Reg.Spill;
 import org.antlr.v4.runtime.misc.Pair;
 
 import java.util.ArrayList;
@@ -31,10 +31,12 @@ public class Reg_al_asm {
     String nowFun = null;
     static int K;
     HashSet<Integer> used_reg = new HashSet<>();
-    String spare_reg = "t6";
+    String spare_reg = "x31";
     String phi_reg = "x27";
     String mem_reg1 = "x28";
     String mem_reg2 = "x29";
+    String tmp_reg = "x30";
+    HashMap<String, text_new> bl2text = new HashMap<>();
     
     int get_reg_int(String reg) {
         return Integer.parseInt(reg.substring(1));
@@ -140,30 +142,166 @@ public class Reg_al_asm {
         }
     }
     
+    enum var_type {
+        num, reg
+    }
+    
+    Pair<var_type, String> src(IREntity entity, text_new t, String reg, boolean hard) {
+        if (entity instanceof IRLiteral) {
+            int val = entity.getVal();
+            t.push(new Li(reg, val));
+            return new Pair<>(var_type.reg, reg);
+//            if (val <= 2047 && val >= -2048) {
+//                return new Pair<>(var_type.num, String.valueOf(val));
+//            } else {
+//                t.push(new Li(reg, val));
+//                return new Pair<>(var_type.reg, reg);
+//            }
+        } else if (entity instanceof IRVar var) {
+            if (var.name.charAt(0) == '@') {
+                assert false;
+                return null;
+//                t.push(new La(reg, var.name));
+            } else {
+                if (var.name.equals("null")) {
+                    t.push(new Li(reg, 0));
+                    return new Pair<>(var_type.reg, reg);
+//                    return new Pair<>(var_type.num, "0");
+                }
+                if (!(var.name.charAt(0) == '%')) {
+                    int val = Integer.parseInt(var.name);
+                    t.push(new Li(reg, val));
+                    return new Pair<>(var_type.reg, reg);
+//                    if (val <= 2047 && val >= -2048) {
+//                        return new Pair<>(var_type.num, String.valueOf(val));
+//                    } else {
+//                        t.push(new Li(reg, val));
+//                        return new Pair<>(var_type.reg, reg);
+//                    }
+                }
+                var pos = var2regOrMem.get(var.name);
+                assert pos != null;
+                if (pos.a == type.reg) {
+                    if (!hard) return new Pair<>(var_type.reg, "x" + pos.b);
+                    else {
+                        if (!reg.equals("x" + pos.b)) t.push(new Mv(reg, "x" + pos.b));
+                        return new Pair<>(var_type.reg, reg);
+                    }
+                } else {
+                    int offset = pos.b;
+                    t.push(new Lw(reg, "sp", offset));
+                    return new Pair<>(var_type.reg, reg);
+                }
+            }
+        } else {
+            assert false;
+            return null;
+        }
+    }
+    
+    Pair<var_type, String> src(String entity, text_new t, String reg, boolean hard) {
+        if (entity.charAt(0) != '@' && entity.charAt(0) != '%') {
+            t.push(new Li(reg, Integer.parseInt(entity)));
+            return new Pair<>(var_type.reg, reg);
+        } else {
+            if (entity.charAt(0) == '@') {
+                t.push(new La(reg, entity));
+                return new Pair<>(var_type.reg, reg);
+            } else {
+                assert entity.charAt(0) == '%';
+                var pos = var2regOrMem.get(entity);
+                assert pos != null;
+                if (pos.a == type.reg) {
+                    if (!hard) return new Pair<>(var_type.reg, "x" + pos.b);
+                    else {
+                        if (!reg.equals("x" + pos.b))
+                            t.push(new Mv(reg, "x" + pos.b));
+                        return new Pair<>(var_type.reg, reg);
+                    }
+                } else {
+                    int offset = pos.b;
+                    t.push(new Lw(reg, "sp", offset));
+                    return new Pair<>(var_type.reg, reg);
+                }
+            }
+        }
+    }
+
+
+//    String dest(IREntity entity) {
+//        if (entity instanceof IRVar var) {
+//            if (var.name.charAt(0) == '@') {
+//                assert false;
+//                return null;
+//            } else {
+//                if (var.name.equals("null")) {
+//                    assert false;
+//                    return null;
+//                }
+//                if (!(var.name.charAt(0) == '%')) {
+//                    assert false;
+//                    return null;
+//                }
+//                var pos = var2regOrMem.get(var.name);
+//                assert pos != null;
+//                if (pos.a == type.reg) {
+//                    return "x" + pos.b;
+//                } else {
+//                    return mem_reg1;
+//                }
+//            }
+//        } else {
+//            assert false;
+//            return null;
+//        }
+//    }
+    
+    private void buildPhi(phiInstNode it, text_new t) {
+    
+    }
+    
+    void mv(String entity, String reg, text_new t) {//reg->entity
+        assert entity.charAt(0) == '%';
+        var pos = var2regOrMem.get(entity);
+        assert pos != null;
+        if (pos.a == type.reg) {
+            t.push(new Mv("x" + pos.b, reg));
+        } else {
+            int offset = pos.b;
+            t.push(new Sw(reg, "sp", offset));
+        }
+    }
+    
     private void buildInst(instNode it, text_new t) {
         if (it instanceof allocaInstNode is) {
             assert false;
         } else if (it instanceof binaryInstNode is) {
-            ldVar(is.lhs, "x28", t);
-            ldVar(is.rhs, "x29", t);
+//            ldVar(is.lhs, "x28", t);
+//            ldVar(is.rhs, "x29", t);
+            Pair<var_type, String> lhs = src(is.lhs, t, mem_reg1, false);
+            Pair<var_type, String> rhs = src(is.rhs, t, mem_reg2, false);
+            var pos = var2regOrMem.get(is.dest.name);
+            assert pos != null;
+            String target = (pos.a == type.reg) ? "x" + pos.b : mem_reg1;
             switch (is.op) {
-                case add -> t.push(new Arith("add", "x30", "x28", "x29"));
-                case sub -> t.push(new Arith("sub", "x30", "x28", "x29"));
-                case mul -> t.push(new Arith("mul", "x30", "x28", "x29"));
-                case sdiv -> t.push(new Arith("div", "x30", "x28", "x29"));
-                case srem -> t.push(new Arith("rem", "x30", "x28", "x29"));
-                case shl -> t.push(new Arith("sll", "x30", "x28", "x29"));
-                case ashr -> t.push(new Arith("sra", "x30", "x28", "x29"));
-                case and -> t.push(new Arith("and", "x30", "x28", "x29"));
-                case or -> t.push(new Arith("or", "x30", "x28", "x29"));
-                case xor -> t.push(new Arith("xor", "x30", "x28", "x29"));
+                case add -> t.push(new Arith("add", target, lhs.b, rhs.b));
+                case sub -> t.push(new Arith("sub", target, lhs.b, rhs.b));//
+                case mul -> t.push(new Arith("mul", target, lhs.b, rhs.b));//
+                case sdiv -> t.push(new Arith("div", target, lhs.b, rhs.b));//
+                case srem -> t.push(new Arith("rem", target, lhs.b, rhs.b));//
+                case shl -> t.push(new Arith("sll", target, lhs.b, rhs.b));
+                case ashr -> t.push(new Arith("sra", target, lhs.b, rhs.b));
+                case and -> t.push(new Arith("and", target, lhs.b, rhs.b));
+                case or -> t.push(new Arith("or", target, lhs.b, rhs.b));
+                case xor -> t.push(new Arith("xor", target, lhs.b, rhs.b));
             }
-            int offset = varOffset.get(is.dest.name);
-            t.push(new Sw("x30", "sp", offset));
+            if (pos.a == type.mem) {
+                t.push(new Sw(target, "sp", pos.b));
+            }
         } else if (it instanceof brInstNode is) {
             if (is.cond != null) {
-                ldVar(is.cond, "x28", t);
-                t.push(new Br("bne", "x28", "x0", ".+8"));
+                var cd = src(is.cond, t, mem_reg1, false);
+                t.push(new Br("bne", cd.b, "x0", ".+8"));
                 t.push(new Jump(nowFun + "_" + is.ifFalse));
                 t.push(new Jump(nowFun + "_" + is.ifTrue));
 //                t.push(new Br("beq", "x28", "x0", nowFun + "_" + is.ifFalse));
@@ -178,11 +316,11 @@ public class Reg_al_asm {
             inas(t);
             for (int i = 0; i < is.args.size(); i++) {
                 if (i < 8) {
-                    ldVar(is.args.get(i), "a" + i, t);
+                    var src = src(is.args.get(i), t, "a" + i, true);
                 } else {
-                    ldVar(is.args.get(i), "x28", t);
+                    var src = src(is.args.get(i), t, mem_reg1, false);
                     int d = -(is.args.size() - i) * 4;
-                    sw = new Sw("x28", "sp", d);
+                    sw = new Sw(src.b, "sp", d);
                     t.push(sw);
                 }
             }
@@ -190,63 +328,75 @@ public class Reg_al_asm {
             Lw lw = new Lw("ra", "sp", regOffset.get("ra"));
             t.push(lw);
             if (is.dest != null) {
-                int offset = varOffset.get(is.dest.name);
-                t.push(new Sw("a0", "sp", offset));
+                var dest = var2regOrMem.get(is.dest.name);
+                assert dest != null;
+                if (dest.a == type.reg) {
+                    t.push(new Mv("x" + dest.b, "a0"));
+                } else {
+                    t.push(new Sw("a0", "sp", dest.b));
+                }
             }
             outas(t);
         } else if (it instanceof getElementPtrInstNode is) {//一般而言，第一个变量是堆地址
             System.err.println("我默认长度全是4,即都是i32");
-            ldVar(is.ptr, "x28", t);
+            var ptr = src(is.ptr, t, mem_reg1, true);
+//            ldVar(is.ptr, "x28", t);
             for (int i = 0; i < is.tys.size(); i++) {
-                ldVar(is.idxs.get(i), "x29", t);
-                Li li = new Li("x30", 4);
-                t.push(li);
-                t.push(new Arith("mul", "x29", "x29", "x30"));
-                t.push(new Arith("add", "x28", "x28", "x29"));
+                var idx = src(is.idxs.get(i), t, mem_reg2, false);
+                t.push(new Arith("slli", tmp_reg, idx.b, "2"));
+                t.push(new Arith("add", mem_reg1, mem_reg1, tmp_reg));
             }
-            int offset = varOffset.get(is.dest);
-            t.push(new Sw("x28", "sp", offset));
+            mv(is.dest, mem_reg1, t);
         } else if (it instanceof icmpInstNode is) {
-            ldVar(is.lhs, "x28", t);
-            ldVar(is.rhs, "x29", t);
-            Arith arith = new Arith("sub", "x30", "x28", "x29");
+//            ldVar(is.lhs, "x28", t);
+//            ldVar(is.rhs, "x29", t);
+            var lhs = src(is.lhs, t, mem_reg1, false);
+            var rhs = src(is.rhs, t, mem_reg2, false);
+            Arith arith = new Arith("sub", "x30", lhs.b, rhs.b);
             t.push(arith);
             switch (is.op) {
                 case eq -> t.push(new S_z("seqz", "x30", "x30"));
                 case ne -> t.push(new S_z("snez", "x30", "x30"));
                 case sgt -> t.push(new S_z("sgtz", "x30", "x30"));
                 case sge -> {
-                    t.push(new S_z("sgtz", "x28", "x30"));
-                    t.push(new S_z("seqz", "x29", "x30"));
-                    t.push(new Arith("or", "x30", "x28", "x29"));
+                    t.push(new S_z("sgtz", lhs.b, "x30"));
+                    t.push(new S_z("seqz", rhs.b, "x30"));
+                    t.push(new Arith("or", "x30", lhs.b, rhs.b));
                 }
                 case slt -> t.push(new S_z("sltz", "x30", "x30"));
                 case sle -> {
-                    t.push(new S_z("sltz", "x28", "x30"));
-                    t.push(new S_z("seqz", "x29", "x30"));
-                    t.push(new Arith("or", "x30", "x28", "x29"));
+                    t.push(new S_z("sltz", lhs.b, "x30"));
+                    t.push(new S_z("seqz", rhs.b, "x30"));
+                    t.push(new Arith("or", "x30", lhs.b, rhs.b));
                 }
             }
-            int offset = varOffset.get(is.dest.name);
-            t.push(new Sw("x30", "sp", offset));
+            mv(is.dest.name, "x30", t);
+//            int offset = varOffset.get(is.dest.name);
+//            t.push(new Sw("x30", "sp", offset));
         } else if (it instanceof loadInstNode is) {
-            ldVar(is.ptr, "x28", t);
-//            Lw lw = new Lw("x28", "sp", varOffset.get(is.ptr));
-            Lw lw1 = new Lw("x28", "x28", 0);
-//            t.push(lw);
-            t.push(lw1);
-            int offset = varOffset.get(is.dest);
-            t.push(new Sw("x28", "sp", offset));
+            var ptr = src(is.ptr, t, mem_reg1, false);
+            var pos = var2regOrMem.get(is.dest);
+            assert pos != null;
+            if (pos.a == type.reg) {
+                t.push(new Lw("x" + pos.b, ptr.b, 0));
+            } else {
+                t.push(new Lw(mem_reg1, ptr.b, 0));
+                t.push(new Sw(mem_reg1, "sp", pos.b));
+            }
         } else if (it instanceof retInstNode is) {
             if (is.value.typeInfo.type != IRType.IRTypeEnum.void_) {
-                ldVar(is.value, "a0", t);
+//                ldVar(is.value, "a0", t);
+                var src = src(is.value, t, "x10", true);
             }
-            Lw lw0 = new Lw("x28", "sp", regOffset.get("x28"));
-            Lw lw1 = new Lw("x29", "sp", regOffset.get("x29"));
-            Lw lw2 = new Lw("x30", "sp", regOffset.get("x30"));
-            t.push(lw0);
-            t.push(lw1);
-            t.push(lw2);
+            for (int i = 27; i <= 31; i++) {
+                t.push(new Lw("x" + i, "sp", regOffset.get("x" + i)));
+            }
+//            Lw lw0 = new Lw("x28", "sp", regOffset.get("x28"));
+//            Lw lw1 = new Lw("x29", "sp", regOffset.get("x29"));
+//            Lw lw2 = new Lw("x30", "sp", regOffset.get("x30"));
+//            t.push(lw0);
+//            t.push(lw1);
+//            t.push(lw2);
             if (stackSize <= 2047 && stackSize >= -2048) {
                 Arithimm arithimm = new Arithimm("addi", "sp", "sp", stackSize);
                 t.push(arithimm);
@@ -258,19 +408,19 @@ public class Reg_al_asm {
             }
             t.push(new Ret());
         } else if (it instanceof storeInstNode is) {
-            ldVar(is.value, "x28", t);
-            ldVar(is.ptr, "x29", t);
-//            int offset = varOffset.get(is.ptr.name);
-//            Lw lw = new Lw("x29", "sp", offset);
-//            t.push(lw);
-            t.push(new Sw("x28", "x29", 0));
+//            ldVar(is.value, "x28", t);
+//            ldVar(is.ptr, "x29", t);
+            var value = src(is.value, t, mem_reg1, false);
+            var ptr = src(is.ptr, t, mem_reg2, false);
+            t.push(new Sw(value.b, ptr.b, 0));
+//            t.push(new Sw("x28", "x29", 0));
         } else {
             assert false;
         }
     }
     
     
-    private void collectVar(IRFunDef it) {
+    private void collectVar(IRFunDef it) {//spill
         HashMap<String, Integer> varOffset = new HashMap<>();//变量->栈sp偏移,包含大于8个参数的参数
         regOffset.clear();
         stackSize = 0;
@@ -338,8 +488,12 @@ public class Reg_al_asm {
             } else {
                 t = new text_new(funName + "_" + block.label, spare_reg);
             }
+            bl2text.put(block.label, t);
             if (block.label.equals("entry")) {
-                collectVar(it);
+                color2reg(it);//reg
+                collectVar(it);//spill
+                paraHandle(it);//old_para_pos
+                para_permute(t);//permute para
                 if (-stackSize <= 2047 && -stackSize >= -2048) {
                     Arithimm arithimm = new Arithimm("addi", "sp", "sp", -stackSize);
                     t.push(arithimm);
@@ -350,6 +504,11 @@ public class Reg_al_asm {
                     t.push(arith);
                 }
                 storeReg(t);
+            }
+            for (phiInstNode stmt : block.phis) {
+                Comment comment = new Comment(stmt.toString().substring(0, stmt.toString().length() - 1));
+                t.push(comment);
+                buildPhi(stmt, t);
             }
             for (instNode stmt : block.insts) {
                 //done:添加注释
@@ -380,7 +539,7 @@ public class Reg_al_asm {
         }
     }
     
-    void color2reg(IRFunDef it) {
+    void color2reg(IRFunDef it) {//reg
         var spill = it.spill;
         var color = it.tempMap;
         HashMap<Integer, Integer> num2reg = new HashMap<>();
@@ -411,7 +570,6 @@ public class Reg_al_asm {
             int reg = num2reg.get(entry.getValue());
             var2regOrMem.put(entry.getKey(), new Pair<>(type.reg, reg));
         }
-        collectVar(it);
     }
     
     void permute(HashMap<Pair<type, Integer>, Pair<type, Integer>> new2old, text_new t) {
@@ -427,6 +585,9 @@ public class Reg_al_asm {
             }
             visited.add(old);
             var new_ = entry.getValue();
+            if (old.equals(new_)) {
+                continue;
+            }
             ArrayList<Pair<type, Integer>> queue = new ArrayList<>();
             queue.add(old);
             queue.add(new_);
@@ -469,6 +630,32 @@ public class Reg_al_asm {
             t.push(new Lw(mem_reg1, "sp", old.b));
             t.push(new Sw(mem_reg1, "sp", new_.b));
         }
+    }
+    
+    HashMap<String, Pair<type, Integer>> old_para_pos = new HashMap<>();//参数->寄存器
+    
+    void paraHandle(IRFunDef it) {
+        for (int i = 0; i < it.parameters.size(); i++) {
+            String para = it.parameters.get(i).name;
+            if (i < 8) {
+                old_para_pos.put(para, new Pair<>(type.reg, 10 + i));
+            } else {
+                int d = stackSize - (it.parameters.size() - i) * 4;
+                old_para_pos.put(para, new Pair<>(type.mem, d));
+            }
+        }
+    }
+    
+    void para_permute(text_new t) {
+        HashMap<Pair<type, Integer>, Pair<type, Integer>> new2old = new HashMap<>();
+        for (var entry : old_para_pos.entrySet()) {
+            String para = entry.getKey();
+            Pair<type, Integer> old = entry.getValue();
+            Pair<type, Integer> new_ = var2regOrMem.get(para);
+            assert new_ != null;
+            new2old.put(new_, old);
+        }
+        permute(new2old, t);
     }
 }
 

@@ -29,8 +29,7 @@ Codegen: build
 #
 #
 .PHONY: Codegenall
-Codegenall:
-# build
+Codegenall:build
 	./testcases/codegen/scripts/test_asm_all.bash 'java -cp /usr/share/java/antlr-4.13.2-complete.jar:bin Main -S' testcases/codegen/ builtin.s
 #
 
