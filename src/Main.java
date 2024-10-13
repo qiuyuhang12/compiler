@@ -1,3 +1,4 @@
+import ASM.Reg_al_asm;
 import ASM.asmBuilder;
 import AST.ProgramNode;
 //import Assembly.AsmFn;
@@ -15,6 +16,7 @@ import Optm.Mem2Reg.Mem2Reg;
 import Parser.MxLexer;
 import Parser.MxParser;
 //import Util.MxErrorListener;
+import Util.Consts;
 import Util.MxErrorListener;
 import Util.Scope;
 import Util.error.error;
@@ -31,15 +33,15 @@ public class Main {
 //todo::内建函数
     
     public static void main(String[] args) throws Exception {
-        boolean asm, redirect_input, redirect_output, redirect_err;
-        asm=true;
-//        asm = false;
+        int K=1;
+        boolean asm = false, new_asm = false, redirect_input = false, redirect_output = false, redirect_err = false, show_color = false;
+//        asm=true;
+//        new_asm=true;
 //        redirect_input = true;
-        redirect_input = false;
-//        redirect_output = true;
-        redirect_output = false;
+        redirect_output = true;
         redirect_err = true;
-//        redirect_err = false;
+//        show_color = true;
+        Consts.colour=true;
         if (redirect_output) {
 //        if (true) {
             PrintStream fileOut;
@@ -89,31 +91,40 @@ public class Main {
             IRBuilder ib = new IRBuilder(programNode, gScope);
             ib.irProgramNode.initCall();
             ib.irProgramNode.clear();
-            if (!asm) {
+            Mem2Reg mem2Reg;
+            if (!asm||new_asm) {
 //            String s = ib.irProgramNode.toString();
-                Mem2Reg mem2Reg = new Mem2Reg(ib.irProgramNode, ib.renamer);
+                mem2Reg = new Mem2Reg(ib.irProgramNode, ib.renamer,K);
                 mem2Reg.run();
                 String s1 = ib.irProgramNode.toString();
 //            System.out.println(s);
                 System.out.println(s1);
-                System.out.println();
-                System.out.println();
-                System.out.println();
-                for (var fun : ib.irProgramNode.initFuns) {
-                    System.out.println("fun:\n" + fun.name);
-                    System.out.println("colour:\n" + fun.tempMap);
-                    System.out.println("spill:\n" + fun.spill);
-                }
-                for (var fun:ib.irProgramNode.funDefs){
-                    System.out.println("fun:\n"+fun.name);
-                    System.out.println("colour:\n"+fun.tempMap);
-                    System.out.println("spill:\n"+fun.spill);
+                if (show_color) {
+                    System.out.println();
+                    System.out.println();
+                    System.out.println("K:"+K);
+                    for (var fun : ib.irProgramNode.initFuns) {
+                        System.out.println("fun:\n" + fun.name);
+                        System.out.println("colour:\n" + fun.tempMap);
+                        System.out.println("spill:\n" + fun.spill);
+                    }
+                    for (var fun : ib.irProgramNode.funDefs) {
+                        System.out.println("fun:\n" + fun.name);
+                        System.out.println("colour:\n" + fun.tempMap);
+                        System.out.println("spill:\n" + fun.spill);
+                    }
                 }
             }
             if (asm) {
-                asmBuilder ab = new asmBuilder(ib.irProgramNode);
-                ab.build();
-                ab.print();
+                if (!new_asm) {
+                    asmBuilder ab = new asmBuilder(ib.irProgramNode);
+                    ab.build();
+                    ab.print();
+                }else {
+                    Reg_al_asm ab_new = new Reg_al_asm(ib.irProgramNode,K);
+                    ab_new.build();
+                    ab_new.print();
+                }
             }
 //            try (FileReader reader = new FileReader("builtin.s")) {
 //                System.out.print("\n\n\n\n\n\n\n");

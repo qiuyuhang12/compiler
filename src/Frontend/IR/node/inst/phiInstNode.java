@@ -41,6 +41,8 @@ public class phiInstNode extends instNode {
     }
     
     public boolean add_source_m2r(String value, String label) {
+        assert value.charAt(0) != '@';
+        //todo：错误的assert.phi可以源于全局变量。
         if (labels.contains(label)) return false;
         values.add(new IRVar(type.toString(), value, false));
         labels.add(label);
@@ -55,6 +57,7 @@ public class phiInstNode extends instNode {
     
     @Override
     public String toString() {
+        assert values.size() > 1;
         StringBuilder sb = new StringBuilder();
         sb.append(dest.toString()).append(" = phi ").append(type.toString()).append(" ");
         for (int i = 0; i < values.size(); i++) {
@@ -65,7 +68,8 @@ public class phiInstNode extends instNode {
     }
     
     @Override
-    public void rename(HashMap<String, String> renameMap) {}
+    public void rename(HashMap<String, String> renameMap) {
+    }
     
     @Override
     public String getDef() {
@@ -76,7 +80,7 @@ public class phiInstNode extends instNode {
     public HashSet<String> getUses() {
         HashSet<String> st = new HashSet<>();
         for (IREntity value : values) {
-            if (value instanceof IRVar var&&var.name.charAt(0) == '%') {
+            if (value instanceof IRVar var && var.name.charAt(0) == '%') {
                 st.add(var.name);
             }
         }

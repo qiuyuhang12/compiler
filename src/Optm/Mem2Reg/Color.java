@@ -36,6 +36,7 @@ public class Color {
         for (var entry : idom.entrySet()) {
             var label = entry.getKey();
             var idom = entry.getValue();
+            if (idom == null) continue;
             if (!dt.containsKey(idom)) {
                 dt.put(idom, new HashSet<>());
             }
@@ -47,30 +48,88 @@ public class Color {
         for (int i = K - 1; i >= 0; i--) {
             stack.add(i);
         }
+        for (int i = 0; i<fun.parameters.size(); i++) {
+            var tmp = fun.parameters.get(i);
+            assert tmp.name.charAt(0) == '%';
+            if (i<K&&i<8) {
+                tempMap.put(tmp.name, i);
+                inUse.add(i);
+                stack.remove((Integer) i);
+            } else {
+                spill.add(tmp.name);
+            }
+        }
         pre_order(fun.blocks.getFirst().label);
     }
     
     void pre_order(String b) {
+        inUse.clear();
         var B = bl.get(b);
         B.plo_after_sp.removeAll(spill);
-        if (!B.live_in.isEmpty())
-            for (var var : B.live_in) {
+        HashSet<String> b_livein_after_spill;
+        if (B.phis.isEmpty()) {
+            var tmp = B.insts.getFirst().lo_after_sp;
+            tmp.removeAll(spill);
+            b_livein_after_spill = new HashSet<>(B.insts.getFirst().lo_after_sp);
+            b_livein_after_spill.remove(B.insts.getFirst().getDef());
+        } else {
+            b_livein_after_spill = new HashSet<>(B.plo_after_sp);
+            b_livein_after_spill.removeAll(B.get_phi_def());
+        }
+        if (!b_livein_after_spill.isEmpty())
+            for (var var : b_livein_after_spill) {
+                assert tempMap.get(var) != null;
                 inUse.add(tempMap.get(var));
             }
+        for (int i = 0; i < K; i++) {
+            if (!inUse.contains(i)) {
+                stack.add(i);
+            }
+        }
+        
+        //TODO:PHI语句漏了！
+//        var uses_ = B.get_phi_use();
+//        if (uses_ != null)
+//            for (var x : uses_.keySet()) {
+//                if (!B.plo_after_sp.contains(x) && !spill.contains(x)) {
+//                    var tmp=tempMap.get(x);
+//                    if (tmp==null) continue;
+////                    assert tmp!=null;
+//                    inUse.remove(tmp);
+//                    stack.add(tmp);
+//                }
+//            }
+        var y_ = B.get_phi_def();
+        if (y_ != null)
+            for (var y : y_) {
+                if (!B.plo_after_sp.contains(y)) continue;
+                assert !stack.isEmpty();
+                int c = stack.getLast();
+                assert c >= 0;
+                tempMap.put(y, c);
+                inUse.add(c);
+                stack.removeLast();
+            }
+        
+        
         for (var s : B.insts) {
             s.lo_after_sp.removeAll(spill);
-            if (s.getUses() != null)
-                for (var x : s.getUses()) {
-                    if (!s.lo_after_sp.contains(x)) {
-                        inUse.remove(tempMap.get(x));
-                        stack.add(tempMap.get(x));
+            var uses = s.getUses();
+            if (uses != null)
+                for (var x : uses) {
+                    if (!s.lo_after_sp.contains(x) && !spill.contains(x)) {
+                        var tmp = tempMap.get(x);
+                        assert tmp != null;
+                        inUse.remove(tmp);
+                        stack.add(tmp);
                     }
                 }
             var y = s.getDef();
             if (y == null || !s.lo_after_sp.contains(y)) continue;
             assert !stack.isEmpty();
-            tempMap.put(y, stack.getLast());
-            inUse.add(stack.getLast());
+            int c = stack.getLast();
+            tempMap.put(y, c);
+            inUse.add(c);
             stack.removeLast();
         }
         if (dt.containsKey(b))

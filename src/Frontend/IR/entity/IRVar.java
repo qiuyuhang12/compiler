@@ -17,7 +17,8 @@ public class IRVar extends IREntity{
                 typeInfo = new IRType(IRType.IRTypeEnum.ptr);
                 break;
             case "void":
-                assert false;
+                break;
+//                assert false;
             default:
                 typeInfo = new IRType(IRType.IRTypeEnum.struct);
         }

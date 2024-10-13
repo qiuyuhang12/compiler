@@ -6,6 +6,7 @@ import Frontend.IR.node.inst.*;
 import Frontend.IR.node.stmt.IRBlockNode;
 import Frontend.IR.type.IRType;
 import Frontend.IR.util.Renamer;
+import Util.Consts;
 import org.antlr.v4.runtime.misc.Pair;
 
 import java.io.FileWriter;
@@ -27,10 +28,12 @@ public class M2r_Fun {
     public HashMap<String, String> var2type = new HashMap<>();//var to type
     public HashMap<String, ArrayList<String>> phiStack = new HashMap<>();//var to phi stack
     public HashSet<String> usefulPtr = new HashSet<>();//label to ele ptr
+    public int K;
     
-    public M2r_Fun(IRFunDef fun, Renamer renamer) {
+    public M2r_Fun(IRFunDef fun, Renamer renamer, int K) {
         this.fun = fun;
         this.renamer = renamer;
+        this.K = K;
     }
     
     
@@ -48,21 +51,23 @@ public class M2r_Fun {
                 rename(entry.getKey());
             }
         }
-        Analysis analysis = new Analysis(fun, bl, in);
-        analysis.run();
-        Spill spill = new Spill(20, fun, bl);
-        spill.run();
+        if (Consts.colour) {
+            Analysis analysis = new Analysis(fun, bl, in);
+            analysis.run();
+            Spill spill = new Spill(K, fun, bl);
+            spill.run();
 //        System.err.println(spill.spill.size());
-        try (FileWriter writer = new FileWriter("/run/media/qiuyuhang/data/ppca/compile/compiler/rubish/hh.txt", true)) {
-            writer.write(spill.spill.size()+" ");
-        } catch (IOException e) {
-            assert false;
+            try (FileWriter writer = new FileWriter("/run/media/qiuyuhang/data/ppca/compile/compiler/rubish/hh.txt", true)) {
+                writer.write(spill.spill.size() + " ");
+            } catch (IOException e) {
+                assert false;
+            }
+            Color color = new Color(K, fun, bl, idom, spill.spill);
+            color.run();
+            fun.tempMap = color.tempMap;
+            fun.spill = spill.spill;
         }
-        Color color = new Color(20, fun, bl, idom, spill.spill);
-        color.run();
         critical_edge();
-        fun.tempMap=color.tempMap;
-        fun.spill=spill.spill;
     }
     
     HashSet<String> visited = new HashSet<>();
@@ -105,10 +110,9 @@ public class M2r_Fun {
         }
         visited.add(label);
         can_arrive.add(label);
-        if (out.get(label) != null)
-            for (String s : out.get(label)) {
-                bfs_arrive(s);
-            }
+        if (out.get(label) != null) for (String s : out.get(label)) {
+            bfs_arrive(s);
+        }
     }
     
     void handleDefUse() {
@@ -169,6 +173,9 @@ public class M2r_Fun {
     }
     
     void dom() {
+        for (String label : bl.keySet()) {
+            dom.put(label, new HashSet<>(bl.keySet()));
+        }
         boolean changed = true;
         while (changed) {
             changed = false;
@@ -179,12 +186,12 @@ public class M2r_Fun {
     }
     
     boolean bfs(String label) {
-        boolean changed;
-        HashSet<String> dom_n = dom.get(label);
+//        HashSet<String> dom_n = dom.get(label);
+        HashSet<String> dom_n = new HashSet<>();
 //        for (String s : out.get(label)) {
 //            tmp.retainAll(dom.get(s));
 //        }
-        changed = dom_n.add(label);
+        dom_n.add(label);
 //        HashSet
         HashSet<String> tmp = null;
         for (String s : in.get(label)) {
@@ -196,8 +203,14 @@ public class M2r_Fun {
 //            changed = changed || dom_n.addAll(dom.get(s));
         }
         if (tmp != null) {
-            changed = dom_n.addAll(tmp) || changed;
+            dom_n.addAll(tmp);
         }
+        boolean changed = dom_n.size() != dom.get(label).size();
+        var tmp0 = new HashSet<>(dom_n);
+        tmp0.removeAll(dom.get(label));
+        changed = changed || !tmp0.isEmpty();
+//        dom.get(label)=dom_n;
+        dom.put(label, dom_n);
 //        for (String s : out.get(label)) {
 //            if (bfs(s)) {
 //                changed = true;
@@ -247,14 +260,13 @@ public class M2r_Fun {
     void setphi() {
         for (var entry : def.entrySet()) {
             String var = entry.getKey();
-            if (useBl.containsKey(var))
-                for (String label : entry.getValue()) {
-                    _setphi(label, var);
+            if (useBl.containsKey(var)) for (String label : entry.getValue()) {
+                _setphi(label, var);
 //                for (String fro : domFr.get(label)) {
 //                    IRBlockNode block = bl.get(fro);
 //                    block.setPhi(var, var2type.get(var));
 //                }
-                }
+            }
         }
     }
     

@@ -32,16 +32,16 @@ public class Analysis {
         clean();
         collect_use();
         ssa_liveness();
-        for (var entry : in.entrySet()) {
-            var label = entry.getKey();
-            var block = this.bl.get(label);
-            var ins = entry.getValue();
-            if (ins == null || ins.isEmpty()) continue;
-            for (var in : ins) {
-                var in_block = this.bl.get(in);
-                block.live_in.addAll(in_block.insts.getLast().live_out);
-            }
-        }
+//        for (var entry : in.entrySet()) {
+//            var label = entry.getKey();
+//            var block = this.bl.get(label);
+//            var ins = entry.getValue();
+//            if (ins == null || ins.isEmpty()) continue;
+//            for (var in : ins) {
+//                var in_block = this.bl.get(in);
+//                block.live_in.addAll(in_block.insts.getLast().live_out);
+//            }
+//        }
     }
     
     HashSet<String> del = new HashSet<>();

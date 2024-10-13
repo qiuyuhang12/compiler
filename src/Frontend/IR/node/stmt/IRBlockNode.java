@@ -17,7 +17,7 @@ public class IRBlockNode extends IRNode {
     public String label;
     public ArrayList<instNode> insts = new ArrayList<>();
     public ArrayList<phiInstNode> phis = new ArrayList<>();
-    public HashSet<String> live_in = new HashSet<>();
+//    public HashSet<String> live_in = new HashSet<>();
     public HashSet<String> phi_live_out = new HashSet<>();
     public HashSet<String> plo_after_sp = new HashSet<>();
 //    public UnionFind<Integer> uf = new UnionFind<>();
@@ -26,7 +26,7 @@ public class IRBlockNode extends IRNode {
     public HashSet<String> get_phi_def() {
         HashSet<String> res = new HashSet<>();
         for (phiInstNode phi : phis) {
-            res.add(phi.oriVar);
+            res.add(phi.dest.toString());
         }
         return res;
     }

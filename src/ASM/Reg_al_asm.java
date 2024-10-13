@@ -20,13 +20,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
+//约定：被调用者保存寄存器t0-t2
+//约定：调用者保存寄存器ra
 public class Reg_al_asm {
     public IRProgramNode ir;
     public prog_new asm;
     HashMap<String, Pair<type, Integer>> var2regOrMem = new HashMap<>();
     HashMap<String, Integer> regOffset = new HashMap<>();//reg存储->栈sp偏移
-    //    public ArrayList<Inst> fromAlloc = new ArrayList<>();//alloca指令
-//    public HashMap<String, String> paraReg = new HashMap<>();//参数->寄存器
     int stackSize = 0;
     String nowFun = null;
     static int K;
@@ -43,9 +43,8 @@ public class Reg_al_asm {
     }
     
     enum type {
-        reg, mem
+        reg, mem, num
     }
-    
     
     public Reg_al_asm(IRProgramNode ir, int k) {
         this.ir = ir;
@@ -67,56 +66,6 @@ public class Reg_al_asm {
         } else {
             assert false;
             return 0;
-        }
-    }
-    
-    public void ldVar(IREntity entity, String reg, text_new t) {
-        if (entity instanceof IRLiteral) {
-            t.push(new Li(reg, entity.getVal()));
-        } else if (entity instanceof IRVar var) {
-            if (var.name.charAt(0) == '@') {
-                t.push(new La(reg, var.name));
-            } else {
-                if (var.name.equals("null")) {
-                    t.push(new Li(reg, 0));
-                    return;
-                }
-                if (!(var.name.charAt(0) == '%')) {
-                    t.push(new Li(reg, Integer.parseInt(var.name)));
-                    return;
-                }
-                var pos = var2regOrMem.get(var.name);
-                assert pos != null;
-                if (pos.a == type.reg) {
-                    t.push(new Mv(reg, "x" + pos.b));
-                } else {
-                    int offset = pos.b;
-                    t.push(new Lw(reg, "sp", offset));
-                }
-                
-            }
-        } else {
-            assert false;
-        }
-    }
-    
-    public void ldVar(String entity, String reg, text_new t) {
-        if (entity.charAt(0) != '@' && entity.charAt(0) != '%') {
-            t.push(new Li(reg, Integer.parseInt(entity)));
-        } else {
-            if (entity.charAt(0) == '@') {
-                t.push(new La(reg, entity));
-            } else {
-                assert entity.charAt(0) == '%';
-                var pos = var2regOrMem.get(entity);
-                assert pos != null;
-                if (pos.a == type.reg) {
-                    t.push(new Mv(reg, "x" + pos.b));
-                } else {
-                    int offset = pos.b;
-                    t.push(new Lw(reg, "sp", offset));
-                }
-            }
         }
     }
     
@@ -214,8 +163,7 @@ public class Reg_al_asm {
                 if (pos.a == type.reg) {
                     if (!hard) return new Pair<>(var_type.reg, "x" + pos.b);
                     else {
-                        if (!reg.equals("x" + pos.b))
-                            t.push(new Mv(reg, "x" + pos.b));
+                        if (!reg.equals("x" + pos.b)) t.push(new Mv(reg, "x" + pos.b));
                         return new Pair<>(var_type.reg, reg);
                     }
                 } else {
@@ -226,38 +174,28 @@ public class Reg_al_asm {
             }
         }
     }
-
-
-//    String dest(IREntity entity) {
-//        if (entity instanceof IRVar var) {
-//            if (var.name.charAt(0) == '@') {
-//                assert false;
-//                return null;
-//            } else {
-//                if (var.name.equals("null")) {
-//                    assert false;
-//                    return null;
-//                }
-//                if (!(var.name.charAt(0) == '%')) {
-//                    assert false;
-//                    return null;
-//                }
-//                var pos = var2regOrMem.get(var.name);
-//                assert pos != null;
-//                if (pos.a == type.reg) {
-//                    return "x" + pos.b;
-//                } else {
-//                    return mem_reg1;
-//                }
-//            }
-//        } else {
-//            assert false;
-//            return null;
-//        }
-//    }
     
-    private void buildPhi(phiInstNode it, text_new t) {
-    
+    private void buildPhi(ArrayList<phiInstNode> it, text_new t) {
+        HashMap<String, HashMap<Pair<type, Integer>, Pair<type, Integer>>> bl2permute = new HashMap<>();
+        for (phiInstNode stmt : it) {
+            var new_ = var2regOrMem.get(stmt.dest.name);
+            for (int i = 0; i < stmt.values.size(); i++) {
+                String label = stmt.labels.get(i);
+                IREntity old = stmt.values.get(i);
+                Pair<type, Integer> old_;
+                if (old instanceof IRVar var) {
+                    old_ = var2regOrMem.get(var.name);
+                } else {
+                    old_ = new Pair<>(type.num, old.getVal());
+                }
+                bl2permute.computeIfAbsent(label, _ -> new HashMap<>()).put(new_, old_);
+            }
+        }
+        for (var entry : bl2permute.entrySet()) {
+            text_new t_ = bl2text.get(entry.getKey());
+            HashMap<Pair<type, Integer>, Pair<type, Integer>> new2old = entry.getValue();
+            permute(new2old, t_);
+        }
     }
     
     void mv(String entity, String reg, text_new t) {//reg->entity
@@ -419,16 +357,17 @@ public class Reg_al_asm {
         }
     }
     
-    
     private void collectVar(IRFunDef it) {//spill
         HashMap<String, Integer> varOffset = new HashMap<>();//变量->栈sp偏移,包含大于8个参数的参数
         regOffset.clear();
         stackSize = 0;
-        var2regOrMem.clear();
         int offset = 1;
         regOffset.put("ra", (++offset) * 4);
         for (var reg : used_reg) {
             regOffset.put("x" + reg, (++offset) * 4);
+        }
+        for (int i = 27; i <= 31; i++) {
+            regOffset.put("x" + i, (++offset) * 4);
         }
         stackSize = (offset + it.spill.size()) * 4 + 4;
 //int d = stackSize - (it.parameters.size() - i) * 4;
@@ -452,9 +391,6 @@ public class Reg_al_asm {
             var2regOrMem.put(entry.getKey(), new Pair<>(type.mem, entry.getValue()));
         }
     }
-    
-    //约定：被调用者保存寄存器t0-t2
-    //约定：调用者保存寄存器ra
     
     private void storeReg(text_new t) {
         Sw sw = new Sw("x28", "sp", regOffset.get("x28"));
@@ -505,11 +441,7 @@ public class Reg_al_asm {
                 }
                 storeReg(t);
             }
-            for (phiInstNode stmt : block.phis) {
-                Comment comment = new Comment(stmt.toString().substring(0, stmt.toString().length() - 1));
-                t.push(comment);
-                buildPhi(stmt, t);
-            }
+            
             for (instNode stmt : block.insts) {
                 //done:添加注释
                 //done:处理判断是参数还是变量
@@ -521,6 +453,17 @@ public class Reg_al_asm {
                 buildInst(stmt, t);
             }
             asm.pushText(t);
+        }
+        for (IRBlockNode block : it.blocks) {
+            if (block == null) {
+                continue;
+            }
+            text_new t = bl2text.get(block.label);
+            for (phiInstNode stmt : block.phis) {
+                Comment comment = new Comment(stmt.toString().substring(0, stmt.toString().length() - 1));
+                t.push(comment);
+            }
+            buildPhi(block.phis, t);
         }
     }
     
@@ -626,9 +569,16 @@ public class Reg_al_asm {
             t.push(new Lw("x" + new_.b, "sp", old.b));
         } else if (old.a == type.reg && new_.a == type.mem) {
             t.push(new Sw("x" + old.b, "sp", new_.b));
-        } else {
+        } else if (old.a == type.mem && new_.a == type.mem) {
             t.push(new Lw(mem_reg1, "sp", old.b));
             t.push(new Sw(mem_reg1, "sp", new_.b));
+        } else if (old.a == type.num && new_.a == type.reg) {
+            t.push(new Li("x" + new_.b, old.b));
+        } else if (old.a == type.num && new_.a == type.mem) {
+            t.push(new Li(mem_reg1, old.b));
+            t.push(new Sw(mem_reg1, "sp", new_.b));
+        } else {
+            assert false;
         }
     }
     
@@ -658,6 +608,3 @@ public class Reg_al_asm {
         permute(new2old, t);
     }
 }
-
-
-//spare_reg
