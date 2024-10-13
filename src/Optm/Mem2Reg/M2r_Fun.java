@@ -120,11 +120,14 @@ public class M2r_Fun {
             for (instNode inst : block.insts) {
                 if (inst instanceof getElementPtrInstNode gep) {
                     usefulPtr.add(gep.ptr);
-                } else if (inst instanceof callInstNode call) {
-                    if (call.funName.equals("string.copy")) {
-                        usefulPtr.add(call.args.getFirst().toString());
-                    }
                 }
+                
+//                else if (inst instanceof callInstNode call) {
+//                    if (call.funName.equals("string.copy")) {
+//                        usefulPtr.add(call.args.getFirst().toString());
+//                    }
+//                }
+                
             }
         }
         for (IRBlockNode block : fun.blocks) {//统计局部变量
@@ -136,10 +139,10 @@ public class M2r_Fun {
 //                    if (alloc.type.type == IRType.IRTypeEnum.ptr || alloc.type.type == IRType.IRTypeEnum.struct) {
 //                        continue;
 //                    }
+                    String var = alloc.dest.toString();
                     if (usefulPtr.contains(alloc.dest.toString())) {
                         continue;
                     }
-                    String var = alloc.dest.toString();
                     def.put(var, new ArrayList<>());
                     useBl.put(var, new ArrayList<>());
                     var2type.put(var, alloc.type.toString());
@@ -166,6 +169,12 @@ public class M2r_Fun {
                     String var = st.ptr.toString();
                     if (def.containsKey(var)) {
                         def.get(var).add(block.label);
+                    }
+                } else if (inst instanceof callInstNode call&&call.funName.equals("string.copy")) {
+                    assert call.args.size() == 2;
+                    var call_ptr = call.args.getFirst().toString();
+                    if (def.containsKey(call_ptr)) {
+                        def.get(call_ptr).add(block.label);
                     }
                 }
             }
@@ -319,7 +328,22 @@ public class M2r_Fun {
                 }
                 phiStack.get(st.ptr.toString()).set(phiStack.get(st.ptr.toString()).size() - 1, st.value.toString());
                 index.add(i);
-            } else {
+            }
+            else if (inst instanceof callInstNode call && call.funName.equals("string.copy")) {
+                assert call.args.size() == 2;
+                var call_ptr = call.args.getFirst().toString();
+                var call_value = call.args.get(1).toString();
+                if (!phiStack.containsKey(call_ptr)) {
+                    continue;
+                }
+                if (renameMap.containsKey(call_value)) {
+                    call_value = renameMap.get(call_value);
+                }
+                phiStack.get(call_ptr).set(phiStack.get(call_ptr).size() - 1, call_value);
+                index.add(i);
+                inst.rename(renameMap);
+            }
+            else {
                 inst.rename(renameMap);
             }
         }

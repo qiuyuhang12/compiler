@@ -41,7 +41,7 @@ public class Main {
         redirect_output = true;
         redirect_err = true;
 //        show_color = true;
-        Consts.colour=true;
+//        Consts.colour=true;
         if (redirect_output) {
 //        if (true) {
             PrintStream fileOut;

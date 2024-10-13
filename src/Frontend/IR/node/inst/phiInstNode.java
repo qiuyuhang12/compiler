@@ -41,7 +41,7 @@ public class phiInstNode extends instNode {
     }
     
     public boolean add_source_m2r(String value, String label) {
-        assert value.charAt(0) != '@';
+//        assert value.charAt(0) != '@';
         //todo：错误的assert.phi可以源于全局变量。
         if (labels.contains(label)) return false;
         values.add(new IRVar(type.toString(), value, false));
