@@ -20,7 +20,18 @@ public class loadInstNode extends instNode{
         this.ptr = ptr;
         this.type = type;
     }
-
+    public loadInstNode(loadInstNode other){
+        super(other);
+        this.dest = other.dest;
+        this.ptr = other.ptr;
+        this.type = other.type;
+    }
+    
+    @Override
+    public instNode copy(instNode other) {
+        return new loadInstNode(this);
+    }
+    
     @Override
     public String toString() {
         return dest+" = load "+type.toString()+", ptr "+ptr + "\n";

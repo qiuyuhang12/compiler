@@ -14,6 +14,13 @@ public abstract class instNode extends IRNode {
         parent = _parent;
         src = _src;
     }
+    public instNode(instNode other){
+        this.parent = other.parent;
+        this.src = other.src;
+        this.live_out = new HashSet<>(other.live_out);
+        this.lo_after_sp = new HashSet<>(other.lo_after_sp);
+    }
+    public abstract instNode copy(instNode other);
     @Override
     public abstract String toString();
     public String getVal(){

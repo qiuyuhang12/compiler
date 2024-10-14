@@ -27,6 +27,12 @@ public class Spill {
                 do_spill(inst.live_out, inst.lo_after_sp);
             }
         }
+        for (var block : fun.blocks) {
+            do_spill_simple(block.plo_after_sp);
+            for (var inst : block.insts) {
+                do_spill_simple(inst.lo_after_sp);
+            }
+        }
     }
     
     void do_spill(HashSet<String> lo, HashSet<String> lo_af) {
@@ -43,5 +49,8 @@ public class Spill {
             lo_af.removeAll(tmp);
             spill.addAll(tmp);
         }
+    }
+    void do_spill_simple(HashSet<String> lo_af) {
+        lo_af.removeAll(spill);
     }
 }

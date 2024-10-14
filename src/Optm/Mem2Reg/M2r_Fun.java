@@ -66,6 +66,10 @@ public class M2r_Fun {
             color.run();
             fun.tempMap = color.tempMap;
             fun.spill = spill.spill;
+            if (Consts.colourCheck) {
+                ColorChecker colorChecker = new ColorChecker(K, fun, bl, spill.spill);
+                colorChecker.run();
+            }
         }
         critical_edge();
     }

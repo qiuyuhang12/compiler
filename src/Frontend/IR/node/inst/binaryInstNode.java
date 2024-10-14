@@ -63,11 +63,27 @@ public class binaryInstNode extends instNode {
         this.lhs = lhs;
         this.rhs = rhs;
     }
-
+    public binaryInstNode(binaryInstNode other) {
+        super(other);
+        this.op = other.op;
+        this.lhs = other.lhs;
+        this.rhs = other.rhs;
+        this.dest = other.dest;
+    }
     public opEnum op;
     public IREntity lhs, rhs;
     public IRVar dest;
-
+    
+//    @Override
+//    public instNode copy(instNode other) {
+//        return new binaryInstNode(other.src, other.parent, dest, this.op, lhs, rhs);
+//    }
+    
+    @Override
+    public instNode copy(instNode other) {
+        return new binaryInstNode(this);
+    }
+    
     @Override
     public String toString() {
         return dest.toString() + " = " + opToString() +" "+ lhs.typeInfo.toString() +" "+ lhs.toString() + ", " + rhs.toString() + "\n";

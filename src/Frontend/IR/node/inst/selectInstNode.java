@@ -12,7 +12,13 @@ import java.util.HashSet;
 public class selectInstNode extends instNode {
     public IRVar dest;
     public IREntity cond, trueVal, falseVal;
-
+    public selectInstNode(selectInstNode other) {
+        super(other);
+        this.dest = other.dest;
+        this.cond = other.cond;
+        this.trueVal = other.trueVal;
+        this.falseVal = other.falseVal;
+    }
     public selectInstNode(ASTNode expr, IRBlockNode _parent, IRVar dest, IREntity cond, IREntity trueVal, IREntity falseVal) {
         super(expr, _parent);
         assert false;
@@ -22,7 +28,12 @@ public class selectInstNode extends instNode {
         this.trueVal = trueVal;
         this.falseVal = falseVal;
     }
-
+    
+    @Override
+    public instNode copy(instNode other) {
+        return new selectInstNode(this);
+    }
+    
     @Override
     public String toString() {
         assert false;

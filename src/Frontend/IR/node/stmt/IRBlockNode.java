@@ -18,7 +18,7 @@ public class IRBlockNode extends IRNode {
     public ArrayList<instNode> insts = new ArrayList<>();
     public ArrayList<phiInstNode> phis = new ArrayList<>();
 //    public HashSet<String> live_in = new HashSet<>();
-    public HashSet<String> phi_live_out = new HashSet<>();
+    public HashSet<String> phi_live_out = new HashSet<>();//对于第一个block，phi_live_out即为用过的参数
     public HashSet<String> plo_after_sp = new HashSet<>();
 //    public UnionFind<Integer> uf = new UnionFind<>();
 //    public HashMap<Integer,HashSet<String>> var_sets = new HashMap<>();
@@ -122,6 +122,7 @@ public class IRBlockNode extends IRNode {
     }
     @Override
     public String toString() {
+        assert !label.equals("entry") || phis.isEmpty();
         assert insts != null && !insts.isEmpty();
         assert insts.getLast() instanceof brInstNode || insts.getLast() instanceof retInstNode;
         StringBuilder sb = new StringBuilder();

@@ -48,16 +48,21 @@ public class Color {
         for (int i = K - 1; i >= 0; i--) {
             stack.add(i);
         }
-        for (int i = 0; i<fun.parameters.size(); i++) {
-            var tmp = fun.parameters.get(i);
-            assert tmp.name.charAt(0) == '%';
-            if (i<K&&i<8) {
-                tempMap.put(tmp.name, i);
-                inUse.add(i);
-                stack.remove((Integer) i);
-            } else {
-                spill.add(tmp.name);
-            }
+        for (var tmp : fun.blocks.getFirst().plo_after_sp) {
+            assert tmp.charAt(0) == '%';
+//            if (!spill.contains(tmp)) {
+            int c = stack.getLast();
+            tempMap.put(tmp, c);
+            inUse.add(c);
+            stack.remove((Integer) c);
+//            }
+//            if (i<K&&i<8) {
+//                tempMap.put(tmp.name, i);
+//                inUse.add(i);
+//                stack.remove((Integer) i);
+//            } else {
+//                spill.add(tmp.name);
+//            }
         }
         pre_order(fun.blocks.getFirst().label);
     }
@@ -67,7 +72,8 @@ public class Color {
         var B = bl.get(b);
         B.plo_after_sp.removeAll(spill);
         HashSet<String> b_livein_after_spill;
-        if (B.phis.isEmpty()) {
+//        if (B.phis.isEmpty()) {
+        if (B.plo_after_sp.isEmpty()) {
             var tmp = B.insts.getFirst().lo_after_sp;
             tmp.removeAll(spill);
             b_livein_after_spill = new HashSet<>(B.insts.getFirst().lo_after_sp);

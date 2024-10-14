@@ -39,7 +39,14 @@ public class phiInstNode extends instNode {
         this.oriVar = oriVar;
         this.type = new IRType(type);
     }
-    
+    public phiInstNode(phiInstNode other) {
+        super(other);
+        this.dest = other.dest;
+        this.type = other.type;
+        this.oriVar = other.oriVar;
+        this.values = new ArrayList<>(other.values);
+        this.labels = new ArrayList<>(other.labels);
+    }
     public boolean add_source_m2r(String value, String label) {
 //        assert value.charAt(0) != '@';
         //todo：错误的assert.phi可以源于全局变量。
@@ -53,6 +60,11 @@ public class phiInstNode extends instNode {
         if (this.dest != null) return false;
         this.dest = new IRVar(type.toString(), dest, false);
         return true;
+    }
+    
+    @Override
+    public instNode copy(instNode other) {
+        return new phiInstNode(this);
     }
     
     @Override

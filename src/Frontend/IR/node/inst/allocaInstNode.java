@@ -18,9 +18,24 @@ public class allocaInstNode extends instNode{
         this.dest = dest;
         this.type = type;
     }
+    public allocaInstNode(allocaInstNode other){
+        super(other);
+        this.dest = other.dest;
+        this.type = other.type;
+    }
+//    @Override
+//    public instNode copy(instNode other) {
+//        return new allocaInstNode(this);
+//    }
+    
+    @Override
+    public instNode copy(instNode other) {
+        return new allocaInstNode(this);
+    }
+    
     @Override
     public String toString() {
-        assert false;
+//        assert false;
         return dest.toString()+" = alloca "+type.toString() + "\n";
     }
     

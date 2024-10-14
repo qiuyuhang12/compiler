@@ -14,7 +14,14 @@ public class getElementPtrInstNode extends instNode {
     public IRType type;
     public ArrayList<IRType> tys = new ArrayList<>();
     public ArrayList<String> idxs = new ArrayList<>();
-    
+    public getElementPtrInstNode(getElementPtrInstNode other) {
+        super(other);
+        this.dest = other.dest;
+        this.ptr = other.ptr;
+        this.type = other.type;
+        this.tys = new ArrayList<>(other.tys);
+        this.idxs = new ArrayList<>(other.idxs);
+    }
     public getElementPtrInstNode(ASTNode expr, IRBlockNode _parent, IRVar dest, IRVar ptr, IRType type) {
         super(expr, _parent);
         assert !ptr.toString().equals("null");
@@ -43,6 +50,11 @@ public class getElementPtrInstNode extends instNode {
     public void push(IRType ty, String idx) {
         tys.add(ty);
         idxs.add(idx);
+    }
+    
+    @Override
+    public instNode copy(instNode other) {
+        return new getElementPtrInstNode(this);
     }
     
     @Override

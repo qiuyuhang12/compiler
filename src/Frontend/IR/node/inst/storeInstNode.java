@@ -12,7 +12,11 @@ import java.util.HashSet;
 public class storeInstNode extends instNode {
     public IREntity value;
     public IRVar ptr;
-    
+    public storeInstNode(storeInstNode other) {
+        super(other);
+        this.value = other.value;
+        this.ptr = other.ptr;
+    }
     public storeInstNode(ASTNode expr, IRBlockNode _parent, IREntity value, IRVar ptr) {
         super(expr, _parent);
 //        assert value instanceof IRLiteral||value.toString().charAt(0)== '%';
@@ -24,6 +28,11 @@ public class storeInstNode extends instNode {
 //        this.value = new IRVar(ptr.typeInfo.toString(),value,ptr.isGlobal);
 //        this.ptr = ptr;
 //    }
+    
+    @Override
+    public instNode copy(instNode other) {
+        return new storeInstNode(this);
+    }
     
     @Override
     public String toString() {

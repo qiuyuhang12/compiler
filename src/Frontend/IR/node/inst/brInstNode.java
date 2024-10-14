@@ -17,6 +17,15 @@ public class brInstNode extends instNode {
     //br label %dest ; Unconditional branch
     public boolean isCondBr;
     
+    public brInstNode(brInstNode other) {
+        super(other);
+        this.cond = other.cond;
+        this.ifTrue = other.ifTrue;
+        this.ifFalse = other.ifFalse;
+        this.dest = other.dest;
+        this.isCondBr = other.isCondBr;
+    }
+    
     public brInstNode(ASTNode expr, IRBlockNode _parent, IREntity cond, String ifTrue, String ifFalse) {
         super(expr, _parent);
         assert cond.typeInfo.type == IRType.IRTypeEnum.i1;
@@ -32,6 +41,11 @@ public class brInstNode extends instNode {
         assert dest.charAt(0) != '%';
         this.dest = dest;
         isCondBr = false;
+    }
+    
+    @Override
+    public instNode copy(instNode other) {
+        return new brInstNode(this);
     }
     
     @Override

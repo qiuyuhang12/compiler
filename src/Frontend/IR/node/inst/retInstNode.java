@@ -10,10 +10,18 @@ import java.util.HashSet;
 
 public class retInstNode extends instNode {
     public IREntity value;
-    
+    public retInstNode(retInstNode other) {
+        super(other);
+        this.value = other.value;
+    }
     public retInstNode(ASTNode expr, IRBlockNode _parent) {
         super(expr, _parent);
         value = new IRVar();
+    }
+    
+    @Override
+    public instNode copy(instNode other) {
+        return new retInstNode(this);
     }
     
     public retInstNode(ASTNode expr, IRBlockNode _parent, IREntity value) {

@@ -16,7 +16,13 @@ public class callInstNode extends instNode {
     public IRType retType;
     public String funName;
     public ArrayList<IREntity> args = new ArrayList<>();
-    
+    public callInstNode(callInstNode other) {
+        super(other);
+        this.dest = other.dest;
+        this.retType = other.retType;
+        this.funName = other.funName;
+        this.args = new ArrayList<>(other.args);
+    }
     public callInstNode(ASTNode expr, IRBlockNode _parent, IRVar dest, IRType retType, String funName, IREntity... args) {
         super(expr, _parent);
         this.dest = dest;
@@ -49,6 +55,11 @@ public class callInstNode extends instNode {
         this.retType = new IRType(IRType.IRTypeEnum.void_);
         this.funName = funName;
         this.args = args;
+    }
+    
+    @Override
+    public instNode copy(instNode other) {
+        return new callInstNode(this);
     }
     
     @Override

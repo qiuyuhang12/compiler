@@ -215,7 +215,8 @@ public class IRBuilder implements ASTVisitor {
         assert currentBlock == null;
         currentBlock = new IRBlockNode(null, currentFunDef, "entry");
         if (MemberGets != null) for (instNode inst : MemberGets) {
-            currentBlock.push(inst);
+            var tmp = inst.copy(inst);
+            currentBlock.push(tmp);
         }
         //处理参数
         if (retStatus.equals(status.inClass)) {

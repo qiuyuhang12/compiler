@@ -53,6 +53,11 @@ public class icmpInstNode extends instNode {
     }
     
     @Override
+    public instNode copy(instNode other) {
+        return new icmpInstNode(this);
+    }
+    
+    @Override
     public String toString() {
         return dest.toString() + " = icmp " + op.toString() + " " + lhs.typeInfo.toString() + " " + lhs.toString() + ", " + rhs.toString() + "\n";
     }
@@ -77,7 +82,13 @@ public class icmpInstNode extends instNode {
     public String getDef() {
         return dest.name;
     }
-    
+    public icmpInstNode(icmpInstNode other) {
+        super(other);
+        this.dest = other.dest;
+        this.lhs = other.lhs;
+        this.rhs = other.rhs;
+        this.op = other.op;
+    }
     
     @Override
     public HashSet<String> getUses() {

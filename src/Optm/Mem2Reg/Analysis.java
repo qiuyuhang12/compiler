@@ -216,6 +216,9 @@ public class Analysis {
                 for (var P : in.get(B)) {
                     scan_block(P, x);
                 }
+                if (B.equals(fun.blocks.getFirst().label)) {
+                    bl.phi_live_out.add(x);
+                }
             } else {
                 scan_live_out_phi(B, x);
             }
@@ -248,6 +251,7 @@ public class Analysis {
         var bl = this.bl.get(B);
         var D = bl.get_phi_def();
         if (B.equals(fun.blocks.getFirst().label)) {
+            assert false;
             D.addAll(fun.get_para_def());
         }
         bl.phi_live_out.addAll(D);
