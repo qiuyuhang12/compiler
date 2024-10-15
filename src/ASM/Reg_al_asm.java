@@ -88,7 +88,7 @@ public class Reg_al_asm {
         @Override
         public int hashCode() {
             int result = a.hashCode();
-            result = 31 * result + b.hashCode();
+            result = 31 * result + (b != null ? b.hashCode() : 0);
             result = 31 * result + (c != null ? c.hashCode() : 0);
             return result;
         }
@@ -390,8 +390,20 @@ public class Reg_al_asm {
         } else if (it instanceof icmpInstNode is) {
 //            ldVar(is.lhs, "x28", t);
 //            ldVar(is.rhs, "x29", t);
-            var lhs = src(is.lhs, t, mem_reg1, false);
-            var rhs = src(is.rhs, t, mem_reg2, false);
+//            var lhs = src(is.lhs, t, mem_reg1, false);
+//            var rhs = src(is.rhs, t, mem_reg2, false);
+            Pair<var_type, String> lhs = null, rhs = null;
+            switch (is.op) {
+                case eq, ne, sgt, slt -> {
+                    lhs = src(is.lhs, t, mem_reg1, false);
+                    rhs = src(is.rhs, t, mem_reg2, false);
+                }
+                case sge, sle -> {
+                    lhs = src(is.lhs, t, mem_reg1, true);
+                    rhs = src(is.rhs, t, mem_reg2, true);
+                }
+            }
+            assert lhs != null && rhs != null;
             Arith arith = new Arith("sub", "x30", lhs.b, rhs.b);
             t.push(arith);
             switch (is.op) {
@@ -622,34 +634,47 @@ public class Reg_al_asm {
     }
     
     void permute(HashMap<MvEntity, MvEntity> new2old, text_new t, text_new.permute_type type_) {
-        HashMap<MvEntity, MvEntity> old2new = new HashMap<>();
+        HashMap<MvEntity, ArrayList<MvEntity>> old2new = new HashMap<>();
         for (var entry : new2old.entrySet()) {
-            if (!entry.getKey().equals(entry.getValue()))
-                old2new.put(entry.getValue(), entry.getKey());
+            old2new.computeIfAbsent(entry.getValue(), _ -> new ArrayList<>()).add(entry.getKey());
+//            if (!entry.getKey().equals(entry.getValue()))
+//                old2new.put(entry.getValue(), entry.getKey());
         }
         boolean flag = true;
         while (flag) {
             flag = false;
-            HashSet<MvEntity> to_remove = new HashSet<>();
+            HashSet<Pair<MvEntity, MvEntity>> to_remove = new HashSet<>();
             for (var entry : old2new.entrySet()) {
                 var old = entry.getKey();
-                var new_ = entry.getValue();
-                var key_set = old2new.keySet();
-                boolean cont = false;
-                for (var key_ : key_set) {
-                    if (key_.equals(new_)) {
-                        cont = true;
-                        break;
+                var new___ = entry.getValue();
+//                int i=-1;
+                for (var new_ : new___) {
+//                    i++;
+                    var key_set = old2new.keySet();
+                    boolean cont = false;
+                    for (var key_ : key_set) {
+                        if (key_.equals(new_)) {
+                            cont = true;
+                            break;
+                        }
                     }
-                }
-                if (!cont) {
-                    mv(old, new_, t, type_);
-                    to_remove.add(old);
-                    flag = true;
+                    if (!cont) {
+                        mv(old, new_, t, type_);
+                        to_remove.add(new Pair<>(old, new_));
+                        flag = true;
+                    }
                 }
             }
             for (var entry : to_remove) {
-                old2new.remove(entry);
+                var old = entry.a;
+                var new_ = entry.b;
+                var old_node = old2new.get(old);
+                old_node.remove(new_);
+//                old2new.get(entry.a).remove((int)entry.b);
+                if (old2new.get(entry.a).isEmpty()) {
+                    old2new.remove(entry.a);
+                }
+//                old2new.remove(entry);
             }
         }
         while (!old2new.isEmpty()) {
@@ -661,7 +686,9 @@ public class Reg_al_asm {
                 MvEntity tmp = null;
                 for (var entry : old2new.entrySet()) {
                     if (entry.getKey().equals(last)) {
-                        tmp = entry.getValue();
+                        var tmp_ = entry.getValue();
+                        assert tmp_.size() == 1;
+                        tmp = tmp_.getFirst();
                     }
                 }
 //                var tmp = old2new.get(last);
