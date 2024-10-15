@@ -58,7 +58,11 @@ public class Reg_al_asm {
             this.b = b;
         }
         
-        public boolean equals(MvEntity o) {
+        @Override
+        public boolean equals(Object o_) {
+            if (this == o_) return true;
+            if (o_ == null || getClass() != o_.getClass()) return false;
+            MvEntity o = (MvEntity) o_;
             boolean flag;
             if (c == null) {
                 flag = (o.c == null);
@@ -80,6 +84,14 @@ public class Reg_al_asm {
 //                return false;
 //            }
         }
+        
+//        @Override
+//        public int hashCode() {
+//            int result = a.hashCode();
+//            result = 31 * result + b;
+//            result = 31 * result + (c != null ? c.hashCode() : 0);
+//            return result;
+//        }
     }
     
     int get_reg_int(String reg) {
@@ -89,7 +101,6 @@ public class Reg_al_asm {
     enum type {
         reg, mem, num, glob
     }
-    
     
     
     public Reg_al_asm(IRProgramNode ir, int k) {
@@ -335,22 +346,22 @@ public class Reg_al_asm {
             Sw sw = new Sw("ra", "sp", regOffset.get("ra"));
             t.push(sw);
             inas(t);
-//            HashMap<MvEntity, MvEntity> new2old = new HashMap<>();
+            HashMap<MvEntity, MvEntity> new2old = new HashMap<>();
             for (int i = 0; i < is.args.size(); i++) {
-//                var src = src(is.args.get(i));
+                var src = src(is.args.get(i));
                 if (i < 8) {
-//                    new2old.put(new MvEntity(type.reg, i + 10), src);
-                    src(is.args.get(i), t, "a" + i, true);
+                    new2old.put(new MvEntity(type.reg, i + 10), src);
+//                    src(is.args.get(i), t, "a" + i, true);
                 } else {
-//                    int d = -(is.args.size() - i) * 4;
-//                    new2old.put(new MvEntity(type.mem, d), src);
-                    var src = src(is.args.get(i), t, mem_reg1, false);
                     int d = -(is.args.size() - i) * 4;
-                    sw = new Sw(src.b, "sp", d);
-                    t.push(sw);
+                    new2old.put(new MvEntity(type.mem, d), src);
+//                    var src = src(is.args.get(i), t, mem_reg1, false);
+//                    int d = -(is.args.size() - i) * 4;
+//                    sw = new Sw(src.b, "sp", d);
+//                    t.push(sw);
                 }
             }
-//            permute(new2old, t, text_new.permute_type.call);
+            permute(new2old, t, text_new.permute_type.call);
             t.push(new Call(is.funName));
             int dest_reg = -1;
             if (is.dest != null) {
@@ -609,6 +620,7 @@ public class Reg_al_asm {
             var2regOrMem.put(entry.getKey(), new Pair<>(type.reg, reg));
         }
     }
+    
     void permute(HashMap<MvEntity, MvEntity> new2old, text_new t, text_new.permute_type type_) {
         HashMap<MvEntity, MvEntity> old2new = new HashMap<>();
         for (var entry : new2old.entrySet()) {
@@ -623,10 +635,10 @@ public class Reg_al_asm {
                 var old = entry.getKey();
                 var new_ = entry.getValue();
                 var key_set = old2new.keySet();
-                boolean cont=false;
-                for (var key_:key_set){
-                    if (key_.equals(new_)){
-                        cont=true;
+                boolean cont = false;
+                for (var key_ : key_set) {
+                    if (key_.equals(new_)) {
+                        cont = true;
                         break;
                     }
                 }
@@ -645,7 +657,14 @@ public class Reg_al_asm {
             ArrayList<MvEntity> queue = new ArrayList<>();
             queue.add(old);
             while (true) {
-                var tmp = old2new.get(queue.getLast());
+                var last = queue.getLast();
+                MvEntity tmp = null;
+                for (var entry : old2new.entrySet()) {
+                    if (entry.getKey().equals(last)) {
+                        tmp = entry.getValue();
+                    }
+                }
+//                var tmp = old2new.get(last);
                 assert tmp != null;
                 if (queue.contains(tmp)) {
                     assert queue.getFirst().equals(tmp);
@@ -664,8 +683,8 @@ public class Reg_al_asm {
     
     void mvs(ArrayList<MvEntity> queue, text_new t, text_new.permute_type type_) {
         for (int i = queue.size() - 1; i > 0; i--) {
-            var old = queue.get(i);
-            var new_ = queue.get(i + 1);
+            var old = queue.get(i - 1);
+            var new_ = queue.get(i);
             mv(old, new_, t, type_);
         }
     }
@@ -686,9 +705,9 @@ public class Reg_al_asm {
             t.push_phi(new Li(mem_reg1, old.b), type_);
             t.push_phi(new Sw(mem_reg1, "sp", new_.b), type_);
         } else if (old.a == type.glob && new_.a == type.reg) {
-            t.push_phi(new Lwg("x" + new_.b, old.c), type_);
+            t.push_phi(new La("x" + new_.b, old.c), type_);
         } else if (old.a == type.glob && new_.a == type.mem) {
-            t.push_phi(new Lwg(mem_reg1, old.c), type_);
+            t.push_phi(new La(mem_reg1, old.c), type_);
             t.push_phi(new Sw(mem_reg1, "sp", new_.b), type_);
         } else {
             assert false;
