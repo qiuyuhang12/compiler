@@ -33,16 +33,16 @@ public class Main {
 //todo::内建函数
     
     public static void main(String[] args) throws Exception {
-        int K=20;
+        int K = 20;
         boolean asm = false, new_asm = false, redirect_input = false, redirect_output = false, redirect_err = false, show_color = false;
-//        asm=true;
-//        new_asm=true;
+        asm = true;
+        new_asm = true;
         redirect_input = true;
         redirect_output = true;
 //        redirect_err = true;
 //        show_color = true;
-        Consts.colour=true;
-        Consts.colourCheck=true;
+        Consts.colour = true;
+        Consts.colourCheck = true;
         if (redirect_output) {
 //        if (true) {
             PrintStream fileOut;
@@ -93,17 +93,18 @@ public class Main {
             ib.irProgramNode.initCall();
             ib.irProgramNode.clear();
             Mem2Reg mem2Reg;
-            if (!asm||new_asm) {
+            if (!asm || new_asm) {
 //            String s = ib.irProgramNode.toString();
-                mem2Reg = new Mem2Reg(ib.irProgramNode, ib.renamer,K);
+                mem2Reg = new Mem2Reg(ib.irProgramNode, ib.renamer, K);
                 mem2Reg.run();
                 String s1 = ib.irProgramNode.toString();
 //            System.out.println(s);
-                System.out.println(s1);
+                if (!new_asm)
+                    System.out.println(s1);
                 if (show_color) {
                     System.out.println();
                     System.out.println();
-                    System.out.println("K:"+K);
+                    System.out.println("K:" + K);
                     for (var fun : ib.irProgramNode.initFuns) {
                         System.out.println("fun:\n" + fun.name);
                         System.out.println("colour:\n" + fun.tempMap);
@@ -121,8 +122,8 @@ public class Main {
                     asmBuilder ab = new asmBuilder(ib.irProgramNode);
                     ab.build();
                     ab.print();
-                }else {
-                    Reg_al_asm ab_new = new Reg_al_asm(ib.irProgramNode,K);
+                } else {
+                    Reg_al_asm ab_new = new Reg_al_asm(ib.irProgramNode, K);
                     ab_new.build();
                     ab_new.print();
                 }
