@@ -40,7 +40,7 @@ public class Reg_al_asm {
     
     class MvEntity {
         public type a;
-        public int b;
+        public Integer b;
         public String c;
         
         public MvEntity(Pair<type, Integer> a) {
@@ -85,13 +85,13 @@ public class Reg_al_asm {
 //            }
         }
         
-//        @Override
-//        public int hashCode() {
-//            int result = a.hashCode();
-//            result = 31 * result + b;
-//            result = 31 * result + (c != null ? c.hashCode() : 0);
-//            return result;
-//        }
+        @Override
+        public int hashCode() {
+            int result = a.hashCode();
+            result = 31 * result + b.hashCode();
+            result = 31 * result + (c != null ? c.hashCode() : 0);
+            return result;
+        }
     }
     
     int get_reg_int(String reg) {
