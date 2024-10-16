@@ -599,7 +599,7 @@ public class Reg_al_asm {
             buildFun(it);
         }
     }
-    
+    int start = 5;
     void color2reg(IRFunDef it) {//reg
         var spill = it.spill;
         var color = it.tempMap;
@@ -617,7 +617,7 @@ public class Reg_al_asm {
         }
         for (int i = 0; i < K; i++) {
             if (color.containsValue(i) && !alled_num.contains(i)) {
-                for (int j = 3; j < 3 + K; j++) {
+                for (int j = start; j < start + K; j++) {
                     if (!used_reg.contains(j)) {
                         num2reg.put(i, j);
                         used_reg.add(j);

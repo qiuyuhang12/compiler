@@ -88,6 +88,9 @@ public class Color {
         if (!b_livein_after_spill.isEmpty())
             for (var var : b_livein_after_spill) {
                 assert tempMap.get(var) != null;
+                Integer tmp = tempMap.get(var);
+                stack.remove(tmp);
+//                assert !stack.contains(tempMap.get(var));
                 inUse.add(tempMap.get(var));
             }
         for (int i = 0; i < K; i++) {
@@ -95,7 +98,9 @@ public class Color {
                 stack.add(i);
             }
         }
-        
+//        for (var var:b_livein_after_spill){
+//            assert !stack.contains(tempMap.get(var));
+//        }
         //TODO:PHI语句漏了！
 //        var uses_ = B.get_phi_use();
 //        if (uses_ != null)
