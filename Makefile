@@ -1,6 +1,7 @@
+
 .PHONY: build
 build:
-    find src -name ".antlr" -exec rm -r {} \; && find src -name '*.java' | xargs javac --enable-preview -d bin -cp /ulib/antlr-4.13.2-complete.jar
+	find src -name ".antlr" -exec rm -r {} \; && find src -name '*.java' | xargs javac -d bin -cp /ulib/antlr-4.13.2-complete.jar
 
 # 	find src -name ".antlr" -exec rm -r {} \; && find src -name '*.java' | xargs javac -d bin -cp /ulib/antlr-4.13.2-complete.jar
 

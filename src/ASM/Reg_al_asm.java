@@ -285,7 +285,7 @@ public class Reg_al_asm {
                 } else {
                     old_ = new MvEntity(type.num, old.getVal());
                 }
-                bl2permute.computeIfAbsent(label, _ -> new HashMap<>()).put(new_, old_);
+                bl2permute.computeIfAbsent(label, aa -> new HashMap<>()).put(new_, old_);
             }
         }
         for (var entry : bl2permute.entrySet()) {
@@ -631,7 +631,7 @@ public class Reg_al_asm {
     void permute(HashMap<MvEntity, MvEntity> new2old, text_new t, text_new.permute_type type_) {
         HashMap<MvEntity, ArrayList<MvEntity>> old2new = new HashMap<>();
         for (var entry : new2old.entrySet()) {
-            old2new.computeIfAbsent(entry.getValue(), _ -> new ArrayList<>()).add(entry.getKey());
+            old2new.computeIfAbsent(entry.getValue(), aa -> new ArrayList<>()).add(entry.getKey());
 //            if (!entry.getKey().equals(entry.getValue()))
 //                old2new.put(entry.getValue(), entry.getKey());
         }
