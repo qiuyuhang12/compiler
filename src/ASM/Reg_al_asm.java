@@ -136,16 +136,34 @@ public class Reg_al_asm {
         asm.pushRodata(r);
     }
     
-    private void inas(text_new t) {
-        for (Integer i : used_reg) {
-            t.push(new Sw("x" + i, "sp", regOffset.get("x" + i)));
+    private void inas(text_new t, HashSet<String> lo_after_sp) {
+//        for (Integer i : used_reg) {
+//            t.push(new Sw("x" + i, "sp", regOffset.get("x" + i)));
+//        }
+        for (String s : lo_after_sp) {
+            var pos = var2regOrMem.get(s);
+            assert pos != null;
+            if (pos.a == type.reg) {
+                t.push(new Sw("x" + pos.b, "sp", regOffset.get("x" + pos.b)));
+            }
         }
     }
+
+//    private void inas_builtin(text_new t) {
+//        t.push(new Sw("x" + 10, "sp", regOffset.get("x" + 10)));
+//        t.push(new Sw("x" + 11, "sp", regOffset.get("x" + 11)));
+//    }
     
-    private void outas(text_new t, int dest_reg) {
-        for (Integer i : used_reg) {
-            if (i != dest_reg)
-                t.push(new Lw("x" + i, "sp", regOffset.get("x" + i)));
+    private void outas(text_new t, int dest_reg, HashSet<String> lo_after_sp) {
+//        for (Integer i : used_reg) {
+//            if (i != dest_reg) t.push(new Lw("x" + i, "sp", regOffset.get("x" + i)));
+//        }
+        for (String s : lo_after_sp) {
+            var pos = var2regOrMem.get(s);
+            assert pos != null;
+            if (pos.a == type.reg) {
+                if (pos.b != dest_reg) t.push(new Lw("x" + pos.b, "sp", regOffset.get("x" + pos.b)));
+            }
         }
     }
     
@@ -178,7 +196,7 @@ public class Reg_al_asm {
 //                    return new Pair<>(var_type.num, "0");
                 }
                 if (!(var.name.charAt(0) == '%')) {
-                    if(var.name.equals("这不合理")){
+                    if (var.name.equals("这不合理")) {
                         System.exit(0);
                     }
                     int val = Integer.parseInt(var.name);
@@ -307,6 +325,19 @@ public class Reg_al_asm {
         }
     }
     
+    boolean is_builtin_fun(String funName) {
+        if (funName.equals("print") || funName.equals("println") || funName.equals("getString") || funName.equals("getInt") || funName.equals("toString")) {
+            return true;
+        }
+        if (funName.equals("malloc") || funName.equals("printInt") || funName.equals("printlnInt") || funName.equals("bool_toString") || funName.equals("alloca_helper") || funName.equals("array.size") || funName.equals("string.length") || funName.equals("string.parseInt") || funName.equals("string.compare") || funName.equals("string.concat") || funName.equals("string.copy") || funName.equals("string.ord")) {
+            return true;
+        }
+//        if (funName.equals("string.substring")|| funName.equals("array.alloca_inside") || funName.equals("array.alloca")){
+//            return false;
+//        }
+        return false;
+    }
+    
     private void buildInst(instNode it, text_new t) {
         if (it instanceof allocaInstNode is) {
             assert false;
@@ -348,7 +379,7 @@ public class Reg_al_asm {
             //done:传参：a0-a7，ret：返回值：a0,恢复ra
             Sw sw = new Sw("ra", "sp", regOffset.get("ra"));
             t.push(sw);
-            inas(t);
+            inas(t, is.lo_after_sp);
             HashMap<MvEntity, MvEntity> new2old = new HashMap<>();
             for (int i = 0; i < is.args.size(); i++) {
                 var src = src(is.args.get(i));
@@ -379,7 +410,7 @@ public class Reg_al_asm {
             }
             Lw lw = new Lw("ra", "sp", regOffset.get("ra"));
             t.push(lw);
-            outas(t, dest_reg);
+            outas(t, dest_reg, is.lo_after_sp);
         } else if (it instanceof getElementPtrInstNode is) {//一般而言，第一个变量是堆地址
             System.err.println("我默认长度全是4,即都是i32");
             src(is.ptr, t, mem_reg1, true);
@@ -594,7 +625,9 @@ public class Reg_al_asm {
             buildFun(it);
         }
     }
+    
     int start = 5;
+    
     void color2reg(IRFunDef it) {//reg
         var spill = it.spill;
         var color = it.tempMap;
@@ -694,6 +727,7 @@ public class Reg_al_asm {
                 }
                 queue.add(tmp);
             }
+            assert queue.size() >= 2;
             mv(queue.getLast(), new MvEntity(type.reg, get_reg_int(mem_reg2)), t, type_);
             mvs(queue, t, type_);
             mv(new MvEntity(type.reg, get_reg_int(mem_reg2)), queue.getFirst(), t, type_);

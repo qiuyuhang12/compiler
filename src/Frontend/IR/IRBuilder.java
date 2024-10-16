@@ -210,7 +210,8 @@ public class IRBuilder implements ASTVisitor {
         currentStatus = status.inFun;
         renamer.in();
         
-        currentFunDef = new IRFunDef(getIRtype(it.typeNd.type), "@" + renamer.rename(it.name));
+//        currentFunDef = new IRFunDef(getIRtype(it.typeNd.type), "@" + renamer.rename(it.name));
+        currentFunDef = new IRFunDef(getIRtype(it.typeNd.type), "@" + it.name);
         irProgramNode.pushFunDef(currentFunDef);
         assert currentBlock == null;
         currentBlock = new IRBlockNode(null, currentFunDef, "entry");
