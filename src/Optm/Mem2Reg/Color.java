@@ -78,9 +78,9 @@ public class Color {
             tmp.removeAll(spill);
             b_livein_after_spill = new HashSet<>(B.insts.getFirst().lo_after_sp);
             b_livein_after_spill.remove(B.insts.getFirst().getDef());
-//            var tmp1 = B.insts.getFirst().getUses();
-//            if (tmp1 != null)
-//                b_livein_after_spill.addAll(tmp1);
+            var tmp1 = B.insts.getFirst().getUses();
+            if (tmp1 != null)
+                b_livein_after_spill.addAll(tmp1);
         } else {
             b_livein_after_spill = new HashSet<>(B.plo_after_sp);
             b_livein_after_spill.removeAll(B.get_phi_def());
@@ -91,9 +91,7 @@ public class Color {
                 inUse.add(tempMap.get(var));
             }
         for (int i = 0; i < K; i++) {
-            if (!inUse.contains(i)
-//                    && !stack.contains(i)
-            ) {
+            if (!inUse.contains(i) && !stack.contains(i)) {
                 stack.add(i);
             }
         }
