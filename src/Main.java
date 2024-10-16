@@ -33,7 +33,7 @@ public class Main {
 //todo::内建函数
     
     public static void main(String[] args) throws Exception {
-        int K = 20;
+        int K = 24;
         boolean asm = false, new_asm = false, redirect_input = false, redirect_output = false, redirect_err = false, show_color = false, oj = false;
         asm = true;
         new_asm = true;

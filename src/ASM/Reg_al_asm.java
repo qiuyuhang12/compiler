@@ -626,7 +626,7 @@ public class Reg_al_asm {
         }
     }
     
-    int start = 5;
+    int start = 3;
     
     void color2reg(IRFunDef it) {//reg
         var spill = it.spill;
