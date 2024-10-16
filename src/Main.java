@@ -34,15 +34,16 @@ public class Main {
     
     public static void main(String[] args) throws Exception {
         int K = 20;
-        boolean asm = false, new_asm = false, redirect_input = false, redirect_output = false, redirect_err = false, show_color = false;
+        boolean asm = false, new_asm = false, redirect_input = false, redirect_output = false, redirect_err = false, show_color = false, oj = false;
         asm = true;
         new_asm = true;
-        redirect_input = true;
-        redirect_output = true;
-//        redirect_err = true;
+//        redirect_input = true;
+//        redirect_output = true;
+        redirect_err = true;
 //        show_color = true;
         Consts.colour = true;
         Consts.colourCheck = true;
+        oj = true;
         if (redirect_output) {
 //        if (true) {
             PrintStream fileOut;
@@ -127,17 +128,19 @@ public class Main {
                     ab_new.build();
                     ab_new.print();
                 }
-//                //输出builtin.s的文件内容
-//                try (FileReader reader = new FileReader("builtin.s")) {
-//                    System.out.print("\n\n\n\n\n\n\n");
-//                    char[] cbuf = new char[1024];
-//                    int hasRead = 0;
-//                    while ((hasRead = reader.read(cbuf)) > 0) {
-//                        System.out.print(new String(cbuf, 0, hasRead));
-//                    }
-//                } catch (IOException e) {
-//                    assert false;
-//                }
+                if (oj) {
+                    //输出builtin.s的文件内容
+                    try (FileReader reader = new FileReader("builtin.s")) {
+                        System.out.print("\n\n\n\n\n\n\n");
+                        char[] cbuf = new char[1024];
+                        int hasRead = 0;
+                        while ((hasRead = reader.read(cbuf)) > 0) {
+                            System.out.print(new String(cbuf, 0, hasRead));
+                        }
+                    } catch (IOException e) {
+                        assert false;
+                    }
+                }
             }
 //            try (FileReader reader = new FileReader("builtin.s")) {
 //                System.out.print("\n\n\n\n\n\n\n");

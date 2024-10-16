@@ -664,8 +664,8 @@ public class Reg_al_asm {
     void permute(HashMap<MvEntity, MvEntity> new2old, text_new t, text_new.permute_type type_) {
         HashMap<MvEntity, ArrayList<MvEntity>> old2new = new HashMap<>();
         for (var entry : new2old.entrySet()) {
-            old2new.computeIfAbsent(entry.getValue(), aa -> new ArrayList<>()).add(entry.getKey());
-//            if (!entry.getKey().equals(entry.getValue()))
+            if (!entry.getKey().equals(entry.getValue()))
+                old2new.computeIfAbsent(entry.getValue(), aa -> new ArrayList<>()).add(entry.getKey());
 //                old2new.put(entry.getValue(), entry.getKey());
         }
         boolean flag = true;
@@ -705,6 +705,7 @@ public class Reg_al_asm {
 //                old2new.remove(entry);
             }
         }
+        assert old2new.size() != 1;
         while (!old2new.isEmpty()) {
             var old = old2new.keySet().iterator().next();
             ArrayList<MvEntity> queue = new ArrayList<>();
