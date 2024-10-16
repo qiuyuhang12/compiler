@@ -548,15 +548,7 @@ public class Reg_al_asm {
                 collectVar(it);//spill
                 paraHandle(it);//old_para_pos
                 para_permute(t);//permute para
-                if (-stackSize <= 2047 && -stackSize >= -2048) {
-                    Arithimm arithimm = new Arithimm("addi", "sp", "sp", -stackSize);
-                    t.push(arithimm);
-                } else {
-                    Li li = new Li(spare_reg, -stackSize);
-                    t.push(li);
-                    Arith arith = new Arith("add", "sp", "x28", "sp");
-                    t.push(arith);
-                }
+                
                 storeReg(t);
             }
             
@@ -769,6 +761,15 @@ public class Reg_al_asm {
             if (!new__.equals(old)) {
                 new2old.put(new_, new MvEntity(old));
             }
+        }
+        if (-stackSize <= 2047 && -stackSize >= -2048) {
+            Arithimm arithimm = new Arithimm("addi", "sp", "sp", -stackSize);
+            t.push(arithimm);
+        } else {
+            Li li = new Li(spare_reg, -stackSize);
+            t.push(li);
+            Arith arith = new Arith("add", "sp", "x28", "sp");
+            t.push(arith);
         }
         permute(new2old, t, text_new.permute_type.para);
     }

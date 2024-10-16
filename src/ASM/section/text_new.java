@@ -14,9 +14,11 @@ public class text_new extends section {
         super(label);
         this.spare_reg = spare_reg;
     }
+    
     public enum permute_type {
         phi, para, call
     }
+    
     public void push(Inst inst) {
         if (inst instanceof Sw sw) {
             if (sw.imm <= 2047 && sw.imm >= -2048)
@@ -88,14 +90,22 @@ public class text_new extends section {
         sb.append("\t.section .text\n");
         sb.append("\t.globl ").append(label).append("\n");
         sb.append(label).append(":\n");
-        for (Inst inst : para_permute) {
-            sb.append("\t").append(inst.toString()).append("\n");
-        }
-        if (insts_phi.isEmpty())
-            for (Inst inst : insts) {
+        boolean flag = false;
+        if (!para_permute.isEmpty()) {
+            flag = true;
+            sb.append("\t").append(insts.getFirst().toString()).append("\n");
+            for (Inst inst : para_permute) {
                 sb.append("\t").append(inst.toString()).append("\n");
             }
-        else {
+        }
+        if (insts_phi.isEmpty()) {
+            int cnt = -1;
+            for (Inst inst : insts) {
+                cnt++;
+                if (cnt == 0 && flag) continue;
+                sb.append("\t").append(inst.toString()).append("\n");
+            }
+        } else {
             int j_count = 0;
             for (Inst inst : insts) {
                 if (inst instanceof Jump) {
@@ -106,13 +116,13 @@ public class text_new extends section {
             int ttt = insts.size() - 1;
             while (insts.get(ttt) instanceof Comment) ttt--;
             assert insts.get(ttt) instanceof Jump;
-            for (int i = 0; i < insts.size() - 1; i++) {
+            for (int i = flag ? 1 : 0; i < ttt; i++) {
                 sb.append("\t").append(insts.get(i).toString()).append("\n");
             }
             for (Inst inst : insts_phi) {
                 sb.append("\t").append(inst.toString()).append("\n");
             }
-            sb.append("\t").append(insts.getLast().toString()).append("\n");
+            sb.append("\t").append(insts.get(ttt).toString()).append("\n");
         }
         return sb.toString();
     }

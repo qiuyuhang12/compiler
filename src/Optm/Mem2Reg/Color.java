@@ -79,8 +79,10 @@ public class Color {
             b_livein_after_spill = new HashSet<>(B.insts.getFirst().lo_after_sp);
             b_livein_after_spill.remove(B.insts.getFirst().getDef());
             var tmp1 = B.insts.getFirst().getUses();
-            if (tmp1 != null)
+            if (tmp1 != null) {
+                tmp1.removeAll(spill);
                 b_livein_after_spill.addAll(tmp1);
+            }
         } else {
             b_livein_after_spill = new HashSet<>(B.plo_after_sp);
             b_livein_after_spill.removeAll(B.get_phi_def());
@@ -125,6 +127,18 @@ public class Color {
                 stack.removeLast();
             }
         
+        if (y_ != null) {
+            HashSet<Integer> inUse__ = new HashSet<>();
+            for (var var : y_) {
+                if (spill.contains(var)) {
+                    assert tempMap.get(var) == null;
+                    continue;
+                }
+                int tmp = tempMap.get(var);
+                assert !inUse__.contains(tmp);
+                inUse__.add(tmp);
+            }
+        }
         
         for (var s : B.insts) {
             s.lo_after_sp.removeAll(spill);
@@ -145,6 +159,16 @@ public class Color {
             tempMap.put(y, c);
             inUse.add(c);
             stack.removeLast();
+            HashSet<Integer> inUse_ = new HashSet<>();
+            for (var var : s.live_out) {
+                if (spill.contains(var)) {
+                    assert tempMap.get(var) == null;
+                    continue;
+                }
+                int tmp = tempMap.get(var);
+                assert !inUse_.contains(tmp);
+                inUse_.add(tmp);
+            }
         }
         if (dt.containsKey(b))
             for (var c : dt.get(b)) {
