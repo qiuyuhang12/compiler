@@ -474,9 +474,9 @@ public class Reg_al_asm {
 //                ldVar(is.value, "a0", t);
                 src(is.value, t, "x10", true);
             }
-            for (int i = 27; i <= 31; i++) {
-                t.push(new Lw("x" + i, "sp", regOffset.get("x" + i)));
-            }
+//            for (int i = 27; i <= 31; i++) {
+//                t.push(new Lw("x" + i, "sp", regOffset.get("x" + i)));
+//            }
 //            Lw lw0 = new Lw("x28", "sp", regOffset.get("x28"));
 //            Lw lw1 = new Lw("x29", "sp", regOffset.get("x29"));
 //            Lw lw2 = new Lw("x30", "sp", regOffset.get("x30"));
@@ -514,9 +514,9 @@ public class Reg_al_asm {
         for (var reg : used_reg) {
             regOffset.put("x" + reg, (++offset) * 4);
         }
-        for (int i = 27; i <= 31; i++) {
-            regOffset.put("x" + i, (++offset) * 4);
-        }
+//        for (int i = 27; i <= 31; i++) {
+//            regOffset.put("x" + i, (++offset) * 4);
+//        }
         stackSize = (offset + it.spill.size()) * 4 + 4;
 //int d = stackSize - (it.parameters.size() - i) * 4;
 //varOffset.put(para, d);
@@ -541,12 +541,12 @@ public class Reg_al_asm {
     }
     
     private void storeReg(text_new t) {
-        Sw sw = new Sw("x28", "sp", regOffset.get("x28"));
-        t.push(sw);
-        sw = new Sw("x29", "sp", regOffset.get("x29"));
-        t.push(sw);
-        sw = new Sw("x30", "sp", regOffset.get("x30"));
-        t.push(sw);
+//        Sw sw = new Sw("x28", "sp", regOffset.get("x28"));
+//        t.push(sw);
+//        sw = new Sw("x29", "sp", regOffset.get("x29"));
+//        t.push(sw);
+//        sw = new Sw("x30", "sp", regOffset.get("x30"));
+//        t.push(sw);
 //        sw = new Sw("ra", "sp", regOffset.get("ra"));
 //        t.push(sw);
 //        sw = new Sw("a0", "sp", regOffset.get("a0"));
