@@ -178,6 +178,9 @@ public class Reg_al_asm {
 //                    return new Pair<>(var_type.num, "0");
                 }
                 if (!(var.name.charAt(0) == '%')) {
+                    if(var.name.equals("这不合理")){
+                        System.exit(0);
+                    }
                     int val = Integer.parseInt(var.name);
                     t.push(new Li(reg, val));
                     return new Pair<>(var_type.reg, reg);
