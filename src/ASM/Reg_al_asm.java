@@ -126,6 +126,7 @@ public class Reg_al_asm {
         }
     }
     
+    
     private void buildGlobalVar(IRGlobalVarDef it) {//不去掉@，加入.data
         data d = new data(it.name, literalToInt(it.value));
         asm.pushData(d);
@@ -338,10 +339,438 @@ public class Reg_al_asm {
         return false;
     }
     
+    int literalToInt(String it) {
+        assert it.charAt(0) != '@';
+        assert it.charAt(0) != '%';
+        if (it.equals("null")) {
+            return 0;
+        }
+        int val = Integer.parseInt(it);
+        assert it.equals(val + "");
+        return val;
+    }
+    
+    static <T> void swap(T a, T b) {
+        T c = a;
+        a = b;
+        b = c;
+    }
+    
+    int cnt(int x) {
+        int cnt = 0;
+        while ((x & 1) == 0) {
+            x >>= 1;
+            cnt++;
+        }
+        return cnt;
+    }
+    
+    boolean buildBin(binaryInstNode is, text_new t) {
+        assert is.lhs.toString().charAt(0) != '@';
+        assert is.rhs.toString().charAt(0) != '@';
+        String _lhs = is.lhs.toString();
+        String _rhs = is.rhs.toString();
+        boolean lIsNum = _lhs.charAt(0) != '%';
+        boolean rIsNum = _rhs.charAt(0) != '%';
+        int lNum = 0, rNum = 0;
+        if (lIsNum) lNum = literalToInt(_lhs);
+        if (rIsNum) rNum = literalToInt(_rhs);
+        var pos = var2regOrMem.get(is.dest.name);
+        assert pos != null;
+        String target = (pos.a == type.reg) ? "x" + pos.b : mem_reg1;
+        boolean flag = false;
+        if (!(lIsNum && rIsNum)) {
+            if (lIsNum) {
+                if (lNum < -2048 || lNum > 2047) {
+                    if (!is.op.equals(binaryInstNode.opEnum.shl) && !is.op.equals(binaryInstNode.opEnum.ashr)) {
+                        return false;
+                    }
+                }
+            }
+            if (rIsNum) {
+                if (rNum < -2048 || rNum > 2047) {
+                    if (!is.op.equals(binaryInstNode.opEnum.shl) && !is.op.equals(binaryInstNode.opEnum.ashr)) {
+                        return false;
+                    }
+                }
+            }
+        }
+        switch (is.op) {
+            case add -> {
+                if (lIsNum && rIsNum) {
+                    t.push(new Li(target, lNum + rNum));
+                    flag = true;
+                } else if (lIsNum) {
+                    Pair<var_type, String> rhs = src(is.rhs, t, mem_reg2, false);
+                    t.push(new Arithimm("addi", target, rhs.b, lNum));
+                    flag = true;
+                } else if (rIsNum) {
+                    Pair<var_type, String> lhs = src(is.lhs, t, mem_reg1, false);
+                    t.push(new Arithimm("addi", target, lhs.b, rNum));
+                    flag = true;
+                } else {
+                    Pair<var_type, String> lhs = src(is.lhs, t, mem_reg1, false);
+                    Pair<var_type, String> rhs = src(is.rhs, t, mem_reg2, false);
+                    t.push(new Arith("add", target, lhs.b, rhs.b));
+                }
+            }
+            case sub -> {
+                if (lIsNum && rIsNum) {
+                    t.push(new Li(target, lNum - rNum));
+                    flag = true;
+                } else if (lIsNum) {
+                    if (lNum == 0) {
+                        Pair<var_type, String> rhs = src(is.rhs, t, mem_reg2, false);
+                        t.push(new Arith("neg", target, rhs.b));
+                    } else {
+                        t.push(new Li(mem_reg1, lNum));
+                        Pair<var_type, String> rhs = src(is.rhs, t, mem_reg2, false);
+                        t.push(new Arith("sub", target, mem_reg1, rhs.b));
+                    }
+                    flag = true;
+                } else if (rIsNum) {
+                    Pair<var_type, String> lhs = src(is.lhs, t, mem_reg1, false);
+                    t.push(new Arithimm("addi", target, lhs.b, -rNum));
+                    flag = true;
+                } else {
+                    Pair<var_type, String> lhs = src(is.lhs, t, mem_reg1, false);
+                    Pair<var_type, String> rhs = src(is.rhs, t, mem_reg2, false);
+                    t.push(new Arith("sub", target, lhs.b, rhs.b));
+                }
+            }
+            case mul -> {
+                if (lIsNum && rIsNum) {
+                    t.push(new Li(target, lNum * rNum));
+                    flag = true;
+                } else {
+                    boolean flag_ = false;
+                    if (rIsNum) {
+                        flag_ = true;
+                        lIsNum = true;
+                        rIsNum = false;
+                        int tmp = lNum;
+                        lNum = rNum;
+                        rNum = tmp;
+                        var tmp_ = is.lhs;
+                        is.lhs = is.rhs;
+                        is.rhs = tmp_;
+                    }
+                    if (lIsNum) {
+                        if (lNum == 0) {
+                            t.push(new Li(target, 0));
+                            flag = true;
+                        } else if (lNum == 1) {
+                            Pair<var_type, String> rhs = src(is.rhs, t, mem_reg2, false);
+                            t.push(new Mv(target, rhs.b));
+                            flag = true;
+                        } else if (lNum == -1) {
+                            Pair<var_type, String> rhs = src(is.rhs, t, mem_reg2, false);
+                            t.push(new Arith("neg", target, rhs.b));
+                            flag = true;
+                        } else if (lNum > 0 && (lNum & (lNum - 1)) == 0) {
+                            int cnt = cnt(lNum);
+                            Pair<var_type, String> rhs = src(is.rhs, t, mem_reg2, false);
+                            t.push(new Arithimm("slli", target, rhs.b, cnt));
+                            flag = true;
+                        } else if (lNum < 0 && (-lNum & (-lNum - 1)) == 0) {
+                            lNum = -lNum;
+                            int cnt = cnt(lNum);
+                            Pair<var_type, String> rhs = src(is.rhs, t, mem_reg2, false);
+                            t.push(new Arithimm("slli", target, rhs.b, cnt));
+                            t.push(new Arith("neg", target, target));
+                            flag = true;
+                            lNum = -lNum;
+                        } else {
+                            t.push(new Li(mem_reg1, lNum));
+                            Pair<var_type, String> rhs = src(is.rhs, t, mem_reg2, false);
+                            t.push(new Arith("mul", target, mem_reg1, rhs.b));
+                            flag = true;
+                        }
+                    } else {
+                        assert !rIsNum;
+                        Pair<var_type, String> lhs = src(is.lhs, t, mem_reg1, false);
+                        Pair<var_type, String> rhs = src(is.rhs, t, mem_reg2, false);
+                        t.push(new Arith("mul", target, lhs.b, rhs.b));
+                        flag = true;
+                    }
+                    if (flag_) {
+                        lIsNum = false;
+                        rIsNum = true;
+                        int tmp = lNum;
+                        lNum = rNum;
+                        rNum = tmp;
+                        var tmp_ = is.lhs;
+                        is.lhs = is.rhs;
+                        is.rhs = tmp_;
+                    }
+                }
+            }
+            case sdiv -> {
+                if (lIsNum && rIsNum) {
+                    t.push(new Li(target, lNum / rNum));
+                    flag = true;
+                } else {
+                    if (rIsNum) {
+                        Pair<var_type, String> lhs = src(is.lhs, t, mem_reg1, false);
+                        if (rNum == 1) {
+                            t.push(new Mv(target, lhs.b));
+                            flag = true;
+                        } else if (rNum == -1) {
+                            t.push(new Arith("neg", target, lhs.b));
+                            flag = true;
+                        } else if (rNum > 0 && (rNum & (rNum - 1)) == 0) {
+                            int cnt = cnt(rNum);
+                            t.push(new Arithimm("srai", target, lhs.b, cnt));
+                            flag = true;
+                        } else if (rNum < 0 && (-rNum & (-rNum - 1)) == 0) {
+                            rNum = -rNum;
+                            int cnt = cnt(rNum);
+                            t.push(new Arithimm("srai", target, lhs.b, cnt));
+                            t.push(new Arith("neg", target, target));
+                            flag = true;
+                            rNum = -rNum;
+                        } else {
+                            t.push(new Li(mem_reg2, rNum));
+                            t.push(new Arith("div", target, lhs.b, mem_reg2));
+                            flag = true;
+                        }
+                    } else if (lIsNum && lNum == 0) {
+                        t.push(new Li(target, 0));
+                        flag = true;
+                    } else {
+                        Pair<var_type, String> lhs = src(is.lhs, t, mem_reg1, false);
+                        Pair<var_type, String> rhs = src(is.rhs, t, mem_reg2, false);
+                        t.push(new Arith("div", target, lhs.b, rhs.b));
+                        flag = true;
+                    }
+                }
+            }
+            case srem -> {
+                if (lIsNum && rIsNum) {
+                    t.push(new Li(target, lNum % rNum));
+                    flag = true;
+                } else {
+                    if (rIsNum) {
+                        Pair<var_type, String> lhs = src(is.lhs, t, mem_reg1, false);
+                        if (rNum == 1 || rNum == -1) {
+                            t.push(new Li(target, 0));
+                            flag = true;
+                        } else if ((rNum & (rNum - 1)) == 0) {
+                            boolean flag_ = rNum < 0;
+                            if (flag_) rNum = -rNum;
+                            int tmp = rNum - 1;
+                            t.push(new Arithimm("andi", target, lhs.b, tmp));
+                            if (flag_) {
+                                t.push(new Arith("neg", target, target));
+                            }
+                            flag = true;
+                        } else {
+                            t.push(new Li(mem_reg2, rNum));
+                            t.push(new Arith("rem", target, lhs.b, mem_reg2));
+                            flag = true;
+                        }
+                    } else if (lIsNum && lNum == 0) {
+                        t.push(new Li(target, 0));
+                        flag = true;
+                    } else {
+                        Pair<var_type, String> lhs = src(is.lhs, t, mem_reg1, false);
+                        Pair<var_type, String> rhs = src(is.rhs, t, mem_reg2, false);
+                        t.push(new Arith("rem", target, lhs.b, rhs.b));
+                        flag = true;
+                    }
+                }
+            }
+            case shl -> {
+                if (lIsNum && rIsNum) {
+                    t.push(new Li(target, lNum << rNum));
+                    flag = true;
+                } else {
+                    if (rIsNum) {
+                        Pair<var_type, String> lhs = src(is.lhs, t, mem_reg1, false);
+                        if (rNum == 0) {
+                            t.push(new Mv(target, lhs.b));
+                            flag = true;
+                        } else if (rNum > -32 && rNum < 32) {
+                            t.push(new Arithimm("slli", target, lhs.b, rNum));
+                            flag = true;
+                        } else {
+                            t.push(new Li(target, 0));
+                            flag = true;
+                        }
+                    } else if (lIsNum) {
+                        if (lNum == 0) {
+                            t.push(new Li(target, 0));
+                        } else {
+                            t.push(new Li(mem_reg1, lNum));
+                            Pair<var_type, String> rhs = src(is.rhs, t, mem_reg2, false);
+                            t.push(new Arith("sll", target, mem_reg1, rhs.b));
+                        }
+                        flag = true;
+                    } else {
+                        Pair<var_type, String> lhs = src(is.lhs, t, mem_reg1, false);
+                        Pair<var_type, String> rhs = src(is.rhs, t, mem_reg2, false);
+                        t.push(new Arith("sll", target, lhs.b, rhs.b));
+                        flag = true;
+                    }
+                }
+            }
+            case ashr -> {
+                if (lIsNum && rIsNum) {
+                    t.push(new Li(target, lNum >> rNum));
+                    flag = true;
+                } else {
+                    if (rIsNum) {
+                        Pair<var_type, String> lhs = src(is.lhs, t, mem_reg1, false);
+                        if (rNum == 0) {
+                            t.push(new Mv(target, lhs.b));
+                            flag = true;
+                        } else if (rNum > -32 && rNum < 32) {
+                            t.push(new Arithimm("srai", target, lhs.b, rNum));
+                            flag = true;
+                        } else if (rNum <= -32) {
+                            t.push(new Li(target, 0));
+                            flag = true;
+                        } else {
+                            assert rNum >= 32;
+                            t.push(new Arithimm("srai", target, lhs.b, 31));
+                            flag = true;
+                        }
+                    } else if (lIsNum) {
+                        if (lNum == 0) {
+                            t.push(new Li(target, 0));
+                        } else {
+                            t.push(new Li(mem_reg1, lNum));
+                            Pair<var_type, String> rhs = src(is.rhs, t, mem_reg2, false);
+                            t.push(new Arith("sra", target, mem_reg1, rhs.b));
+                        }
+                        flag = true;
+                    } else {
+                        Pair<var_type, String> lhs = src(is.lhs, t, mem_reg1, false);
+                        Pair<var_type, String> rhs = src(is.rhs, t, mem_reg2, false);
+                        t.push(new Arith("sra", target, lhs.b, rhs.b));
+                        flag = true;
+                    }
+                }
+            }
+            case and -> {
+                if (lIsNum && rIsNum) {
+                    t.push(new Li(target, lNum & rNum));
+                    flag = true;
+                } else {
+                    if (lIsNum) {
+                        if (lNum == 0) {
+                            t.push(new Li(target, 0));
+                            flag = true;
+                        } else if (lNum == -1) {
+                            Pair<var_type, String> rhs = src(is.rhs, t, target, true);
+                            flag = true;
+                        } else {
+                            Pair<var_type, String> rhs = src(is.rhs, t, mem_reg2, false);
+                            t.push(new Arithimm("andi", target, rhs.b, lNum));
+                            flag = true;
+                        }
+                    } else if (rIsNum) {
+                        if (rNum == 0) {
+                            t.push(new Li(target, 0));
+                            flag = true;
+                        } else if (rNum == -1) {
+                            Pair<var_type, String> lhs = src(is.lhs, t, target, true);
+                            flag = true;
+                        } else {
+                            Pair<var_type, String> lhs = src(is.lhs, t, mem_reg1, false);
+                            t.push(new Arithimm("andi", target, lhs.b, rNum));
+                            flag = true;
+                        }
+                    } else {
+                        Pair<var_type, String> lhs = src(is.lhs, t, mem_reg1, false);
+                        Pair<var_type, String> rhs = src(is.rhs, t, mem_reg2, false);
+                        t.push(new Arith("and", target, lhs.b, rhs.b));
+                        flag = true;
+                    }
+                }
+            }
+            case or -> {
+                if (lIsNum && rIsNum) {
+                    t.push(new Li(target, lNum | rNum));
+                    flag = true;
+                } else {
+                    if (lIsNum) {
+                        if (lNum == 0) {
+                            Pair<var_type, String> rhs = src(is.rhs, t, target, true);
+                            flag = true;
+                        } else if (lNum == -1) {
+                            t.push(new Li(target, -1));
+                            flag = true;
+                        } else {
+                            Pair<var_type, String> rhs = src(is.rhs, t, mem_reg2, false);
+                            t.push(new Arithimm("ori", target, rhs.b, lNum));
+                            flag = true;
+                        }
+                    } else if (rIsNum) {
+                        if (rNum == 0) {
+                            Pair<var_type, String> lhs = src(is.lhs, t, target, true);
+                            flag = true;
+                        } else if (rNum == -1) {
+                            t.push(new Li(target, -1));
+                            flag = true;
+                        } else {
+                            Pair<var_type, String> lhs = src(is.lhs, t, mem_reg1, false);
+                            t.push(new Arithimm("ori", target, lhs.b, rNum));
+                            flag = true;
+                        }
+                    } else {
+                        Pair<var_type, String> lhs = src(is.lhs, t, mem_reg1, false);
+                        Pair<var_type, String> rhs = src(is.rhs, t, mem_reg2, false);
+                        t.push(new Arith("or", target, lhs.b, rhs.b));
+                        flag = true;
+                    }
+                }
+            }
+            case xor -> {
+                if (lIsNum && rIsNum) {
+                    t.push(new Li(target, lNum ^ rNum));
+                    flag = true;
+                } else {
+                    if (lIsNum) {
+                        if (lNum == 0) {
+                            Pair<var_type, String> rhs = src(is.rhs, t, target, true);
+                            flag = true;
+                        } else {
+                            Pair<var_type, String> rhs = src(is.rhs, t, mem_reg2, false);
+                            t.push(new Arithimm("xori", target, rhs.b, lNum));
+                            flag = true;
+                        }
+                    } else if (rIsNum) {
+                        if (rNum == 0) {
+                            Pair<var_type, String> lhs = src(is.lhs, t, target, true);
+                            flag = true;
+                        } else {
+                            Pair<var_type, String> lhs = src(is.lhs, t, mem_reg1, false);
+                            t.push(new Arithimm("xori", target, lhs.b, rNum));
+                            flag = true;
+                        }
+                    } else {
+                        Pair<var_type, String> lhs = src(is.lhs, t, mem_reg1, false);
+                        Pair<var_type, String> rhs = src(is.rhs, t, mem_reg2, false);
+                        t.push(new Arith("xor", target, lhs.b, rhs.b));
+                        flag = true;
+                    }
+                }
+            }
+        }
+        if (pos.a == type.mem) {
+            t.push(new Sw(target, "sp", pos.b));
+        }
+        return flag;
+    }
+    
     private void buildInst(instNode it, text_new t) {
         if (it instanceof allocaInstNode is) {
             assert false;
         } else if (it instanceof binaryInstNode is) {
+            if (buildBin(is, t)) return;
+            assert is.lhs.toString().charAt(0) != '@';
+            assert is.rhs.toString().charAt(0) != '@';
 //            ldVar(is.lhs, "x28", t);
 //            ldVar(is.rhs, "x29", t);
             Pair<var_type, String> lhs = src(is.lhs, t, mem_reg1, false);
