@@ -16,7 +16,7 @@ public class Br extends Inst {
         return this.op + " " + this.rs1 + ", " + this.rs2 + ", " + this.label;
     }
     void check(String op) {
-        assert op.equals("beq") || op.equals("bne") || op.equals("blt") || op.equals("bge") || op.equals("bltu") || op.equals("bgeu");
+        assert op.equals("beq") || op.equals("bne") || op.equals("blt") || op.equals("bge") || op.equals("bltu") || op.equals("bgeu")|| op.equals("bgt")|| op.equals("ble");
     }
     
 }

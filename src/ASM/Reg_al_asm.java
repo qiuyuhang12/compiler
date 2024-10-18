@@ -793,7 +793,37 @@ public class Reg_al_asm {
         return flag;
     }
     
-    private void buildInst(instNode it, text_new t) {
+    boolean check_cj(icmpInstNode is, instNode nxt_it) {
+//        if (true) return false;
+        if (!(nxt_it instanceof brInstNode br)) return false;
+        if (nxt_it.live_out.contains(is.dest.name)) return false;
+        var cmp = is.dest.toString();
+        assert cmp.charAt(0) == '%';
+        if (br.cond == null) return false;
+        var cnd = br.cond.toString();
+        return cnd.equals(cmp);
+    }
+    
+    boolean cj_hazard = false;
+    
+    void cj(icmpInstNode cmp, brInstNode br, text_new t) {
+        cj_hazard = true;
+        var lhs = src(cmp.lhs, t, mem_reg1, false);
+        var rhs = src(cmp.rhs, t, mem_reg2, false);
+        String tLb = nowFun + "_" + br.ifTrue;
+        String fLb = nowFun + "_" + br.ifFalse;
+        switch (cmp.op) {
+            case eq -> t.push(new Br("beq", lhs.b, rhs.b, tLb));
+            case ne -> t.push(new Br("bne", lhs.b, rhs.b, tLb));
+            case sgt -> t.push(new Br("bgt", lhs.b, rhs.b, tLb));
+            case sge -> t.push(new Br("bge", lhs.b, rhs.b, tLb));
+            case slt -> t.push(new Br("blt", lhs.b, rhs.b, tLb));
+            case sle -> t.push(new Br("ble", lhs.b, rhs.b, tLb));
+        }
+        t.push(new Jump(fLb));
+    }
+    
+    private void buildInst(instNode it, instNode nxt_it, text_new t) {
         if (it instanceof allocaInstNode is) {
             assert false;
         } else if (it instanceof binaryInstNode is) {
@@ -891,6 +921,10 @@ public class Reg_al_asm {
             }
 //            mv(is.dest, mem_reg1, t);
         } else if (it instanceof icmpInstNode is) {
+            if (check_cj(is, nxt_it)) {
+                cj(is, (brInstNode) nxt_it, t);
+                return;
+            }
 //            ldVar(is.lhs, "x28", t);
 //            ldVar(is.rhs, "x29", t);
 //            var lhs = src(is.lhs, t, mem_reg1, false);
@@ -1099,7 +1133,13 @@ public class Reg_al_asm {
                 storeReg(t);
             }
             
+            int i = -1;
             for (instNode stmt : block.insts) {
+                i++;
+                if (cj_hazard) {
+                    cj_hazard = false;
+                    continue;
+                }
                 //done:添加注释
                 //done:处理判断是参数还是变量
                 //done:判断变量是全局变量还是局部变量
@@ -1107,7 +1147,7 @@ public class Reg_al_asm {
                 assert !(stmt instanceof allocaInstNode);
                 Comment comment = new Comment(stmt.toString().substring(0, stmt.toString().length() - 1));
                 t.push(comment);
-                buildInst(stmt, t);
+                buildInst(stmt, i + 1 < block.insts.size() ? block.insts.get(i + 1) : null, t);
             }
             asm.pushText(t);
         }
