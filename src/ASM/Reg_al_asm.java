@@ -207,6 +207,10 @@ public class Reg_al_asm {
                         System.exit(0);
                     }
                     int val = Integer.parseInt(var.name);
+                    //短路表达式可能因此出问题
+//                    if (val == 0 && !hard) {
+//                        return new Pair<>(var_type.reg, "x0");
+//                    }
                     t.push(new Li(reg, val));
                     return new Pair<>(var_type.reg, reg);
 //                    if (val <= 2047 && val >= -2048) {
@@ -942,9 +946,14 @@ public class Reg_al_asm {
             if (lhs.b.equals("x0") && rhs.b.equals("x0")) {
                 switch (is.op) {
                     case eq, sle, sge -> t.push(new Li(reg, 1));
-                    case ne, slt, sgt -> t.push(new Li(reg, 0));
+                    case ne, slt, sgt -> {
+                        if (pos.a == type.reg)
+                            t.push(new Li(reg, 0));
+                        else
+                            reg = "x0";
+                    }
                 }
-                return;
+//                return;
             } else if (lhs.b.equals("x0")) {
                 Pair<var_type, String> tmp = lhs;
                 lhs = rhs;
