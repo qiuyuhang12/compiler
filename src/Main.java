@@ -43,7 +43,7 @@ public class Main {
 //        show_color = true;
         Consts.colour = true;
         Consts.colourCheck = true;
-        oj = true;
+//        oj = true;
         if (redirect_output) {
 //        if (true) {
             PrintStream fileOut;

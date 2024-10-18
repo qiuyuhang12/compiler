@@ -569,12 +569,12 @@ public class Reg_al_asm {
                         if (rNum == 1 || rNum == -1) {
                             t.push(new Li(target, 0));
                             flag = true;
-                        } else if (rNum > 0 && (rNum & (rNum - 1)) == 0){
+                        } else if (rNum > 0 && (rNum & (rNum - 1)) == 0) {
                             if (true) return false;
                             int tmp = rNum - 1;
                             t.push(new Arithimm("andi", target, lhs.b, tmp));
                             flag = true;
-                        }else if (rNum < 0 && (-rNum & (-rNum - 1)) == 0){
+                        } else if (rNum < 0 && (-rNum & (-rNum - 1)) == 0) {
                             if (true) return false;
                             rNum = -rNum;
                             int tmp = rNum - 1;
@@ -582,8 +582,7 @@ public class Reg_al_asm {
                             t.push(new Arith("neg", target, target));
                             flag = true;
                             rNum = -rNum;
-                        }
-                        else{
+                        } else {
                             t.push(new Li(mem_reg2, rNum));
                             t.push(new Arith("rem", target, lhs.b, mem_reg2));
                             flag = true;
@@ -876,16 +875,8 @@ public class Reg_al_asm {
 //            var lhs = src(is.lhs, t, mem_reg1, false);
 //            var rhs = src(is.rhs, t, mem_reg2, false);
             Pair<var_type, String> lhs = null, rhs = null;
-            switch (is.op) {
-                case eq, ne, sgt, slt -> {
-                    lhs = src(is.lhs, t, mem_reg1, false);
-                    rhs = src(is.rhs, t, mem_reg2, false);
-                }
-                case sge, sle -> {
-                    lhs = src(is.lhs, t, mem_reg1, true);
-                    rhs = src(is.rhs, t, mem_reg2, true);
-                }
-            }
+            lhs = src(is.lhs, t, mem_reg1, false);
+            rhs = src(is.rhs, t, mem_reg2, false);
             assert lhs != null && rhs != null;
             Arith arith = new Arith("sub", "x30", lhs.b, rhs.b);
             t.push(arith);
@@ -894,15 +885,15 @@ public class Reg_al_asm {
                 case ne -> t.push(new S_z("snez", "x30", "x30"));
                 case sgt -> t.push(new S_z("sgtz", "x30", "x30"));
                 case sge -> {
-                    t.push(new S_z("sgtz", lhs.b, "x30"));
-                    t.push(new S_z("seqz", rhs.b, "x30"));
-                    t.push(new Arith("or", "x30", lhs.b, rhs.b));
+                    t.push(new S_z("sgtz", mem_reg1, "x30"));
+                    t.push(new S_z("seqz", mem_reg2, "x30"));
+                    t.push(new Arith("or", "x30", mem_reg1, mem_reg2));
                 }
                 case slt -> t.push(new S_z("sltz", "x30", "x30"));
                 case sle -> {
-                    t.push(new S_z("sltz", lhs.b, "x30"));
-                    t.push(new S_z("seqz", rhs.b, "x30"));
-                    t.push(new Arith("or", "x30", lhs.b, rhs.b));
+                    t.push(new S_z("sltz", mem_reg1, "x30"));
+                    t.push(new S_z("seqz", mem_reg2, "x30"));
+                    t.push(new Arith("or", "x30", mem_reg1, mem_reg2));
                 }
             }
             mv(is.dest.name, "x30", t);
