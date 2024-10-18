@@ -345,6 +345,12 @@ public class Reg_al_asm {
         if (it.equals("null")) {
             return 0;
         }
+        if (it.equals("true")) {
+            return 1;
+        }
+        if (it.equals("false")) {
+            return 0;
+        }
         int val = Integer.parseInt(it);
         assert it.equals(val + "");
         return val;
@@ -412,6 +418,7 @@ public class Reg_al_asm {
                     Pair<var_type, String> lhs = src(is.lhs, t, mem_reg1, false);
                     Pair<var_type, String> rhs = src(is.rhs, t, mem_reg2, false);
                     t.push(new Arith("add", target, lhs.b, rhs.b));
+                    flag = true;
                 }
             }
             case sub -> {
@@ -436,6 +443,7 @@ public class Reg_al_asm {
                     Pair<var_type, String> lhs = src(is.lhs, t, mem_reg1, false);
                     Pair<var_type, String> rhs = src(is.rhs, t, mem_reg2, false);
                     t.push(new Arith("sub", target, lhs.b, rhs.b));
+                    flag = true;
                 }
             }
             case mul -> {
@@ -507,6 +515,10 @@ public class Reg_al_asm {
             }
             case sdiv -> {
                 if (lIsNum && rIsNum) {
+                    if (rNum == 0) {
+                        t.push(new Comment("除以0异常，114514！"));
+                        return false;
+                    }
                     t.push(new Li(target, lNum / rNum));
                     flag = true;
                 } else {
@@ -519,10 +531,12 @@ public class Reg_al_asm {
                             t.push(new Arith("neg", target, lhs.b));
                             flag = true;
                         } else if (rNum > 0 && (rNum & (rNum - 1)) == 0) {
+                            if (true) return false;
                             int cnt = cnt(rNum);
                             t.push(new Arithimm("srai", target, lhs.b, cnt));
                             flag = true;
                         } else if (rNum < 0 && (-rNum & (-rNum - 1)) == 0) {
+                            if (true) return false;
                             rNum = -rNum;
                             int cnt = cnt(rNum);
                             t.push(new Arithimm("srai", target, lhs.b, cnt));
@@ -555,16 +569,21 @@ public class Reg_al_asm {
                         if (rNum == 1 || rNum == -1) {
                             t.push(new Li(target, 0));
                             flag = true;
-                        } else if ((rNum & (rNum - 1)) == 0) {
-                            boolean flag_ = rNum < 0;
-                            if (flag_) rNum = -rNum;
+                        } else if (rNum > 0 && (rNum & (rNum - 1)) == 0){
+                            if (true) return false;
                             int tmp = rNum - 1;
                             t.push(new Arithimm("andi", target, lhs.b, tmp));
-                            if (flag_) {
-                                t.push(new Arith("neg", target, target));
-                            }
                             flag = true;
-                        } else {
+                        }else if (rNum < 0 && (-rNum & (-rNum - 1)) == 0){
+                            if (true) return false;
+                            rNum = -rNum;
+                            int tmp = rNum - 1;
+                            t.push(new Arithimm("andi", target, lhs.b, tmp));
+                            t.push(new Arith("neg", target, target));
+                            flag = true;
+                            rNum = -rNum;
+                        }
+                        else{
                             t.push(new Li(mem_reg2, rNum));
                             t.push(new Arith("rem", target, lhs.b, mem_reg2));
                             flag = true;
@@ -761,6 +780,7 @@ public class Reg_al_asm {
         if (pos.a == type.mem) {
             t.push(new Sw(target, "sp", pos.b));
         }
+        assert flag;
         return flag;
     }
     
