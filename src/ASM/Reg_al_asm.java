@@ -911,6 +911,7 @@ public class Reg_al_asm {
             var pos = var2regOrMem.get(entity);
             assert pos != null;
             String dst = (pos.a == type.reg) ? "x" + pos.b : mem_reg1;
+//            src(is.ptr, t, mem_reg1, true);
             var ptr = src(is.ptr, t, mem_reg2, false);
             if (is.tys.size() == 2) {
                 assert is.idxs.getFirst().equals("0");
@@ -949,9 +950,9 @@ public class Reg_al_asm {
 //                var idx = src(is.idxs.get(i), t, mem_reg2, false);
 //                t.push(new Arithimm("slli", tmp_reg, idx.b, 2));
 //                if (i < is.tys.size() - 1)
-//                    t.push(new Arith("add", reg, reg, tmp_reg));
+//                    t.push(new Arith("add", mem_reg1, mem_reg1, tmp_reg));
 //                else
-//                    t.push(new Arith("add", reg_, reg, tmp_reg));
+//                    t.push(new Arith("add", dst, mem_reg1, tmp_reg));
 //            }
             if (pos.a == type.mem) {
                 t.push(new Sw(dst, "sp", pos.b));
