@@ -39,7 +39,7 @@ public class Main {
         new_asm = true;
 //        redirect_input = true;
 //        redirect_output = true;
-        redirect_err = true;
+//        redirect_err = true;
 //        show_color = true;
         Consts.colour = true;
         Consts.colourCheck = true;
