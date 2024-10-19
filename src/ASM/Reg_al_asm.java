@@ -905,23 +905,56 @@ public class Reg_al_asm {
             outas(t, dest_reg, is.lo_after_sp);
         } else if (it instanceof getElementPtrInstNode is) {//一般而言，第一个变量是堆地址
             System.err.println("我默认长度全是4,即都是i32");
+            assert is.tys.size() == 1 || is.tys.size() == 2;
             String entity = is.dest;
             assert entity.charAt(0) == '%';
             var pos = var2regOrMem.get(entity);
             assert pos != null;
-            String reg_ = (pos.a == type.reg) ? "x" + pos.b : mem_reg1;
-            String reg = mem_reg1;
-            src(is.ptr, t, reg, true);
-            for (int i = 0; i < is.tys.size(); i++) {
-                var idx = src(is.idxs.get(i), t, mem_reg2, false);
-                t.push(new Arithimm("slli", tmp_reg, idx.b, 2));
-                if (i < is.tys.size() - 1)
-                    t.push(new Arith("add", reg, reg, tmp_reg));
-                else
-                    t.push(new Arith("add", reg_, reg, tmp_reg));
+            String dst = (pos.a == type.reg) ? "x" + pos.b : mem_reg1;
+            var ptr = src(is.ptr, t, mem_reg2, false);
+            if (is.tys.size() == 2) {
+                assert is.idxs.getFirst().equals("0");
+                var idx_1 = is.idxs.get(1);
+                if (idx_1.charAt(0) != '@' && idx_1.charAt(0) != '%') {
+                    int val = Integer.parseInt(idx_1);
+                    assert is.tys.get(1).toString().equals("i32");
+                    val <<= 2;
+                    if (val > 2047 || val < -2048) {
+                        t.push(new Li(tmp_reg, val));
+                        t.push(new Arith("add", dst, ptr.b, tmp_reg));
+                    } else t.push(new Arithimm("addi", dst, ptr.b, val));
+                } else {
+                    var idx_ = src(is.idxs.get(1), t, tmp_reg, false);
+                    t.push(new Arithimm("slli", tmp_reg, idx_.b, 2));
+                    t.push(new Arith("add", dst, ptr.b, tmp_reg));
+                }
+            } else {
+                assert is.idxs.size() == 1;
+                var idx_0 = is.idxs.getFirst();
+                if (idx_0.charAt(0) != '@' && idx_0.charAt(0) != '%') {
+                    int val = Integer.parseInt(idx_0);
+                    assert is.tys.getFirst().toString().equals("i32");
+                    val <<= 2;
+                    if (val > 2047 || val < -2048) {
+                        t.push(new Li(tmp_reg, val));
+                        t.push(new Arith("add", dst, ptr.b, tmp_reg));
+                    } else t.push(new Arithimm("addi", dst, ptr.b, val));
+                } else {
+                    var idx_ = src(is.idxs.getFirst(), t, tmp_reg, false);
+                    t.push(new Arithimm("slli", tmp_reg, idx_.b, 2));
+                    t.push(new Arith("add", dst, ptr.b, tmp_reg));
+                }
             }
+//            for (int i = 0; i < is.tys.size(); i++) {
+//                var idx = src(is.idxs.get(i), t, mem_reg2, false);
+//                t.push(new Arithimm("slli", tmp_reg, idx.b, 2));
+//                if (i < is.tys.size() - 1)
+//                    t.push(new Arith("add", reg, reg, tmp_reg));
+//                else
+//                    t.push(new Arith("add", reg_, reg, tmp_reg));
+//            }
             if (pos.a == type.mem) {
-                t.push(new Sw(reg, "sp", pos.b));
+                t.push(new Sw(dst, "sp", pos.b));
             }
 //            mv(is.dest, mem_reg1, t);
         } else if (it instanceof icmpInstNode is) {
@@ -947,10 +980,8 @@ public class Reg_al_asm {
                 switch (is.op) {
                     case eq, sle, sge -> t.push(new Li(reg, 1));
                     case ne, slt, sgt -> {
-                        if (pos.a == type.reg)
-                            t.push(new Li(reg, 0));
-                        else
-                            reg = "x0";
+                        if (pos.a == type.reg) t.push(new Li(reg, 0));
+                        else reg = "x0";
                     }
                 }
 //                return;

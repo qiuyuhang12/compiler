@@ -5,6 +5,7 @@ public class Lwg extends Inst {
     public String symbol;
     
     public Lwg(String rd, String symbol) {
+        assert !rd.equals("x0");
         this.rd = rd;
         this.symbol = symbol;
     }

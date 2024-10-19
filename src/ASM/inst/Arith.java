@@ -8,6 +8,8 @@ public class Arith extends Inst {
     
     public Arith(String op, String rd, String rs1, String rs2) {
         check(op);
+        assert !op.equals("neg");
+        assert !rd.equals("x0");
         this.op = op;
         this.rd = rd;
         this.rs1 = rs1;
@@ -22,6 +24,7 @@ public class Arith extends Inst {
     }
     
     public String toString() {
+        assert !rd.equals("x0");
         if (this.op.equals("neg")) {
             return this.op + " " + this.rd + ", " + this.rs1;
         }

@@ -3,6 +3,7 @@ package ASM.inst;
 public class S_z extends Inst {
     public String rs,rd,op;
     public S_z(String op,String rd,String rs){
+        assert !rd.equals("x0");
         check(op);
         this.op = op;
         this.rd = rd;

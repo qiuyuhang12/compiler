@@ -5,6 +5,7 @@ public class Lw extends Inst{
     public String rs;
     public int imm;
     public Lw(String rd, String rs, int imm){
+        assert !rd.equals("x0");
         this.rd = rd;
         this.rs = rs;
         this.imm = imm;

@@ -15,6 +15,7 @@ public class Arithimm extends Inst {
     }
 
     public String toString(){
+        assert !rd.equals("x0");
         return op + " " + rd + ", " + rs + ", " + imm;
     }
     
