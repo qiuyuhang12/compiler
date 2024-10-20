@@ -271,6 +271,65 @@ public class Reg_al_asm {
         }
     }
     
+    Pair<var_type, String> src_ret(IREntity entity, text_new t, String reg) {
+        if (entity instanceof IRLiteral) {
+            int val = entity.getVal();
+            t.push(new Li(reg, val & 256));
+            return new Pair<>(var_type.reg, reg);
+//            if (val <= 2047 && val >= -2048) {
+//                return new Pair<>(var_type.num, String.valueOf(val));
+//            } else {
+//                t.push(new Li(reg, val));
+//                return new Pair<>(var_type.reg, reg);
+//            }
+        } else if (entity instanceof IRVar var) {
+            if (var.name.charAt(0) == '@') {
+                t.push(new La(reg, var.name));
+                return new Pair<>(var_type.reg, reg);
+//                assert false;
+//                return null;
+//                t.push(new La(reg, var.name));
+            } else {
+                if (var.name.equals("null")) {
+                    t.push(new Li(reg, 0));
+                    return new Pair<>(var_type.reg, reg);
+//                    return new Pair<>(var_type.num, "0");
+                }
+                if (!(var.name.charAt(0) == '%')) {
+                    if (var.name.equals("这不合理")) {
+                        System.exit(0);
+                    }
+                    int val = Integer.parseInt(var.name);
+                    //短路表达式可能因此出问题
+//                    if (val == 0 && !hard) {
+//                        return new Pair<>(var_type.reg, "x0");
+//                    }
+                    t.push(new Li(reg, val & 256));
+                    return new Pair<>(var_type.reg, reg);
+//                    if (val <= 2047 && val >= -2048) {
+//                        return new Pair<>(var_type.num, String.valueOf(val));
+//                    } else {
+//                        t.push(new Li(reg, val));
+//                        return new Pair<>(var_type.reg, reg);
+//                    }
+                }
+                var pos = var2regOrMem.get(var.name);
+                assert pos != null;
+                if (pos.a == type.reg) {
+                    if (!reg.equals("x" + pos.b)) t.push(new Arithimm("andi", reg, "x" + pos.b, 256));
+                } else {
+                    int offset = pos.b;
+                    t.push(new Lw(reg, "sp", offset));
+                    t.push(new Arithimm("andi", reg, reg, 256));
+                }
+                return new Pair<>(var_type.reg, reg);
+            }
+        } else {
+            assert false;
+            return null;
+        }
+    }
+    
     MvEntity src(IREntity entity) {
         if (entity instanceof IRLiteral) {
             return new MvEntity(type.num, entity.getVal());
@@ -827,6 +886,8 @@ public class Reg_al_asm {
         t.push(new Jump(fLb));
     }
     
+    boolean is_main = false;
+    
     private void buildInst(instNode it, instNode nxt_it, text_new t) {
         if (it instanceof allocaInstNode is) {
             assert false;
@@ -1060,7 +1121,10 @@ public class Reg_al_asm {
         } else if (it instanceof retInstNode is) {
             if (is.value.typeInfo.type != IRType.IRTypeEnum.void_) {
 //                ldVar(is.value, "a0", t);
-                src(is.value, t, "x10", true);
+                if (is_main)
+                    src_ret(is.value, t, "x10");
+                else
+                    src(is.value, t, "x10",true);
             }
 //            for (int i = 27; i <= 31; i++) {
 //                t.push(new Lw("x" + i, "sp", regOffset.get("x" + i)));
@@ -1151,7 +1215,7 @@ public class Reg_al_asm {
         //ret：
         //done:返回值传递
         //done:恢复t0-t2，ra，sp（栈释放），a0;
-        
+        is_main = funName.equals("main");
         for (IRBlockNode block : it.blocks) {
             if (block == null) {
                 continue;
