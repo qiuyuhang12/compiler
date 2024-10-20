@@ -43,6 +43,8 @@ public class Main {
 //        show_color = true;
         Consts.colour = true;
         Consts.colourCheck = true;
+        Consts.sccp = true;
+//        Consts.showsccp = true;
         oj = true;
         if (redirect_output) {
 //        if (true) {

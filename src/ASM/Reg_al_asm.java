@@ -274,7 +274,7 @@ public class Reg_al_asm {
     Pair<var_type, String> src_ret(IREntity entity, text_new t, String reg) {
         if (entity instanceof IRLiteral) {
             int val = entity.getVal();
-            t.push(new Li(reg, val & 256));
+            t.push(new Li(reg, val & 255));
             return new Pair<>(var_type.reg, reg);
 //            if (val <= 2047 && val >= -2048) {
 //                return new Pair<>(var_type.num, String.valueOf(val));
@@ -304,7 +304,7 @@ public class Reg_al_asm {
 //                    if (val == 0 && !hard) {
 //                        return new Pair<>(var_type.reg, "x0");
 //                    }
-                    t.push(new Li(reg, val & 256));
+                    t.push(new Li(reg, val & 255));
                     return new Pair<>(var_type.reg, reg);
 //                    if (val <= 2047 && val >= -2048) {
 //                        return new Pair<>(var_type.num, String.valueOf(val));
@@ -316,11 +316,11 @@ public class Reg_al_asm {
                 var pos = var2regOrMem.get(var.name);
                 assert pos != null;
                 if (pos.a == type.reg) {
-                    if (!reg.equals("x" + pos.b)) t.push(new Arithimm("andi", reg, "x" + pos.b, 256));
+                    if (!reg.equals("x" + pos.b)) t.push(new Arithimm("andi", reg, "x" + pos.b, 255));
                 } else {
                     int offset = pos.b;
                     t.push(new Lw(reg, "sp", offset));
-                    t.push(new Arithimm("andi", reg, reg, 256));
+                    t.push(new Arithimm("andi", reg, reg, 255));
                 }
                 return new Pair<>(var_type.reg, reg);
             }
@@ -1121,10 +1121,12 @@ public class Reg_al_asm {
         } else if (it instanceof retInstNode is) {
             if (is.value.typeInfo.type != IRType.IRTypeEnum.void_) {
 //                ldVar(is.value, "a0", t);
-                if (is_main)
+                if (is_main) {
+//                    src(is.value, t, "x10", true);
                     src_ret(is.value, t, "x10");
-                else
-                    src(is.value, t, "x10",true);
+                } else {
+                    src(is.value, t, "x10", true);
+                }
             }
 //            for (int i = 27; i <= 31; i++) {
 //                t.push(new Lw("x" + i, "sp", regOffset.get("x" + i)));
