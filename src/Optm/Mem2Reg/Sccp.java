@@ -1,9 +1,12 @@
 package Optm.Mem2Reg;
 
+import Frontend.IR.entity.IRBoolLiteral;
 import Frontend.IR.entity.IREntity;
+import Frontend.IR.entity.IRVar;
 import Frontend.IR.node.def.IRFunDef;
 import Frontend.IR.node.stmt.IRBlockNode;
 import Frontend.IR.node.inst.*;
+import Util.Consts;
 import org.antlr.v4.runtime.misc.Pair;
 
 import java.util.ArrayList;
@@ -22,7 +25,7 @@ public class Sccp {
     HashMap<String, ArrayList<instNode>> uses = new HashMap<>();
     HashMap<String, ArrayList<String>> brBlock = new HashMap<>();
     HashSet<String> visitedBlock = new HashSet<>();
-    public HashMap<String,String> constMap=new HashMap<>();
+    public HashMap<String, String> constMap = new HashMap<>();
 //    HashMap<String, ArrayList<ubp>> useByPhi = new HashMap<>();
 
 //    class ubp {
@@ -47,24 +50,50 @@ public class Sccp {
     }
     
     public void run() {
+        if (!Consts.sccp) return;
         buildDefUse();
         bfs(fun.blocks.getFirst().label);
-        for (var var:latticeCells.entrySet()){
-            if (var.getValue().a==Type.const_){
-                constMap.put(var.getKey(),var.getValue().b);
+        for (var var : latticeCells.entrySet()) {
+            if (var.getValue().a == Type.const_) {
+                constMap.put(var.getKey(), var.getValue().b);
             }
         }
+        if (Consts.showsccp) {
+            System.out.println(constMap);
+            System.out.println(latticeCells);
+        }
+        replace();
     }
     
     void buildDefUse() {
+        for (var para : fun.parameters) {
+            latticeCells.put(para.name, new Pair<>(Type.bottom, null));
+        }
         for (var block : fun.blocks) {
-            for (var inst : block.phis) {
-                _buildDefUse(inst, block.label);
+            for (var it : block.phis) {
+                String def = it.getDef();
+                assert def != null;
+                latticeCells.put(def, new Pair<>(Type.top, null));
+                uses.put(def, new ArrayList<>());
+                worklist.add(it);
+//                _buildDefUse(inst, block.label);
             }
         }
         for (var block : fun.blocks) {
             for (var inst : block.insts) {
                 _buildDefUse(inst, block.label);
+            }
+        }
+        for (var block : fun.blocks) {
+            for (var it : block.phis) {
+                String def = it.getDef();
+                assert def != null;
+                for (int i = 0; i < it.labels.size(); i++) {
+                    var val = it.values.get(i).toString();
+                    if (val.charAt(0) == '%') {
+                        if (uses.containsKey(val)) uses.get(val).add(it);
+                    }
+                }
             }
         }
     }
@@ -106,7 +135,9 @@ public class Sccp {
         } else {
             t = Type.const_;
             val = _val;
-            assert _val.equals(Integer.toString(Integer.parseInt(_val))) || _val.equals("null");
+            if (_val.equals("true")) val = "1";
+            if (_val.equals("false")) val = "0";
+            assert _val.equals("null") || _val.equals("true") || _val.equals("false") || _val.equals(Integer.toString(Integer.parseInt(_val)));
             return new Pair<>(t, val);
         }
     }
@@ -118,6 +149,26 @@ public class Sccp {
         if (a.a == Type.const_ && b.a == Type.const_) {
             if (op.equals("union")) if (a.b.equals(b.b)) return new Pair<>(a.a, a.b);
             else return new Pair<>(Type.bottom, null);
+            if (a.b.equals("null") || b.b.equals("null")) {
+//                assert a.b.equals("null") && b.b.equals("null");
+                if (a.b.equals("null") && b.b.equals("null"))
+                    switch (op) {
+                        case "eq" -> {
+                            return new Pair<>(Type.const_, "1");
+                        }
+                        case "ne" -> {
+                            return new Pair<>(Type.const_, "0");
+                        }
+                        default -> {
+                            System.err.println("Sccp:null err0!");
+                            return new Pair<>(Type.const_, "0");
+                        }
+                    }
+                else {
+                    System.err.println("Sccp:null err1!");
+                    return new Pair<>(Type.const_, "0");
+                }
+            }
             int x = Integer.parseInt(a.b);
             int y = Integer.parseInt(b.b);
             switch (op) {
@@ -130,7 +181,11 @@ public class Sccp {
                 case "mul" -> {
                     return new Pair<>(Type.const_, Integer.toString(x * y));
                 }
-                case "div" -> {
+                case "sdiv" -> {
+                    if (y == 0) {
+                        System.err.println("Sccp:div 0 err!");
+                        return new Pair<>(Type.const_, "0");
+                    }
                     return new Pair<>(Type.const_, Integer.toString(x / y));
                 }
                 case "srem" -> {
@@ -190,6 +245,7 @@ public class Sccp {
                 _bin(def, is.lhs, is.rhs, is.op.toString(), it);
             }
             case brInstNode is -> {
+                if (is.cond == null) return;
                 var cond = varInfo(is.cond.toString());
                 if (cond.a != Type.bottom) {
                     if (!brBlock.containsKey(is.cond.toString())) brBlock.put(is.cond.toString(), new ArrayList<>());
@@ -210,14 +266,18 @@ public class Sccp {
                 latticeCells.put(def, new Pair<>(Type.bottom, null));
             }
             case phiInstNode is -> {
-                latticeCells.put(def, new Pair<>(Type.top, null));
-                for (int i = 0; i < is.labels.size(); i++) {
-                    var val = is.values.get(i).toString();
-                    if (val.charAt(0) == '%') {
-                        if (uses.containsKey(val)) uses.get(val).add(it);
-                    }
-//                    handlePhi(is, _bl);
-                }
+                assert false;
+//                latticeCells.put(def, new Pair<>(Type.top, null));
+//                uses.put(def, new ArrayList<>());
+//                worklist.add(is);
+//                for (int i = 0; i < is.labels.size(); i++) {
+//                    var val = is.values.get(i).toString();
+//                    if (val.charAt(0) == '%') {
+//                        //todo:如果phi的入还没有扫到，无法真正加入use链，解决：分开吧，一个建链，一个入殓
+//                        if (uses.containsKey(val)) uses.get(val).add(it);
+//                    }
+////                    handlePhi(is, _bl);
+//                }
             }
             default -> {
                 assert false;
@@ -317,7 +377,6 @@ public class Sccp {
                         }
                     }
                     default -> {
-                        assert false;
                     }
                 }
             }
@@ -350,7 +409,7 @@ public class Sccp {
                     Pair<Type, String> rsl = new Pair<>(Type.top, null);
                     for (int i = 0; i < is.labels.size(); i++) {
                         var val = is.values.get(i).toString();
-                        var tmp=varInfo(val);
+                        var tmp = varInfo(val);
                         rsl = add(rsl, tmp, "union");
                     }
                     var old = latticeCells.get(is.getDef());
@@ -365,6 +424,98 @@ public class Sccp {
                     assert false;
                 }
             }
+        }
+    }
+    
+    void replace() {
+        for (var block : fun.blocks) {
+            for (var inst : block.phis) {
+                for (int i = 0; i < inst.values.size(); i++) {
+                    String val = inst.values.get(i).toString();
+                    if (val.charAt(0) == '%' && constMap.containsKey(val)) {
+                        ((IRVar) inst.values.get(i)).name = constMap.get(val);
+                    }
+                }
+            }
+            for (var it : block.insts) {
+                switch (it) {
+                    case binaryInstNode is -> {
+                        //-self,mul 0,shl...没考虑
+                        _bin_replace(is.lhs, is.rhs);
+                    }
+                    case brInstNode is -> {
+                        if (is.cond == null) continue;
+                        String cond = is.cond.toString();
+                        if (cond.charAt(0) == '%' && constMap.containsKey(cond)) {
+                            is.cond = new IRBoolLiteral(constMap.get(cond).equals("1"));
+                        }
+                    }
+                    case callInstNode is -> {
+                        //string_compare不考虑
+                        for (int i = 0; i < is.args.size(); i++) {
+                            String arg = is.args.get(i).toString();
+                            if (arg.charAt(0) == '%' && constMap.containsKey(arg)) {
+                                ((IRVar) is.args.get(i)).name = constMap.get(arg);
+                            }
+                        }
+                    }
+                    case getElementPtrInstNode is -> {
+                        for (int i = 0; i < is.idxs.size(); i++) {
+                            String _idx = is.idxs.get(i);
+                            if (_idx.charAt(0) == '%' && constMap.containsKey(_idx)) {
+                                is.idxs.set(i, constMap.get(_idx));
+                            }
+                        }
+                    }
+                    case icmpInstNode is -> {
+                        _bin_replace(is.lhs, is.rhs);
+                    }
+                    case loadInstNode is -> {
+                        if (is.ptr.charAt(0) == '%' && constMap.containsKey(is.ptr)) {
+                            is.ptr = constMap.get(is.ptr);
+                        }
+                    }
+//                    case phiInstNode is -> {
+//                        for (int i = 0; i < is.values.size(); i++) {
+//                            String val = is.values.get(i).toString();
+//                            if (val.charAt(0) == '%' && constMap.containsKey(val)) {
+//                                ((IRVar) is.values.get(i)).name = constMap.get(val);
+//                            }
+//                        }
+//                    }
+                    case retInstNode is -> {
+                        if (is.value.typeInfo.toString().equals("void")) continue;
+                        String val = is.value.toString();
+                        if (val.charAt(0) == '%' && constMap.containsKey(val)) {
+                            ((IRVar) is.value).name = constMap.get(val);
+                        }
+                    }
+                    case storeInstNode is -> {
+                        String val = is.value.toString();
+                        if (val.charAt(0) == '%' && constMap.containsKey(val)) {
+                            ((IRVar) is.value).name = constMap.get(val);
+                        }
+                        String ptr = is.ptr.toString();
+                        if (ptr.charAt(0) == '%' && constMap.containsKey(ptr)) {
+                            ((IRVar) is.ptr).name = constMap.get(ptr);
+                        }
+                    }
+                    default -> {
+                        assert false;
+                    }
+                }
+            }
+        }
+    }
+    
+    private void _bin_replace(IREntity lhs2, IREntity rhs2) {
+        String lhs = lhs2.toString();
+        String rhs = rhs2.toString();
+        if (lhs.charAt(0) == '%' && constMap.containsKey(lhs)) {
+            ((IRVar) lhs2).name = constMap.get(lhs);
+        }
+        if (rhs.charAt(0) == '%' && constMap.containsKey(rhs)) {
+            ((IRVar) rhs2).name = constMap.get(rhs);
         }
     }
 }

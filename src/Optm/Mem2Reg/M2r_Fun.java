@@ -51,6 +51,8 @@ public class M2r_Fun {
                 rename(entry.getKey());
             }
         }
+        Sccp sccp = new Sccp(fun, bl, in, def);
+        sccp.run();
         if (Consts.colour) {
             Analysis analysis = new Analysis(fun, bl, in);
             analysis.run();
@@ -125,7 +127,7 @@ public class M2r_Fun {
                 if (inst instanceof getElementPtrInstNode gep) {
                     usefulPtr.add(gep.ptr);
                 }
-                
+
 //                else if (inst instanceof callInstNode call) {
 //                    if (call.funName.equals("string.copy")) {
 //                        usefulPtr.add(call.args.getFirst().toString());
@@ -174,7 +176,7 @@ public class M2r_Fun {
                     if (def.containsKey(var)) {
                         def.get(var).add(block.label);
                     }
-                } else if (inst instanceof callInstNode call&&call.funName.equals("string.copy")) {
+                } else if (inst instanceof callInstNode call && call.funName.equals("string.copy")) {
                     assert call.args.size() == 2;
                     var call_ptr = call.args.getFirst().toString();
                     if (def.containsKey(call_ptr)) {
@@ -304,7 +306,7 @@ public class M2r_Fun {
         block.renamed = true;
         for (ArrayList<String> stack : phiStack.values()) {//入栈一次
             if (!stack.isEmpty()) stack.add(stack.getLast());
-            else stack.add("这不合理");
+            else stack.add("null");//todo:warning:这不合理
         }
         for (phiInstNode phi : block.phis) {//rename phi
 //            String var = phi.oriVar + "." + label;
@@ -332,8 +334,7 @@ public class M2r_Fun {
                 }
                 phiStack.get(st.ptr.toString()).set(phiStack.get(st.ptr.toString()).size() - 1, st.value.toString());
                 index.add(i);
-            }
-            else if (inst instanceof callInstNode call && call.funName.equals("string.copy")) {
+            } else if (inst instanceof callInstNode call && call.funName.equals("string.copy")) {
                 assert call.args.size() == 2;
                 var call_ptr = call.args.getFirst().toString();
                 var call_value = call.args.get(1).toString();
@@ -346,8 +347,7 @@ public class M2r_Fun {
                 phiStack.get(call_ptr).set(phiStack.get(call_ptr).size() - 1, call_value);
                 index.add(i);
                 inst.rename(renameMap);
-            }
-            else {
+            } else {
                 inst.rename(renameMap);
             }
         }
@@ -358,7 +358,7 @@ public class M2r_Fun {
             IRBlockNode next = bl.get(s);
             for (phiInstNode nextPhi : next.phis) {
                 var stack = phiStack.get(nextPhi.oriVar);
-                if (!stack.isEmpty() && !stack.getLast().equals("这不合理")) {
+                if (!stack.isEmpty() && !stack.getLast().equals("null")) {//todo:warning:这不合理
                     boolean tmp = nextPhi.add_source_m2r(stack.getLast(), label);
                     assert tmp;
                 } else {
