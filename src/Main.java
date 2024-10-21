@@ -44,6 +44,7 @@ public class Main {
         Consts.colour = true;
         Consts.colourCheck = true;
         Consts.sccp = true;
+        Consts.dce = true;
 //        Consts.showsccp = true;
         oj = true;
         if (redirect_output) {

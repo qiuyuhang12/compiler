@@ -30,7 +30,7 @@ run:
 #
 # .PHONY: Codegen
 # Codegen: build
-# 	./testcases/codegen/scripts/test_asm.bash 'java -cp /usr/share/java/antlr-4.13.2-complete.jar:bin Main' testcases/codegen/e1.mx builtin.s
+# 	./testcases/codegen/scripts/test_asm.bash 'java -cp /usr/share/java/antlr-4.13.2-complete.jar:bin Main' $(file) builtin.s
 # # 	./testcases/codegen/scripts/test_asm.bash 'java -cp /usr/share/java/antlr-4.13.2-complete.jar:bin Main' testcases/codegen/e1.mx builtin.s
 # #
 # #

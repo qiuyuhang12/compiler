@@ -210,6 +210,8 @@ public class M2r_Fun {
     }
     
     void dom() {
+//        _dom();
+//        if (true)return;
         for (String label : bl.keySet()) {
             dom.put(label, new HashSet<>(bl.keySet()));
         }
@@ -222,14 +224,19 @@ public class M2r_Fun {
         }
     }
     
+    void _dom() {
+        for (String label : bl.keySet()) {
+            dom.put(label, new HashSet<>(bl.keySet()));
+        }
+        boolean changed = true;
+        while (changed) {
+            changed = _bfs(fun.blocks.getFirst().label);
+        }
+    }
+    
     boolean bfs(String label) {
-//        HashSet<String> dom_n = dom.get(label);
         HashSet<String> dom_n = new HashSet<>();
-//        for (String s : out.get(label)) {
-//            tmp.retainAll(dom.get(s));
-//        }
         dom_n.add(label);
-//        HashSet
         HashSet<String> tmp = null;
         for (String s : in.get(label)) {
             if (tmp == null) {
@@ -237,7 +244,6 @@ public class M2r_Fun {
             } else {
                 tmp.retainAll(dom.get(s));
             }
-//            changed = changed || dom_n.addAll(dom.get(s));
         }
         if (tmp != null) {
             dom_n.addAll(tmp);
@@ -246,13 +252,43 @@ public class M2r_Fun {
         var tmp0 = new HashSet<>(dom_n);
         tmp0.removeAll(dom.get(label));
         changed = changed || !tmp0.isEmpty();
-//        dom.get(label)=dom_n;
         dom.put(label, dom_n);
-//        for (String s : out.get(label)) {
-//            if (bfs(s)) {
-//                changed = true;
-//            }
-//        }
+        return changed;
+    }
+    
+    boolean _bfs(String label) {
+        ArrayList<String> queue = new ArrayList<>();
+        queue.add(label);
+        boolean changed = false;
+        while (!queue.isEmpty()) {
+            String now = queue.removeFirst();
+            HashSet<String> dom_n = new HashSet<>();
+            dom_n.add(now);
+            HashSet<String> tmp = null;
+            for (String s : in.get(now)) {
+                if (tmp == null) {
+                    tmp = new HashSet<>(dom.get(s));
+                } else {
+                    tmp.retainAll(dom.get(s));
+                }
+            }
+            if (tmp != null) {
+                dom_n.addAll(tmp);
+            }
+            boolean _changed = dom_n.size() != dom.get(now).size();
+            var tmp0 = new HashSet<>(dom_n);
+            tmp0.removeAll(dom.get(now));
+            _changed = _changed || !tmp0.isEmpty();
+            dom.put(now, dom_n);
+            if (_changed) {
+                changed = true;
+                for (String s : out.get(now)) {
+                    if (!queue.contains(s)) {
+                        queue.add(s);
+                    }
+                }
+            }
+        }
         return changed;
     }
     
