@@ -51,8 +51,30 @@ public class M2r_Fun {
                 rename(entry.getKey());
             }
         }
-        Sccp sccp = new Sccp(fun, bl, in, def);
-        sccp.run();
+        Dce dce = new Dce(fun, bl);
+        dce.run();
+        if (Consts.sccp) {
+            Sccp sccp = new Sccp(fun, bl, in, def);
+            sccp.run();
+            Dce dce_ = new Dce(fun, bl);
+            dce_.run();
+            bl.clear();
+            in.clear();
+            out.clear();
+            dom.clear();
+//            def.clear();
+//            useBl.clear();
+//            useVar.clear();
+            idom.clear();
+            domFr.clear();
+//            var2type.clear();
+//            phiStack.clear();
+//            usefulPtr.clear();
+            cfg();
+            dom();
+            idom();
+            domFr();
+        }
         if (Consts.colour) {
             Analysis analysis = new Analysis(fun, bl, in);
             analysis.run();

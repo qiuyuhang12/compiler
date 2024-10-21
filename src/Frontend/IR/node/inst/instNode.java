@@ -32,4 +32,5 @@ public abstract class instNode extends IRNode {
     public HashSet<String> lo_after_sp = new HashSet<>();
     public abstract String getDef();
     public abstract HashSet<String> getUses();
+    public boolean useless=true;
 }

@@ -12,19 +12,17 @@ import org.antlr.v4.runtime.misc.Pair;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Objects;
 
 public class Sccp {
     IRFunDef fun;
     HashMap<String, IRBlockNode> bl = new HashMap<>();//label to block
     HashMap<String, ArrayList<String>> in = new HashMap<>();//label to in block
     HashMap<String, ArrayList<String>> out = new HashMap<>();//label to out block
-    ArrayList<Pair<String, String>> edges = new ArrayList<>();
-    ArrayList<instNode> worklist = new ArrayList<>();
-    HashSet<Pair<String, String>> visitedEdge = new HashSet<>();
+    //    HashSet<Pair<String, String>> visitedEdge = new HashSet<>();
     HashMap<String, Pair<Type, String>> latticeCells = new HashMap<>();
-    HashMap<String, ArrayList<instNode>> uses = new HashMap<>();
-    HashMap<String, ArrayList<String>> brBlock = new HashMap<>();
-    HashSet<String> visitedBlock = new HashSet<>();
+    HashMap<String, ArrayList<Pair<instNode, Pair<String, String>>>> uses = new HashMap<>();//var -> use{inst,edge}
+    HashMap<String, ArrayList<Pair<instNode, Pair<String, String>>>> brBlock = new HashMap<>();
     public HashMap<String, String> constMap = new HashMap<>();
 //    HashMap<String, ArrayList<ubp>> useByPhi = new HashMap<>();
 
@@ -62,6 +60,7 @@ public class Sccp {
             System.out.println(constMap);
             System.out.println(latticeCells);
         }
+        del_block();
         replace();
     }
     
@@ -75,7 +74,7 @@ public class Sccp {
                 assert def != null;
                 latticeCells.put(def, new Pair<>(Type.top, null));
                 uses.put(def, new ArrayList<>());
-                worklist.add(it);
+//                worklist.add(new Pair<>(it, new Pair<>(block.label, null)));
 //                _buildDefUse(inst, block.label);
             }
         }
@@ -91,7 +90,8 @@ public class Sccp {
                 for (int i = 0; i < it.labels.size(); i++) {
                     var val = it.values.get(i).toString();
                     if (val.charAt(0) == '%') {
-                        if (uses.containsKey(val)) uses.get(val).add(it);
+                        if (uses.containsKey(val))
+                            uses.get(val).add(new Pair<>(it, new Pair<>(it.labels.get(i), block.label)));
                     }
                 }
             }
@@ -143,27 +143,30 @@ public class Sccp {
     }
     
     Pair<Type, String> add(Pair<Type, String> a, Pair<Type, String> b, String op) {
-        if (a.a == Type.top) return new Pair<>(b.a, b.b);
-        if (b.a == Type.top) return new Pair<>(a.a, a.b);
+        if (op.equals("union")) {
+            if (a.a == Type.top) return new Pair<>(b.a, b.b);
+            if (b.a == Type.top) return new Pair<>(a.a, a.b);
+        } else {
+            if (a.a == Type.top || b.a == Type.top) return new Pair<>(Type.top, null);
+        }
         if (a.a == Type.bottom || b.a == Type.bottom) return new Pair<>(Type.bottom, null);
         if (a.a == Type.const_ && b.a == Type.const_) {
             if (op.equals("union")) if (a.b.equals(b.b)) return new Pair<>(a.a, a.b);
             else return new Pair<>(Type.bottom, null);
             if (a.b.equals("null") || b.b.equals("null")) {
 //                assert a.b.equals("null") && b.b.equals("null");
-                if (a.b.equals("null") && b.b.equals("null"))
-                    switch (op) {
-                        case "eq" -> {
-                            return new Pair<>(Type.const_, "1");
-                        }
-                        case "ne" -> {
-                            return new Pair<>(Type.const_, "0");
-                        }
-                        default -> {
-                            System.err.println("Sccp:null err0!");
-                            return new Pair<>(Type.const_, "0");
-                        }
+                if (a.b.equals("null") && b.b.equals("null")) switch (op) {
+                    case "eq" -> {
+                        return new Pair<>(Type.const_, "1");
                     }
+                    case "ne" -> {
+                        return new Pair<>(Type.const_, "0");
+                    }
+                    default -> {
+                        System.err.println("Sccp:null err0!");
+                        return new Pair<>(Type.const_, "0");
+                    }
+                }
                 else {
                     System.err.println("Sccp:null err1!");
                     return new Pair<>(Type.const_, "0");
@@ -249,7 +252,7 @@ public class Sccp {
                 var cond = varInfo(is.cond.toString());
                 if (cond.a != Type.bottom) {
                     if (!brBlock.containsKey(is.cond.toString())) brBlock.put(is.cond.toString(), new ArrayList<>());
-                    brBlock.get(is.cond.toString()).add(_bl);
+                    brBlock.get(is.cond.toString()).add(new Pair<>(is, new Pair<>(null, _bl)));
                 }
             }
             case callInstNode is -> {
@@ -297,6 +300,7 @@ public class Sccp {
 //        }
 //    }
     
+    //in buildDefUse
     private void _bin(String def, IREntity lhs2, IREntity rhs2, String op, instNode it) {
         String lhs = lhs2.toString();
         String rhs = rhs2.toString();
@@ -306,134 +310,229 @@ public class Sccp {
         latticeCells.put(def, res);
         if (res.a != Type.bottom) {
             uses.put(def, new ArrayList<>());
-            if (lhs.charAt(0) == '%') {
-                uses.get(lhs).add(it);
+            if (lhs.charAt(0) == '%' && uses.containsKey(lhs)) {
+                uses.get(lhs).add(new Pair<>(it, null));
             }
-            if (rhs.charAt(0) == '%') {
-                uses.get(rhs).add(it);
+            if (rhs.charAt(0) == '%' && uses.containsKey(rhs)) {
+                uses.get(rhs).add(new Pair<>(it, null));
             }
         }
     }
     
+    //in bfs
     private Pair<Type, String> __bin(String def, IREntity lhs2, IREntity rhs2, String op, instNode it) {
         String lhs = lhs2.toString();
         String rhs = rhs2.toString();
+        if (lhs.equals(rhs)) {
+            if (op.equals("eq") || op.equals("sge") || op.equals("sle"))
+                return new Pair<>(Type.const_, "1");
+            if (op.equals("ne") || op.equals("sgt") || op.equals("slt"))
+                return new Pair<>(Type.const_, "0");
+        }
         var lhs_ = varInfo(lhs);
         var rhs_ = varInfo(rhs);
         return add(lhs_, rhs_, op);
     }
     
-    void bfs(String entry) {
-        edges.add(new Pair<>(null, entry));
-        while (!edges.isEmpty()) {
-            var edge = edges.getFirst();
-            edges.removeFirst();
-            if (visitedEdge.contains(edge)) continue;
-            visitedEdge.add(edge);
-            var block = bl.get(edge.b);
-            for (var inst : block.phis) {
-                int i = inst.labels.indexOf(edge.a);
-                String var = inst.values.get(i).toString();
-                var tp = varInfo(var);
-                var old = latticeCells.get(inst.getDef());
-                var rsl = add(old, tp, "union");
-                if (!old.equals(rsl)) {
-                    assert old.a != Type.bottom;
-                    worklist.addAll(uses.get(inst.getDef()));
-                    latticeCells.put(inst.getDef(), rsl);
-//                    for (var ub : useByPhi.get(inst.getDef())) {
-//                        var old_ = latticeCells.get(ub.phi_var);
-//                        var rsl_ = add(old_, tp, "union");
-//                        if (!old_.equals(rsl_)) {
-//                            assert old_.a != Type.bottom;
-//                            worklist.addAll(uses.get(ub.phi_var));
-//                            latticeCells.put(ub.phi_var, rsl_);
-//                        }
-//                    }
+    ArrayList<Pair<String, String>> edges = new ArrayList<>();
+    HashSet<String> visitedBlock = new HashSet<>();
+    ArrayList<Pair<instNode, Pair<String, String>>> worklist = new ArrayList<>(); //inst edge(上一个->此)
+    
+    void bfs_inst(binaryInstNode is, Pair<String, String> edge) {
+        var rsl = __bin(is.getDef(), is.lhs, is.rhs, is.op.toString(), is);
+        update(is, rsl, edge);
+    }
+    
+    void bfs_inst(icmpInstNode is, Pair<String, String> edge) {
+        var rsl = __bin(is.getDef(), is.lhs, is.rhs, is.op.toString(), is);
+        update(is, rsl, edge);
+    }
+    
+    void bfs_inst(brInstNode is, Pair<String, String> edge) {
+        if (is.cond == null) {
+            edges.add(new Pair<>(edge.b, is.dest));
+            return;
+        }
+        var cond = is.cond.toString();
+        var cond_ = varInfo(cond);
+        switch (cond_.a) {
+            case const_ -> {
+                if (cond_.b.equals("1")) {
+                    edges.add(new Pair<>(edge.b, is.ifTrue));
+                } else {
+                    assert cond_.b.equals("0");
+                    edges.add(new Pair<>(edge.b, is.ifFalse));
                 }
             }
-            if (visitedBlock.contains(edge.b)) continue;
-            visitedBlock.add(edge.b);
-            for (var inst : block.insts) {
-                switch (inst) {
-                    case binaryInstNode is -> {
-                        var rsl = __bin(is.getDef(), is.lhs, is.rhs, is.op.toString(), is);
-                        var old = latticeCells.get(is.getDef());
-                        var rsl_ = add(old, rsl, "union");
-                        if (!old.equals(rsl_)) {
-                            assert old.a != Type.bottom;
-                            worklist.addAll(uses.get(is.getDef()));
-                            latticeCells.put(is.getDef(), rsl_);
-                        }
-                    }
-                    case icmpInstNode is -> {
-                        var rsl = __bin(is.getDef(), is.lhs, is.rhs, is.op.toString(), is);
-                        var old = latticeCells.get(is.getDef());
-                        var rsl_ = add(old, rsl, "union");
-                        if (!old.equals(rsl_)) {
-                            assert old.a != Type.bottom;
-                            worklist.addAll(uses.get(is.getDef()));
-                            latticeCells.put(is.getDef(), rsl_);
-                        }
-                    }
-                    default -> {
-                    }
-                }
+            case bottom -> {
+                edges.add(new Pair<>(edge.b, is.ifTrue));
+                edges.add(new Pair<>(edge.b, is.ifFalse));
+            }
+            case top -> {
             }
         }
-        while (!worklist.isEmpty()) {
-            var inst = worklist.getFirst();
-            worklist.removeFirst();
-            switch (inst) {
-                case binaryInstNode is -> {
-                    var rsl = __bin(is.getDef(), is.lhs, is.rhs, is.op.toString(), is);
-                    var old = latticeCells.get(is.getDef());
-                    var rsl_ = add(old, rsl, "union");
-                    if (!old.equals(rsl_)) {
-                        assert old.a != Type.bottom;
-                        worklist.addAll(uses.get(is.getDef()));
-                        latticeCells.put(is.getDef(), rsl_);
+    }
+    
+    void bfs_inst(phiInstNode inst, Pair<String, String> edge) {
+        int i = inst.labels.indexOf(edge.a);
+        String var = inst.values.get(i).toString();
+        var tp = varInfo(var);
+        update(inst, tp, edge);
+    }
+    
+    void bfs_phis(Pair<String, String> edge, IRBlockNode block) {
+        for (var inst : block.phis) {
+            bfs_inst(inst, edge);
+        }
+    }
+    
+    void bfs(String entry) {
+        edges.add(new Pair<>(null, entry));
+        while (!edges.isEmpty() || !worklist.isEmpty()) {
+            if (!edges.isEmpty()) {
+                var edge = edges.getFirst();
+                edges.removeFirst();
+                var block = bl.get(edge.b);
+                boolean isVisited = visitedBlock.contains(edge.b);
+                visitedBlock.add(edge.b);
+                bfs_phis(edge, block);
+                if (!isVisited) {
+                    for (var inst : block.insts) {
+                        switch (inst) {
+                            case binaryInstNode is -> {
+                                bfs_inst(is, edge);
+                            }
+                            case icmpInstNode is -> {
+                                bfs_inst(is, edge);
+                            }
+                            case brInstNode is -> {
+                                bfs_inst(is, edge);
+                            }
+                            default -> {
+                            }
+                        }
                     }
                 }
-                case icmpInstNode is -> {
-                    var rsl = __bin(is.getDef(), is.lhs, is.rhs, is.op.toString(), is);
-                    var old = latticeCells.get(is.getDef());
-                    var rsl_ = add(old, rsl, "union");
-                    if (!old.equals(rsl_)) {
-                        assert old.a != Type.bottom;
-                        worklist.addAll(uses.get(is.getDef()));
-                        latticeCells.put(is.getDef(), rsl_);
+            } else {
+                var inst_label = worklist.getFirst();
+                worklist.removeFirst();
+                switch (inst_label.a) {
+                    case binaryInstNode is -> {
+                        bfs_inst(is, inst_label.b);
                     }
-                }
-                case phiInstNode is -> {
-                    Pair<Type, String> rsl = new Pair<>(Type.top, null);
-                    for (int i = 0; i < is.labels.size(); i++) {
-                        var val = is.values.get(i).toString();
-                        var tmp = varInfo(val);
-                        rsl = add(rsl, tmp, "union");
+                    case icmpInstNode is -> {
+                        bfs_inst(is, inst_label.b);
                     }
-                    var old = latticeCells.get(is.getDef());
-                    var rsl_ = add(old, rsl, "union");
-                    if (!old.equals(rsl_)) {
-                        assert old.a != Type.bottom;
-                        worklist.addAll(uses.get(is.getDef()));
-                        latticeCells.put(is.getDef(), rsl_);
+                    case phiInstNode is -> {
+                        bfs_inst(is, inst_label.b);
                     }
-                }
-                default -> {
-                    assert false;
+                    case brInstNode is -> {
+                        bfs_inst(is, inst_label.b);
+                    }
+                    default -> {
+                        assert false;
+                    }
                 }
             }
         }
     }
     
+    void update(instNode inst, Pair<Type, String> tp, Pair<String, String> edge) {
+        var old = latticeCells.get(inst.getDef());
+        var rsl = add(old, tp, "union");
+        if (!old.equals(rsl)) {
+            assert old.a != Type.bottom;
+            worklist.addAll(uses.get(inst.getDef()));
+            var brs = brBlock.get(inst.getDef());
+            if (brs != null) {
+                worklist.addAll(brs);
+            }
+            latticeCells.put(inst.getDef(), rsl);
+        }
+    }
+    
+    HashMap<String, String> single_phi_renamer = new HashMap<>();
+    
+    void del_block() {
+        for (int i = 0; i < fun.blocks.size(); i++) {
+            var block = fun.blocks.get(i);
+            if (!visitedBlock.contains(block.label)) {
+                fun.blocks.remove(i);
+                i--;
+                continue;
+            }
+            for (int i1 = 0; i1 < block.phis.size(); i1++) {
+                var inst = block.phis.get(i1);
+                for (int j = 0; j < inst.values.size(); j++) {
+                    String val = inst.values.get(j).toString();
+                    String label = inst.labels.get(j);
+                    if (!visitedBlock.contains(label)) {
+                        inst.values.remove(j);
+                        inst.labels.remove(j);
+                        j--;
+                    }
+                }
+                if (inst.values.size() == 1) {
+                    String val = inst.values.getFirst().toString();
+                    single_phi_renamer.put(inst.getDef(), constMap.getOrDefault(val, val));
+                    block.phis.remove(i1);
+                    i1--;
+                }
+                
+            }
+            int j = -1;
+            for (var inst : block.insts) {
+                j++;
+                if (Objects.requireNonNull(inst) instanceof brInstNode is) {
+                    assert j == block.insts.size() - 1;
+                    if (is.cond == null) continue;
+                    String iftrue = is.ifTrue;
+                    String iffalse = is.ifFalse;
+                    if (!visitedBlock.contains(iftrue) && !visitedBlock.contains(iffalse)) {
+                        assert false;
+                    } else if (!visitedBlock.contains(iftrue)) {
+                        if (is.cond.toString().charAt(0) == '%') {
+                            assert latticeCells.get(is.cond.toString()).a == Type.const_;
+                            assert latticeCells.get(is.cond.toString()).b.equals("0");
+                        }
+                        block.insts.removeLast();
+                        block.insts.add(new brInstNode(null, block, iffalse));
+                    } else if (!visitedBlock.contains(iffalse)) {
+                        if (is.cond.toString().charAt(0) == '%') {
+                            assert latticeCells.get(is.cond.toString()).a == Type.const_;
+                            assert latticeCells.get(is.cond.toString()).b.equals("1");
+                        }
+                        block.insts.removeLast();
+                        block.insts.add(new brInstNode(null, block, iftrue));
+                    }
+                }
+            }
+        }
+    }
+    
+    void handle_renamer() {
+        HashMap<String, String> new_single_phi_renamer = new HashMap<>();
+        for (var entry : single_phi_renamer.entrySet()) {
+            String key = entry.getKey();
+            String val = entry.getValue();
+            while (single_phi_renamer.containsKey(val)) {
+                val = single_phi_renamer.get(val);
+            }
+            new_single_phi_renamer.put(key, val);
+        }
+        single_phi_renamer = new_single_phi_renamer;
+    }
+    
     void replace() {
+        handle_renamer();
         for (var block : fun.blocks) {
             for (var inst : block.phis) {
                 for (int i = 0; i < inst.values.size(); i++) {
                     String val = inst.values.get(i).toString();
                     if (val.charAt(0) == '%' && constMap.containsKey(val)) {
                         ((IRVar) inst.values.get(i)).name = constMap.get(val);
+                    } else if (val.charAt(0) == '%' && single_phi_renamer.containsKey(val)) {
+                        ((IRVar) inst.values.get(i)).name = single_phi_renamer.get(val);
                     }
                 }
             }
@@ -441,22 +540,26 @@ public class Sccp {
                 switch (it) {
                     case binaryInstNode is -> {
                         //-self,mul 0,shl...没考虑
-                        _bin_replace(is.lhs, is.rhs);
+//                        _bin_replace(is.lhs, is.rhs);
+                        entity_replace(is.lhs);
+                        entity_replace(is.rhs);
                     }
                     case brInstNode is -> {
                         if (is.cond == null) continue;
-                        String cond = is.cond.toString();
-                        if (cond.charAt(0) == '%' && constMap.containsKey(cond)) {
-                            is.cond = new IRBoolLiteral(constMap.get(cond).equals("1"));
-                        }
+                        entity_replace(is.cond);
+//                        String cond = is.cond.toString();
+//                        if (cond.charAt(0) == '%' && constMap.containsKey(cond)) {
+//                            is.cond = new IRBoolLiteral(constMap.get(cond).equals("1"));
+//                        }
                     }
                     case callInstNode is -> {
                         //string_compare不考虑
                         for (int i = 0; i < is.args.size(); i++) {
-                            String arg = is.args.get(i).toString();
-                            if (arg.charAt(0) == '%' && constMap.containsKey(arg)) {
-                                ((IRVar) is.args.get(i)).name = constMap.get(arg);
-                            }
+                            entity_replace(is.args.get(i));
+//                            String arg = is.args.get(i).toString();
+//                            if (arg.charAt(0) == '%' && constMap.containsKey(arg)) {
+//                                ((IRVar) is.args.get(i)).name = constMap.get(arg);
+//                            }
                         }
                     }
                     case getElementPtrInstNode is -> {
@@ -464,15 +567,21 @@ public class Sccp {
                             String _idx = is.idxs.get(i);
                             if (_idx.charAt(0) == '%' && constMap.containsKey(_idx)) {
                                 is.idxs.set(i, constMap.get(_idx));
+                            } else if (_idx.charAt(0) == '%' && single_phi_renamer.containsKey(_idx)) {
+                                is.idxs.set(i, single_phi_renamer.get(_idx));
                             }
                         }
                     }
                     case icmpInstNode is -> {
-                        _bin_replace(is.lhs, is.rhs);
+                        entity_replace(is.lhs);
+                        entity_replace(is.rhs);
+//                        _bin_replace(is.lhs, is.rhs);
                     }
                     case loadInstNode is -> {
                         if (is.ptr.charAt(0) == '%' && constMap.containsKey(is.ptr)) {
                             is.ptr = constMap.get(is.ptr);
+                        } else if (is.ptr.charAt(0) == '%' && single_phi_renamer.containsKey(is.ptr)) {
+                            is.ptr = single_phi_renamer.get(is.ptr);
                         }
                     }
 //                    case phiInstNode is -> {
@@ -485,20 +594,23 @@ public class Sccp {
 //                    }
                     case retInstNode is -> {
                         if (is.value.typeInfo.toString().equals("void")) continue;
-                        String val = is.value.toString();
-                        if (val.charAt(0) == '%' && constMap.containsKey(val)) {
-                            ((IRVar) is.value).name = constMap.get(val);
-                        }
+                        entity_replace(is.value);
+//                        String val = is.value.toString();
+//                        if (val.charAt(0) == '%' && constMap.containsKey(val)) {
+//                            ((IRVar) is.value).name = constMap.get(val);
+//                        }
                     }
                     case storeInstNode is -> {
-                        String val = is.value.toString();
-                        if (val.charAt(0) == '%' && constMap.containsKey(val)) {
-                            ((IRVar) is.value).name = constMap.get(val);
-                        }
-                        String ptr = is.ptr.toString();
-                        if (ptr.charAt(0) == '%' && constMap.containsKey(ptr)) {
-                            ((IRVar) is.ptr).name = constMap.get(ptr);
-                        }
+                        entity_replace(is.value);
+                        entity_replace(is.ptr);
+//                        String val = is.value.toString();
+//                        if (val.charAt(0) == '%' && constMap.containsKey(val)) {
+//                            ((IRVar) is.value).name = constMap.get(val);
+//                        }
+//                        String ptr = is.ptr.toString();
+//                        if (ptr.charAt(0) == '%' && constMap.containsKey(ptr)) {
+//                            ((IRVar) is.ptr).name = constMap.get(ptr);
+//                        }
                     }
                     default -> {
                         assert false;
@@ -508,14 +620,24 @@ public class Sccp {
         }
     }
     
-    private void _bin_replace(IREntity lhs2, IREntity rhs2) {
-        String lhs = lhs2.toString();
-        String rhs = rhs2.toString();
-        if (lhs.charAt(0) == '%' && constMap.containsKey(lhs)) {
-            ((IRVar) lhs2).name = constMap.get(lhs);
-        }
-        if (rhs.charAt(0) == '%' && constMap.containsKey(rhs)) {
-            ((IRVar) rhs2).name = constMap.get(rhs);
+    void entity_replace(IREntity entity) {
+        if (entity.toString().charAt(0) == '%' && constMap.containsKey(entity.toString())) {
+            ((IRVar) entity).name = constMap.get(entity.toString());
+        } else if (entity.toString().charAt(0) == '%' && single_phi_renamer.containsKey(entity.toString())) {
+            ((IRVar) entity).name = single_phi_renamer.get(entity.toString());
         }
     }
+
+//    private void _bin_replace(IREntity lhs2, IREntity rhs2) {
+////        String lhs = lhs2.toString();
+////        String rhs = rhs2.toString();
+////        if (lhs.charAt(0) == '%' && constMap.containsKey(lhs)) {
+////            ((IRVar) lhs2).name = constMap.get(lhs);
+////        }
+////        if (rhs.charAt(0) == '%' && constMap.containsKey(rhs)) {
+////            ((IRVar) rhs2).name = constMap.get(rhs);
+////        }
+//        entity_replace(lhs2);
+//        entity_replace(rhs2);
+//    }
 }
