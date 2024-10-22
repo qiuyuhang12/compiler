@@ -162,7 +162,7 @@ public class Reg_al_asm {
             }
         }
 //        saveReg.add(8);
-        saveReg.add(9);
+//        saveReg.add(9);
         for (int i = 25; i <= 26; i++) {
 //            if (i != 19 && i != 20 && i != 21 && i != 22)
                 saveReg.add(i);
