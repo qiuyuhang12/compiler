@@ -98,11 +98,18 @@ public class text_new extends section {
                 sb.append("\t").append(inst.toString()).append("\n");
             }
         }
+        int ttt = insts.size() - 1;
+        while (insts.get(ttt) instanceof Comment) ttt--;
         if (insts_phi.isEmpty()) {
             int cnt = -1;
             for (Inst inst : insts) {
                 cnt++;
                 if (cnt == 0 && flag) continue;
+                if (cnt==ttt){
+                    if (inst instanceof Jump){
+                        if (((Jump) inst).label.equals(next_label)) continue;
+                    }
+                }
                 sb.append("\t").append(inst.toString()).append("\n");
             }
         } else {
@@ -113,8 +120,6 @@ public class text_new extends section {
                 }
             }
             assert j_count == 1;
-            int ttt = insts.size() - 1;
-            while (insts.get(ttt) instanceof Comment) ttt--;
             assert insts.get(ttt) instanceof Jump;
             for (int i = flag ? 1 : 0; i < ttt; i++) {
                 sb.append("\t").append(insts.get(i).toString()).append("\n");
@@ -122,8 +127,11 @@ public class text_new extends section {
             for (Inst inst : insts_phi) {
                 sb.append("\t").append(inst.toString()).append("\n");
             }
-            sb.append("\t").append(insts.get(ttt).toString()).append("\n");
+            if (!((Jump) insts.get(ttt)).label.equals(next_label))
+                sb.append("\t").append(insts.get(ttt).toString()).append("\n");
         }
         return sb.toString();
     }
+    
+    public String next_label;
 }

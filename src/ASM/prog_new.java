@@ -27,6 +27,9 @@ public class prog_new {
         for (data data : datas) {
             sb.append(data.toString());
         }
+        for (int i = 0; i < text_news.size()-1; i++) {
+            text_news.get(i).next_label=text_news.get(i+1).label;
+        }
         for (text_new text_new : text_news) {
             sb.append(text_new.toString());
         }

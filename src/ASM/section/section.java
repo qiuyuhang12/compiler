@@ -1,7 +1,7 @@
 package ASM.section;
 
 public abstract class section {
-    String label;
+    public String label;
     public section(String label){
         this.label = label;
     }
