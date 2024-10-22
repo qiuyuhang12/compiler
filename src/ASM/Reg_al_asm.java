@@ -39,6 +39,8 @@ public class Reg_al_asm {
     HashMap<String, text_new> bl2text = new HashMap<>();
     HashSet<Integer> CalleeSave = new HashSet<>();
     HashSet<Integer> CallerSave = new HashSet<>();
+    HashSet<Integer> saveReg = new HashSet<>();
+    HashSet<Integer> regret_saver = new HashSet<>();
     
     int get_reg_index(String s) {
         if (s.charAt(0) == 'x') return Integer.parseInt(s.substring(1));
@@ -157,6 +159,9 @@ public class Reg_al_asm {
                 CallerSave.add(i);
             }
         }
+        for (int i = 18; i < 27; i++) {
+            saveReg.add(i);
+        }
         asm = new prog_new();
         K = k;
     }
@@ -199,15 +204,30 @@ public class Reg_al_asm {
         }
     }
     
+    HashMap<String, Integer> reg2savedReg = new HashMap<>();
+    
     private void caller_inas(text_new t, HashSet<String> lo_after_sp) {
+        reg2savedReg.clear();
+        HashSet<Integer> saver = new HashSet<>(saveReg);
+        saver.removeAll(used_reg);
         for (String s : lo_after_sp) {
             var pos = var2regOrMem.get(s);
             assert pos != null;
             if (pos.a == type.reg) {
                 int reg = pos.b;
                 if (!CallerSave.contains(reg)) continue;
-                t.push(new Sw("x" + pos.b, "sp", regOffset.get("x" + pos.b)));
+                if (!saver.isEmpty()) {
+                    assert !saver.contains(reg);
+                    Integer reg_ = saver.iterator().next();
+                    saver.remove(reg_);
+                    reg2savedReg.put("x" + reg, reg_);
+                    t.push(new Mv("x" + reg_, "x" + reg));
+                } else
+                    t.push(new Sw("x" + pos.b, "sp", regOffset.get("x" + pos.b)));
             }
+        }
+        for (int reg : reg2savedReg.values()) {
+            regret_saver.add(reg);
         }
     }
 
@@ -233,9 +253,16 @@ public class Reg_al_asm {
             if (pos.a == type.reg) {
                 int reg = pos.b;
                 if (!CallerSave.contains(reg)) continue;
-                if (pos.b != dest_reg) t.push(new Lw("x" + pos.b, "sp", regOffset.get("x" + pos.b)));
+                if (pos.b != dest_reg) {
+                    if (reg2savedReg.containsKey("x" + reg)) {
+                        t.push(new Mv("x" + reg, "x" + reg2savedReg.get("x" + reg)));
+                    } else {
+                        t.push(new Lw("x" + reg, "sp", regOffset.get("x" + reg)));
+                    }
+                }
             }
         }
+        reg2savedReg.clear();
     }
     
     private void callee_inas(text_new t, HashSet<Integer> used_reg) {
@@ -1227,11 +1254,21 @@ public class Reg_al_asm {
 //            t.push(lw0);
 //            t.push(lw1);
 //            t.push(lw2);
+            if (!regret_saver.isEmpty()) {
+                int i = -1;
+                for (int reg : regret_saver) {
+                    i++;
+                    int offset = stackSize + i * 4;
+                    t.push_regret(new Lw("x" + reg, "sp", offset));
+                }
+            }
+            
+            assert stackSize >= 0;
             if (stackSize <= 2047 && stackSize >= -2048) {
-                Arithimm arithimm = new Arithimm("addi", "sp", "sp", stackSize);
+                Arithimm arithimm = new Arithimm("addi", "sp", "sp", stackSize + regret_saver.size() * 4);
                 t.push(arithimm);
             } else {
-                Li li = new Li("x28", stackSize);
+                Li li = new Li("x28", stackSize + regret_saver.size() * 4);
                 t.push(li);
                 Arith arith = new Arith("add", "sp", "x28", "sp");
                 t.push(arith);
@@ -1308,6 +1345,9 @@ public class Reg_al_asm {
         //done:返回值传递
         //done:恢复t0-t2，ra，sp（栈释放），a0;
         is_main = funName.equals("main");
+        text_new entry = null;
+        //todo entry的后悔
+        //todo 将栈空间变大一下，容下save
         for (IRBlockNode block : it.blocks) {
             if (block == null) {
                 continue;
@@ -1317,6 +1357,7 @@ public class Reg_al_asm {
 //                t = new text_new("main");
             if (block.label.equals("entry")) {
                 t = new text_new(funName, spare_reg);
+                entry = t;
             } else {
                 t = new text_new(funName + "_" + block.label, spare_reg);
             }
@@ -1360,6 +1401,17 @@ public class Reg_al_asm {
             }
             buildPhi(block.phis, t);
         }
+        if (!regret_saver.isEmpty()) {
+            int i = -1;
+            assert entry != null;
+            entry.regret_stack_for_entry(regret_saver.size() * 4);
+            for (int reg : regret_saver) {
+                i++;
+                int offset = stackSize + i * 4;
+                entry.push_regret(new Sw("x" + reg, "sp", offset));
+            }
+        }
+        regret_saver.clear();
     }
     
     public void build() {

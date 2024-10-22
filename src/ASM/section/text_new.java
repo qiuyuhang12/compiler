@@ -19,6 +19,23 @@ public class text_new extends section {
         phi, para, call
     }
     
+    public void regret_stack_for_entry(int size) {
+        if (size == 0) return;
+        var sp = insts.getFirst();
+        if (sp instanceof Arithimm) {
+            assert ((Arithimm) sp).op.equals("addi");
+            assert ((Arithimm) sp).rd.equals("sp");
+            assert ((Arithimm) sp).rs.equals("sp");
+            ((Arithimm) sp).imm -= size;
+        } else if (sp instanceof Li li) {
+            assert li.rd.equals("sp");
+            li.imm -= size;
+        } else {
+            assert false;
+        }
+        
+    }
+    
     public void push(Inst inst) {
         if (inst instanceof Sw sw) {
             if (sw.imm <= 2047 && sw.imm >= -2048)
@@ -46,6 +63,35 @@ public class text_new extends section {
             }
         } else
             insts.add(inst);
+    }
+    
+    public void push_regret(Inst inst) {
+        if (inst instanceof Sw sw) {
+            if (sw.imm <= 2047 && sw.imm >= -2048)
+                insts.add(1, inst);
+            else {
+                Li li = new Li(spare_reg, sw.imm);
+//                assert !sw.val.equals(spare_reg) && !sw.addr.equals(spare_reg);
+                Arith arith = new Arith("add", spare_reg, sw.addr, spare_reg);
+                insts.add(1, li);
+                insts.add(2, arith);
+                insts.add(3, new Sw(sw.val, spare_reg, 0));
+            }
+        } else if (inst instanceof Lw lw) {
+            if (lw.imm <= 2047 && lw.imm >= -2048)
+                insts.add(1, inst);
+            else {
+                assert lw.rs.equals("x28") || lw.rs.equals("sp");
+                String reg = lw.rd.equals("x29") ? "x30" : "x29";
+                Li li = new Li(reg, lw.imm);
+                Arith arith = new Arith("add", reg, lw.rs, reg);
+//                assert !lw.rd.equals("x29") && !lw.rs.equals("x29");
+                insts.add(1, li);
+                insts.add(2, arith);
+                insts.add(3, new Lw(lw.rd, reg, 0));
+            }
+        } else
+            assert false;
     }
     
     public void push_phi(Inst inst, permute_type type) {
@@ -105,8 +151,8 @@ public class text_new extends section {
             for (Inst inst : insts) {
                 cnt++;
                 if (cnt == 0 && flag) continue;
-                if (cnt==ttt){
-                    if (inst instanceof Jump){
+                if (cnt == ttt) {
+                    if (inst instanceof Jump) {
                         if (((Jump) inst).label.equals(next_label)) continue;
                     }
                 }

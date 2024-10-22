@@ -104,8 +104,7 @@ public class Main {
                 mem2Reg.run();
                 String s1 = ib.irProgramNode.toString();
 //            System.out.println(s);
-                if (!new_asm)
-                    System.out.println(s1);
+                if (!new_asm) System.out.println(s1);
                 if (show_color) {
                     System.out.println();
                     System.out.println();
