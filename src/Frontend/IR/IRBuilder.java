@@ -117,11 +117,14 @@ public class IRBuilder implements ASTVisitor {
         MemberGets = new ArrayList<>();
         MemberGets.add(alloc);
         MemberGets.add(store);
+        int cnt=-1;
         for (int i = 0; i < it.varDefs.size(); ++i) {
+//            cnt++;
             varDefNode varDef = it.varDefs.get(i);
             for (int j = 0; j < varDef.units.size(); ++j) {
+                cnt++;
                 varDefUnitNode unit = varDef.units.get(j);
-                classVarIndex.get(it.name).put(unit.name, i + j);
+                classVarIndex.get(it.name).put(unit.name, cnt);
 //                unit.irIndex = i + j;
                 irStruct.struct.add(getIRtype(varDef.typeNd.type));
                 IRType irType = new IRType(IRType.IRTypeEnum.struct);
@@ -129,7 +132,7 @@ public class IRBuilder implements ASTVisitor {
 //                getElementPtrInstNode get = new getElementPtrInstNode(varDef, currentBlock, "%" + it.name + "." + unit.name, renamer.getRenamed("this"), irType);
                 getElementPtrInstNode get = new getElementPtrInstNode(varDef, currentBlock, "%" + it.name + "." + unit.name, "%this", irType);
                 get.push(new IRType(IRType.IRTypeEnum.i32), 0);
-                get.push(new IRType(IRType.IRTypeEnum.i32), i + j);
+                get.push(new IRType(IRType.IRTypeEnum.i32), cnt);
                 MemberGets.add(get);
                 renamer.rename(unit.name);
             }
@@ -652,7 +655,7 @@ public class IRBuilder implements ASTVisitor {
         IRVar lhs = new IRVar(irType.toString(), lhsName, false);
         IRVar rhs = new IRVar(irType.toString(), rhsName, false);
         IRType irType2 = getIRtype(it.typeNd.type);
-        IRVar dest = new IRVar(irType2.toString(), "%" + renamer.rename(it.opCode.toString()), false);
+        IRVar dest = new IRVar(irType2.toString(), "%" + renamer.rename(it.opCode.toString()+".."), false);
         if (!it.lhs.typeNd.type.atomType.equals(Type.TypeEnum.STRING))
             switch (it.opCode) {
                 case add:
