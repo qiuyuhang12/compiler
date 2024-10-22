@@ -32,7 +32,7 @@ public class Reg_al_asm {
     static int K;
     HashSet<Integer> used_reg = new HashSet<>();
     String spare_reg = "x31";
-    String phi_reg = "x27";
+    //    String phi_reg = "x27";
     String mem_reg1 = "x28";
     String mem_reg2 = "x29";
     String tmp_reg = "x30";
@@ -153,15 +153,23 @@ public class Reg_al_asm {
     public Reg_al_asm(IRProgramNode ir, int k) {
         this.ir = ir;
         for (int i = 1; i < 32; i++) {
-            if (i == 2 || i == 8 || i == 9 || (i >= 18 && i <= 27)) {
+//            if (i == 2 || i == 8 || i == 9 || (i >= 18 && i <= 27)) {
+            if (i == 2  || i == 9 || (i >= 25 && i <= 26 )) {
+//            if (i >= 18 && i <= 27) {
                 CalleeSave.add(i);
             } else {
                 CallerSave.add(i);
             }
         }
-        for (int i = 18; i < 27; i++) {
-            saveReg.add(i);
+//        saveReg.add(8);
+        saveReg.add(9);
+        for (int i = 25; i <= 26; i++) {
+//            if (i != 19 && i != 20 && i != 21 && i != 22)
+                saveReg.add(i);
         }
+//        for (int i = 18; i < 26; i++) {
+//            saveReg.add(i);
+//        }
         asm = new prog_new();
         K = k;
     }
@@ -206,10 +214,30 @@ public class Reg_al_asm {
     
     HashMap<String, Integer> reg2savedReg = new HashMap<>();
     
-    private void caller_inas(text_new t, HashSet<String> lo_after_sp) {
+    private void caller_inas(text_new t, HashSet<String> lo_after_sp, ArrayList<IREntity> args) {
         reg2savedReg.clear();
+        HashSet<Integer> using_reg = new HashSet<>();
+        for (String s : lo_after_sp) {
+            var pos = var2regOrMem.get(s);
+            assert pos != null;
+            if (pos.a == type.reg) {
+                using_reg.add(pos.b);
+            }
+        }
+        for (IREntity arg : args) {
+            if (arg instanceof IRVar var) {
+                if (var.name.charAt(0) == '%') {
+                    var pos = var2regOrMem.get(var.name);
+                    assert pos != null;
+                    if (pos.a == type.reg) {
+                        using_reg.add(pos.b);
+                    }
+                }
+            }
+        }
         HashSet<Integer> saver = new HashSet<>(saveReg);
-        saver.removeAll(used_reg);
+//        saver.removeAll(used_reg);
+        saver.removeAll(using_reg);
         for (String s : lo_after_sp) {
             var pos = var2regOrMem.get(s);
             assert pos != null;
@@ -227,7 +255,8 @@ public class Reg_al_asm {
             }
         }
         for (int reg : reg2savedReg.values()) {
-            regret_saver.add(reg);
+            if (!used_reg.contains(reg))
+                regret_saver.add(reg);
         }
     }
 
@@ -1047,7 +1076,7 @@ public class Reg_al_asm {
             Sw sw = new Sw("ra", "sp", regOffset.get("ra"));
             t.push(sw);
 //            inas(t, is.lo_after_sp);
-            caller_inas(t, is.lo_after_sp);
+            caller_inas(t, is.lo_after_sp, is.args);
             HashMap<MvEntity, MvEntity> new2old = new HashMap<>();
             for (int i = 0; i < is.args.size(); i++) {
                 var src = src(is.args.get(i));
