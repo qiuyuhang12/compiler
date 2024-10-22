@@ -46,6 +46,7 @@ public class Main {
         Consts.sccp = true;
         Consts.dce = true;
 //        Consts.showsccp = true;
+        Consts.m2r = true;
         oj = true;
         if (redirect_output) {
 //        if (true) {

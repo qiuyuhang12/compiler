@@ -7,7 +7,7 @@ build:
 
 .PHONY: run
 run:
-	java -cp /ulib/antlr-4.13.2-complete.jar:bin Main
+	java -Xss40M -cp /ulib/antlr-4.13.2-complete.jar:bin Main
 
 
 
@@ -19,7 +19,7 @@ run:
 # .PHONY: run
 # run:
 # # build
-# 	java -ea -cp ./src/Parser/lib/antlr-4.13.2-complete.jar:bin Main
+# 	java -ea -Xss40M -cp ./src/Parser/lib/antlr-4.13.2-complete.jar:bin Main
 # # 	java -server -cp ./src/Parser/lib/antlr-4.13.2-complete.jar:bin Main
 #
 # #
@@ -30,14 +30,14 @@ run:
 #
 # .PHONY: Codegen
 # Codegen: build
-# 	./testcases/codegen/scripts/test_asm.bash 'java -cp /usr/share/java/antlr-4.13.2-complete.jar:bin Main' $(file) builtin.s
+# 	./testcases/codegen/scripts/test_asm.bash 'java -Xss40M -cp /usr/share/java/antlr-4.13.2-complete.jar:bin Main' $(file) builtin.s
 # # 	./testcases/codegen/scripts/test_asm.bash 'java -cp /usr/share/java/antlr-4.13.2-complete.jar:bin Main' testcases/codegen/e1.mx builtin.s
 # #
 # #
 # #
 # .PHONY: Codegenall
 # Codegenall:build
-# 	./testcases/codegen/scripts/test_asm_all.bash 'java -ea -cp /usr/share/java/antlr-4.13.2-complete.jar:bin Main -S' testcases/codegen/ builtin.s
+# 	./testcases/codegen/scripts/test_asm_all.bash 'java -ea -Xss40M -cp /usr/share/java/antlr-4.13.2-complete.jar:bin Main -S' testcases/codegen/ builtin.s
 # #
 #
 # # libfmt.so.10
