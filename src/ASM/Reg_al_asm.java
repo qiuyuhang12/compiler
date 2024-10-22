@@ -37,6 +37,51 @@ public class Reg_al_asm {
     String mem_reg2 = "x29";
     String tmp_reg = "x30";
     HashMap<String, text_new> bl2text = new HashMap<>();
+    HashSet<Integer> CalleeSave = new HashSet<>();
+    HashSet<Integer> CallerSave = new HashSet<>();
+    
+    int get_reg_index(String s) {
+        if (s.charAt(0) == 'x') return Integer.parseInt(s.substring(1));
+        else {
+            return switch (s) {
+                case "ra" -> 1;
+                case "sp" -> 2;
+                case "gp" -> 3;
+                case "tp" -> 4;
+                case "t0" -> 5;
+                case "t1" -> 6;
+                case "t2" -> 7;
+                case "s0" -> 8;
+                case "s1" -> 9;
+                case "a0" -> 10;
+                case "a1" -> 11;
+                case "a2" -> 12;
+                case "a3" -> 13;
+                case "a4" -> 14;
+                case "a5" -> 15;
+                case "a6" -> 16;
+                case "a7" -> 17;
+                case "s2" -> 18;
+                case "s3" -> 19;
+                case "s4" -> 20;
+                case "s5" -> 21;
+                case "s6" -> 22;
+                case "s7" -> 23;
+                case "s8" -> 24;
+                case "s9" -> 25;
+                case "s10" -> 26;
+                case "s11" -> 27;
+                case "t3" -> 28;
+                case "t4" -> 29;
+                case "t5" -> 30;
+                case "t6" -> 31;
+                default -> {
+                    assert false;
+                    yield -1;
+                }
+            };
+        }
+    }
     
     class MvEntity {
         public type a;
@@ -105,6 +150,13 @@ public class Reg_al_asm {
     
     public Reg_al_asm(IRProgramNode ir, int k) {
         this.ir = ir;
+        for (int i = 1; i < 32; i++) {
+            if (i == 2 || i == 8 || i == 9 || (i >= 18 && i <= 27)) {
+                CalleeSave.add(i);
+            } else {
+                CallerSave.add(i);
+            }
+        }
         asm = new prog_new();
         K = k;
     }
@@ -138,13 +190,22 @@ public class Reg_al_asm {
     }
     
     private void inas(text_new t, HashSet<String> lo_after_sp) {
-//        for (Integer i : used_reg) {
-//            t.push(new Sw("x" + i, "sp", regOffset.get("x" + i)));
-//        }
         for (String s : lo_after_sp) {
             var pos = var2regOrMem.get(s);
             assert pos != null;
             if (pos.a == type.reg) {
+                t.push(new Sw("x" + pos.b, "sp", regOffset.get("x" + pos.b)));
+            }
+        }
+    }
+    
+    private void caller_inas(text_new t, HashSet<String> lo_after_sp) {
+        for (String s : lo_after_sp) {
+            var pos = var2regOrMem.get(s);
+            assert pos != null;
+            if (pos.a == type.reg) {
+                int reg = pos.b;
+                if (!CallerSave.contains(reg)) continue;
                 t.push(new Sw("x" + pos.b, "sp", regOffset.get("x" + pos.b)));
             }
         }
@@ -156,14 +217,40 @@ public class Reg_al_asm {
 //    }
     
     private void outas(text_new t, int dest_reg, HashSet<String> lo_after_sp) {
-//        for (Integer i : used_reg) {
-//            if (i != dest_reg) t.push(new Lw("x" + i, "sp", regOffset.get("x" + i)));
-//        }
         for (String s : lo_after_sp) {
             var pos = var2regOrMem.get(s);
             assert pos != null;
             if (pos.a == type.reg) {
                 if (pos.b != dest_reg) t.push(new Lw("x" + pos.b, "sp", regOffset.get("x" + pos.b)));
+            }
+        }
+    }
+    
+    private void caller_outas(text_new t, int dest_reg, HashSet<String> lo_after_sp) {
+        for (String s : lo_after_sp) {
+            var pos = var2regOrMem.get(s);
+            assert pos != null;
+            if (pos.a == type.reg) {
+                int reg = pos.b;
+                if (!CallerSave.contains(reg)) continue;
+                if (pos.b != dest_reg) t.push(new Lw("x" + pos.b, "sp", regOffset.get("x" + pos.b)));
+            }
+        }
+    }
+    
+    private void callee_inas(text_new t, HashSet<Integer> used_reg) {
+        for (int reg : used_reg) {
+            if (CalleeSave.contains(reg)) {
+                t.push(new Sw("x" + reg, "sp", regOffset.get("x" + reg)));
+            }
+        }
+    }
+    
+    private void callee_outas(text_new t, HashSet<Integer> used_reg) {
+        for (int reg : used_reg) {
+            if (CalleeSave.contains(reg)) {
+//                if (reg != dest_reg)
+                t.push(new Lw("x" + reg, "sp", regOffset.get("x" + reg)));
             }
         }
     }
@@ -932,7 +1019,8 @@ public class Reg_al_asm {
             //done:传参：a0-a7，ret：返回值：a0,恢复ra
             Sw sw = new Sw("ra", "sp", regOffset.get("ra"));
             t.push(sw);
-            inas(t, is.lo_after_sp);
+//            inas(t, is.lo_after_sp);
+            caller_inas(t, is.lo_after_sp);
             HashMap<MvEntity, MvEntity> new2old = new HashMap<>();
             for (int i = 0; i < is.args.size(); i++) {
                 var src = src(is.args.get(i));
@@ -963,7 +1051,8 @@ public class Reg_al_asm {
             }
             Lw lw = new Lw("ra", "sp", regOffset.get("ra"));
             t.push(lw);
-            outas(t, dest_reg, is.lo_after_sp);
+//            outas(t, dest_reg, is.lo_after_sp);
+            caller_outas(t, dest_reg, is.lo_after_sp);
         } else if (it instanceof getElementPtrInstNode is) {//一般而言，第一个变量是堆地址
             System.err.println("我默认长度全是4,即都是i32");
             assert is.tys.size() == 1 || is.tys.size() == 2;
@@ -1128,6 +1217,7 @@ public class Reg_al_asm {
                     src(is.value, t, "x10", true);
                 }
             }
+            callee_outas(t, used_reg);
 //            for (int i = 27; i <= 31; i++) {
 //                t.push(new Lw("x" + i, "sp", regOffset.get("x" + i)));
 //            }
@@ -1237,7 +1327,8 @@ public class Reg_al_asm {
                 paraHandle(it);//old_para_pos
                 para_permute(t);//permute para
                 
-                storeReg(t);
+                callee_inas(t, used_reg);
+//                storeReg(t);
             }
             
             int i = -1;
