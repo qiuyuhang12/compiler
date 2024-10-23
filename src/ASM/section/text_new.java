@@ -19,17 +19,26 @@ public class text_new extends section {
         phi, para, call
     }
     
+    int align16(int in){
+        return in;
+//        return (in + 15) / 16 * 16;
+    }
+    
     public void regret_stack_for_entry(int size) {
-        if (size == 0) return;
+//        if (size == 0) return;
         var sp = insts.getFirst();
         if (sp instanceof Arithimm) {
             assert ((Arithimm) sp).op.equals("addi");
             assert ((Arithimm) sp).rd.equals("sp");
             assert ((Arithimm) sp).rs.equals("sp");
-            ((Arithimm) sp).imm -= size;
+            int tmp= align16(-((Arithimm) sp).imm+size);
+            ((Arithimm) sp).imm = -tmp;
+//            ((Arithimm) sp).imm -= size;
         } else if (sp instanceof Li li) {
             assert li.rd.equals("sp");
-            li.imm -= size;
+            int tmp= align16(-li.imm+size);
+            li.imm = -tmp;
+//            li.imm -= size;
         } else {
             assert false;
         }

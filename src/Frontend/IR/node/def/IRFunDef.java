@@ -4,6 +4,7 @@ import Frontend.IR.entity.IRVar;
 import Frontend.IR.node.IRNode;
 import Frontend.IR.node.stmt.IRBlockNode;
 import Frontend.IR.type.IRType;
+import Frontend.IR.node.inst.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,6 +27,18 @@ public class IRFunDef extends IRFunDeclare {
             if (tmp.charAt(0) == '%') res.add(tmp);
         }
         return res;
+    }
+    
+    public boolean call_plenty(){
+        int calls=0;
+        for (IRBlockNode block : blocks) {
+            for (IRNode node : block.insts) {
+                if (node instanceof callInstNode) {
+                    calls++;
+                }
+            }
+        }
+        return calls > 4;
     }
     
     public void push(IRBlockNode block) {

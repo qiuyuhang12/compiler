@@ -85,6 +85,11 @@ public class Reg_al_asm {
         }
     }
     
+    int align16(int in){
+        return in;
+//        return (in + 15) / 16 * 16;
+    }
+    
     class MvEntity {
         public type a;
         public Integer b;
@@ -153,8 +158,8 @@ public class Reg_al_asm {
     public Reg_al_asm(IRProgramNode ir, int k) {
         this.ir = ir;
         for (int i = 1; i < 32; i++) {
-//            if (i == 2 || i == 8 || i == 9 || (i >= 18 && i <= 27)) {
-            if (i == 2  || i == 9 || (i >= 25 && i <= 26 )) {
+            if (i == 2 || i == 8 || i == 9 || (i >= 18 && i <= 27)) {
+//            if (i == 2  || i == 9 || (i >= 25 && i <= 26 )) {
 //            if (i >= 18 && i <= 27) {
                 CalleeSave.add(i);
             } else {
@@ -163,10 +168,10 @@ public class Reg_al_asm {
         }
 //        saveReg.add(8);
 //        saveReg.add(9);
-        for (int i = 25; i <= 26; i++) {
-//            if (i != 19 && i != 20 && i != 21 && i != 22)
-                saveReg.add(i);
-        }
+//        for (int i = 25; i <= 26; i++) {
+////            if (i != 19 && i != 20 && i != 21 && i != 22)
+//                saveReg.add(i);
+//        }
 //        for (int i = 18; i < 26; i++) {
 //            saveReg.add(i);
 //        }
@@ -1293,11 +1298,11 @@ public class Reg_al_asm {
             }
             
             assert stackSize >= 0;
-            if (stackSize <= 2047 && stackSize >= -2048) {
-                Arithimm arithimm = new Arithimm("addi", "sp", "sp", stackSize + regret_saver.size() * 4);
+            if ((align16(stackSize + regret_saver.size() * 4)) <= 2047 && (align16(stackSize + regret_saver.size() * 4)) >= -2048) {
+                Arithimm arithimm = new Arithimm("addi", "sp", "sp", align16(stackSize + regret_saver.size() * 4));
                 t.push(arithimm);
             } else {
-                Li li = new Li("x28", stackSize + regret_saver.size() * 4);
+                Li li = new Li("x28", align16(stackSize + regret_saver.size() * 4));
                 t.push(li);
                 Arith arith = new Arith("add", "sp", "x28", "sp");
                 t.push(arith);
@@ -1375,6 +1380,17 @@ public class Reg_al_asm {
         //done:恢复t0-t2，ra，sp（栈释放），a0;
         is_main = funName.equals("main");
         text_new entry = null;
+        saveReg.clear();
+//        i == 2 || i == 8 || i == 9 || (i >= 18 && i <= 27)
+        if (it.call_plenty()){
+//            saveReg.add(2);
+            saveReg.add(8);
+            saveReg.add(9);
+            for (int i = 18; i <= 27; i++) {
+//            if (i != 19 && i != 20 && i != 21 && i != 22)
+                saveReg.add(i);
+            }
+        }
         //todo entry的后悔
         //todo 将栈空间变大一下，容下save
         for (IRBlockNode block : it.blocks) {
@@ -1439,6 +1455,9 @@ public class Reg_al_asm {
                 int offset = stackSize + i * 4;
                 entry.push_regret(new Sw("x" + reg, "sp", offset));
             }
+        }else {
+            assert entry != null;
+            entry.regret_stack_for_entry(0);
         }
         regret_saver.clear();
     }
